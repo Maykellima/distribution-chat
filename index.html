@@ -1,351 +1,338 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distribution Chat</title>
-    <style>
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .container {
-            width: 640px;
-            padding: 40px 0;
-        }
-        
-        .messages {
-            min-height: 400px;
-            max-height: 70vh;
-            overflow-y: auto;
-            margin-bottom: 40px;
-            padding: 20px 0;
-        }
-        
-        .messages::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .messages::-webkit-scrollbar-thumb {
-            background: #e0e0e0;
-            border-radius: 3px;
-        }
-        
-        .message {
-            margin-bottom: 12px;
-            margin-left: 60px;
-            position: relative;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .user-message {
-            font-size: 18px;
-            color: #404040;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-            max-width: 440px;
-        }
-        
-        .user-message::before {
-            content: '';
-            position: absolute;
-            left: -40px;
-            top: 4px;
-            width: 12px;
-            height: 12px;
-            background: #000000;
-            border-radius: 50%;
-        }
-        
-        .assistant-message {
-            font-size: 12px;
-            color: #404040;
-            line-height: 1.6;
-            max-width: 440px;
-        }
-        
-        .assistant-message h3 {
-            font-size: 14px;
-            font-weight: 600;
-            margin: 16px 0 8px 0;
-            color: #202020;
-        }
-        
-        .assistant-message p {
-            margin-bottom: 8px;
-        }
-        
-        .assistant-message ul, .assistant-message ol {
-            margin: 8px 0;
-            padding-left: 20px;
-        }
-        
-        .assistant-message li {
-            margin: 4px 0;
-        }
-        
-        .assistant-message strong {
-            font-weight: 600;
-            color: #202020;
-        }
-        
-        .assistant-message em {
-            font-style: italic;
-        }
-        
-        .assistant-message code {
-            background: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 11px;
-        }
-        
-        .assistant-message a {
-            color: #2563eb;
-            text-decoration: none;
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.2s;
-        }
-        
-        .assistant-message a:hover {
-            border-bottom-color: #2563eb;
-        }
-        
-        .typing-indicator {
-            margin-left: 60px;
-            height: 20px;
-        }
-        
-        .typing-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #404040;
-            border-radius: 50%;
-            margin-right: 4px;
-            animation: typingPulse 1.4s infinite;
-        }
-        
-        .typing-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .typing-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        .input-container {
-            position: relative;
-        }
-        
-        .input-field {
-            width: 600px;
-            padding: 16px 60px 16px 24px;
-            border: 1px solid #e0e0e0;
-            border-radius: 30px;
-            font-size: 15px;
-            color: #404040;
-            background: #ffffff;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        
-        .input-field:focus {
-            border-color: #b0b0b0;
-        }
-        
-        .input-field::placeholder {
-            color: #a0a0a0;
-        }
-        
-        .send-button {
-            position: absolute;
-            right: 22px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 36px;
-            height: 36px;
-            border: none;
-            border-radius: 50%;
-            background: #e8e8e8;
-            color: #606060;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        
-        .send-button:hover:not(:disabled) {
-            background: #d0d0d0;
-        }
-        
-        .send-button:disabled {
-            background: #f5f5f5;
-            color: #c0c0c0;
-            cursor: not-allowed;
-        }
-        
-        .send-button svg {
-            width: 16px;
-            height: 16px;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes typingPulse {
-            0%, 60%, 100% {
-                opacity: 0.3;
-            }
-            30% {
-                opacity: 1;
-            }
-        }
-    </style>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Distribution Chat</title>
+   <style>
+       * { 
+           margin: 0; 
+           padding: 0; 
+           box-sizing: border-box;
+       }
+       
+       body {
+           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+           background: #ffffff;
+           min-height: 100vh;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+       }
+       
+       .container {
+           width: 640px;
+           padding: 40px 0;
+       }
+       
+       .messages {
+           min-height: 400px;
+           max-height: 70vh;
+           overflow-y: auto;
+           margin-bottom: 40px;
+           padding: 20px 0;
+           scrollbar-width: none;
+           -ms-overflow-style: none;
+       }
+       
+       .messages::-webkit-scrollbar {
+           display: none;
+       }
+       
+       .message {
+           margin-bottom: 12px;
+           margin-left: 60px;
+           position: relative;
+           animation: fadeIn 0.3s ease;
+       }
+       
+       .user-message {
+           font-size: 18px;
+           color: #404040;
+           font-weight: 500;
+           text-transform: uppercase;
+           letter-spacing: 0.02em;
+           max-width: 440px;
+       }
+       
+       .user-message::before {
+           content: '';
+           position: absolute;
+           left: -40px;
+           top: 4px;
+           width: 12px;
+           height: 12px;
+           background: #000000;
+           border-radius: 50%;
+       }
+       
+       .assistant-message {
+           font-size: 12px;
+           color: #404040;
+           line-height: 1.6;
+           max-width: 440px;
+       }
+       
+       .assistant-message h3 {
+           font-size: 14px;
+           font-weight: 600;
+           margin: 16px 0 8px 0;
+           color: #202020;
+       }
+       
+       .assistant-message p {
+           margin-bottom: 8px;
+       }
+       
+       .assistant-message ul, .assistant-message ol {
+           margin: 8px 0;
+           padding-left: 20px;
+       }
+       
+       .assistant-message li {
+           margin: 4px 0;
+       }
+       
+       .assistant-message strong {
+           font-weight: 600;
+           color: #202020;
+       }
+       
+       .assistant-message em {
+           font-style: italic;
+       }
+       
+       .assistant-message code {
+           background: #f5f5f5;
+           padding: 2px 6px;
+           border-radius: 3px;
+           font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+           font-size: 11px;
+       }
+       
+       .assistant-message a {
+           color: #2563eb;
+           text-decoration: none;
+           border-bottom: 1px solid transparent;
+           transition: border-color 0.2s;
+       }
+       
+       .assistant-message a:hover {
+           border-bottom-color: #2563eb;
+       }
+       
+       .typing-indicator {
+           margin-left: 60px;
+           height: 20px;
+       }
+       
+       .typing-dot {
+           display: inline-block;
+           width: 8px;
+           height: 8px;
+           background: #404040;
+           border-radius: 50%;
+           margin-right: 4px;
+           animation: typingPulse 1.4s infinite;
+       }
+       
+       .typing-dot:nth-child(2) {
+           animation-delay: 0.2s;
+       }
+       
+       .typing-dot:nth-child(3) {
+           animation-delay: 0.4s;
+       }
+       
+       .input-container {
+           position: relative;
+       }
+       
+       .input-field {
+           width: 600px;
+           padding: 16px 60px 16px 24px;
+           border: 1px solid #e0e0e0;
+           border-radius: 30px;
+           font-size: 15px;
+           color: #404040;
+           background: #ffffff;
+           outline: none;
+           transition: border-color 0.2s;
+       }
+       
+       .input-field:focus {
+           border-color: #b0b0b0;
+       }
+       
+       .input-field::placeholder {
+           color: #a0a0a0;
+       }
+       
+       .send-button {
+           position: absolute;
+           right: 22px;
+           top: 50%;
+           transform: translateY(-50%);
+           width: 36px;
+           height: 36px;
+           border: none;
+           border-radius: 50%;
+           background: #e8e8e8;
+           color: #606060;
+           cursor: pointer;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           transition: all 0.2s;
+       }
+       
+       .send-button:hover:not(:disabled) {
+           background: #d0d0d0;
+       }
+       
+       .send-button:disabled {
+           background: #f5f5f5;
+           color: #c0c0c0;
+           cursor: not-allowed;
+       }
+       
+       .send-button svg {
+           width: 18px;
+           height: 18px;
+           transform: rotate(-90deg);
+       }
+       
+       @keyframes fadeIn {
+           from {
+               opacity: 0;
+               transform: translateY(10px);
+           }
+           to {
+               opacity: 1;
+               transform: translateY(0);
+           }
+       }
+       
+       @keyframes typingPulse {
+           0%, 60%, 100% {
+               opacity: 0.3;
+           }
+           30% {
+               opacity: 1;
+           }
+       }
+   </style>
 </head>
 <body>
-    <div class="container">
-        <div class="messages" id="messages"></div>
-        <div class="input-container">
-            <input 
-                type="text" 
-                class="input-field" 
-                id="input" 
-                placeholder="Pregunta lo que necesitas, encuentra lo que buscas."
-                autocomplete="off"
-            />
-            <button class="send-button" id="sendBtn">
-                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 19V5M5 12l7-7 7 7"/>
-                </svg>
-            </button>
-        </div>
-    </div>
+   <div class="container">
+       <div class="messages" id="messages"></div>
+       <div class="input-container">
+           <input 
+               type="text" 
+               class="input-field" 
+               id="input" 
+               placeholder="Pregunta lo que necesitas, encuentra lo que buscas."
+               autocomplete="off"
+           />
+           <button class="send-button" id="sendBtn">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                   <path d="M5 12l14 0M12 5l7 7-7 7"/>
+               </svg>
+           </button>
+       </div>
+   </div>
 
-    <script>
-        const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
-        
-        const messagesDiv = document.getElementById('messages');
-        const input = document.getElementById('input');
-        const sendBtn = document.getElementById('sendBtn');
-        
-        let isLoading = false;
+   <script>
+       const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+       
+       const messagesDiv = document.getElementById('messages');
+       const input = document.getElementById('input');
+       const sendBtn = document.getElementById('sendBtn');
+       
+       let isLoading = false;
 
-        function formatMessage(content) {
-            // Convertir markdown básico a HTML
-            return content
-                .replace(/### (.*?)$/gm, '<h3>$1</h3>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/`(.*?)`/g, '<code>$1</code>')
-                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-                .replace(/\n/g, '<br>');
-        }
+       function formatMessage(content) {
+           return content
+               .replace(/### (.*?)$/gm, '<h3>$1</h3>')
+               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+               .replace(/\*(.*?)\*/g, '<em>$1</em>')
+               .replace(/`(.*?)`/g, '<code>$1</code>')
+               .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+               .replace(/\n/g, '<br>');
+       }
 
-        async function sendMessage() {
-            const question = input.value.trim();
-            if (!question || isLoading) return;
+       async function sendMessage() {
+           const question = input.value.trim();
+           if (!question || isLoading) return;
 
-            // Agregar mensaje del usuario
-            const userDiv = document.createElement('div');
-            userDiv.className = 'message user-message';
-            userDiv.textContent = question.toUpperCase();
-            messagesDiv.appendChild(userDiv);
-            
-            input.value = '';
-            isLoading = true;
-            sendBtn.disabled = true;
-            
-            // Mostrar indicador de escritura
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
-            typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
-            messagesDiv.appendChild(typingDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+           const userDiv = document.createElement('div');
+           userDiv.className = 'message user-message';
+           userDiv.textContent = question.toUpperCase();
+           messagesDiv.appendChild(userDiv);
+           
+           input.value = '';
+           isLoading = true;
+           sendBtn.disabled = true;
+           
+           const typingDiv = document.createElement('div');
+           typingDiv.className = 'typing-indicator';
+           typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+           messagesDiv.appendChild(typingDiv);
+           messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            try {
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({ question })
-                });
+           try {
+               const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
+                   method: 'POST',
+                   headers: {
+                       'Content-Type': 'application/json',
+                       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                   },
+                   body: JSON.stringify({ question })
+               });
 
-                const data = await response.json();
-                
-                // Remover indicador de escritura
-                typingDiv.remove();
-                
-                // Agregar respuesta con efecto typewriter
-                const assistantDiv = document.createElement('div');
-                assistantDiv.className = 'message assistant-message';
-                messagesDiv.appendChild(assistantDiv);
-                
-                // Efecto typewriter mejorado
-                const fullText = data.answer || 'No pude procesar la pregunta';
-                let currentIndex = 0;
-                
-                function typeWriter() {
-                    if (currentIndex < fullText.length) {
-                        const speed = Math.random() * 20 + 10; // Velocidad variable
-                        assistantDiv.innerHTML = formatMessage(fullText.slice(0, currentIndex + 1));
-                        currentIndex++;
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                        setTimeout(typeWriter, speed);
-                    }
-                }
-                
-                typeWriter();
-                
-            } catch (error) {
-                typingDiv.remove();
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'message assistant-message';
-                errorDiv.textContent = 'Error al conectar con el servidor. Intenta de nuevo.';
-                messagesDiv.appendChild(errorDiv);
-            } finally {
-                isLoading = false;
-                sendBtn.disabled = false;
-                input.focus();
-            }
-        }
+               const data = await response.json();
+               
+               typingDiv.remove();
+               
+               const assistantDiv = document.createElement('div');
+               assistantDiv.className = 'message assistant-message';
+               messagesDiv.appendChild(assistantDiv);
+               
+               const fullText = data.answer || 'No pude procesar la pregunta';
+               let currentIndex = 0;
+               
+               function typeWriter() {
+                   if (currentIndex < fullText.length) {
+                       const speed = Math.random() * 20 + 10;
+                       assistantDiv.innerHTML = formatMessage(fullText.slice(0, currentIndex + 1));
+                       currentIndex++;
+                       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                       setTimeout(typeWriter, speed);
+                   }
+               }
+               
+               typeWriter();
+               
+           } catch (error) {
+               typingDiv.remove();
+               const errorDiv = document.createElement('div');
+               errorDiv.className = 'message assistant-message';
+               errorDiv.textContent = 'Error al conectar con el servidor. Intenta de nuevo.';
+               messagesDiv.appendChild(errorDiv);
+           } finally {
+               isLoading = false;
+               sendBtn.disabled = false;
+               input.focus();
+           }
+       }
 
-        sendBtn.addEventListener('click', sendMessage);
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-        
-        // Focus inicial
-        input.focus();
-    </script>
+       sendBtn.addEventListener('click', sendMessage);
+       input.addEventListener('keypress', (e) => {
+           if (e.key === 'Enter') sendMessage();
+       });
+       
+       input.focus();
+   </script>
 </body>
 </html>
