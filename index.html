@@ -67,7 +67,7 @@
        }
        
        .assistant-message {
-           font-size: 12px;
+           font-size: 14px;
            color: #404040;
            line-height: 1.6;
            max-width: 440px;
@@ -313,7 +313,7 @@
                
                function typeWriter() {
                    if (currentIndex < fullText.length) {
-                       const speed = Math.random() * 20 + 10;
+                       const speed = Math.random() * 10 + 5;
                        assistantDiv.innerHTML = formatMessage(fullText.slice(0, currentIndex + 1));
                        currentIndex++;
                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
