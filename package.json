@@ -1,0 +1,9 @@
+{
+  "name": "distribution-chat",
+  "version": "1.0.0",
+  "description": "Chat interface for Distribution Dashboard",
+  "scripts": {
+    "dev": "python3 -m http.server 8000"
+  },
+  "dependencies": {}
+}

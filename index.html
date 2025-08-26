@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribution Chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 90%; max-width: 800px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+        .messages { height: 400px; overflow-y: auto; padding: 20px; }
+        .message { margin-bottom: 15புபு; padding: 10px 15px; border-radius: 10px; max-width: 70%; }
+        .user { background: #2563eb; color: white; margin-left: auto; text-align: right; }
+        .assistant { background: #f3f4f6; color: #333; }
+        .input-area { padding: 20px; border-top: 1px solid #e5e7eb; display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px 15px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 16px; }
+        button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        .loading { text-align: center; color: #6b7280; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Distribution Chat</h1>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="input-area">
+            <input type="text" id="input" placeholder="Haz una pregunta sobre el equipo..." />
+            <button id="send">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+        
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('send');
+
+        async function sendMessage() {
+            const question = input.value.trim();
+            if (!question) return;
+
+            addMessage(question, 'user');
+            input.value = '';
+            sendBtn.disabled = true;
+            
+            const loadingId = addMessage('Pensando...', 'loading');
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+                removeMessage(loadingId);
+                addMessage(data.answer || 'No pude procesar la pregunta', 'assistant');
+            } catch (error) {
+                removeMessage(loadingId);
+                addMessage('Error: No pude conectar con el servidor', 'assistant');
+            } finally {
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        function addMessage(text, type) {
+            const id = Date.now();
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.id = `msg-${id}`;
+            div.textContent = text;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return id;
+        }
+
+        function removeMessage(id) {
+            const msg = document.getElementById(`msg-${id}`);
+            if (msg) msg.remove();
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
