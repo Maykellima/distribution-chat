@@ -73,6 +73,22 @@
            max-width: 440px;
        }
        
+       .assistant-message h1 {
+           font-size: 20px;
+           font-weight: 700;
+           margin: 20px 0 12px 0;
+           color: #000000;
+           border-bottom: 2px solid #e5e5e5;
+           padding-bottom: 8px;
+       }
+       
+       .assistant-message h2 {
+           font-size: 16px;
+           font-weight: 600;
+           margin: 18px 0 10px 0;
+           color: #202020;
+       }
+       
        .assistant-message h3 {
            font-size: 14px;
            font-weight: 600;
@@ -90,6 +106,62 @@
            color: #000000;
        }
        
+       .assistant-message em {
+           font-style: italic;
+       }
+       
+       .assistant-message code {
+           background: #f5f5f5;
+           padding: 2px 6px;
+           border-radius: 3px;
+           font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+           font-size: 12px;
+           color: #d73a49;
+       }
+       
+       .assistant-message pre {
+           background: #f6f8fa;
+           border: 1px solid #e1e4e8;
+           border-radius: 6px;
+           padding: 16px;
+           margin: 12px 0;
+           overflow-x: auto;
+           line-height: 1.45;
+       }
+       
+       .assistant-message pre code {
+           background: none;
+           padding: 0;
+           color: #24292e;
+           font-size: 12px;
+       }
+       
+       .assistant-message blockquote {
+           margin: 12px 0;
+           padding: 0 16px;
+           border-left: 4px solid #dfe2e5;
+           color: #6a737d;
+       }
+       
+       .assistant-message hr {
+           margin: 16px 0;
+           border: 0;
+           border-top: 1px solid #e1e4e8;
+       }
+       
+       .assistant-message a {
+           color: #0366d6;
+           text-decoration: none;
+           font-weight: 500;
+           border-bottom: 1px solid transparent;
+           transition: all 0.2s;
+       }
+       
+       .assistant-message a:hover {
+           color: #0056b3;
+           border-bottom-color: #0366d6;
+       }
+       
        .assistant-message ul, .assistant-message ol {
            margin: 8px 0;
            padding-left: 20px;
@@ -97,6 +169,33 @@
        
        .assistant-message li {
            margin: 4px 0;
+       }
+       
+       .assistant-message ul li::marker {
+           color: #666666;
+       }
+       
+       .assistant-message ol li::marker {
+           color: #666666;
+           font-weight: 600;
+       }
+       
+       /* Estilos para proyectos y empleados */
+       .assistant-message .project-item {
+           margin: 12px 0;
+           padding: 0;
+           display: block;
+       }
+       
+       .assistant-message .project-name {
+           font-weight: 700;
+           color: #000000;
+           display: inline;
+       }
+       
+       .assistant-message .project-employees {
+           color: #404040;
+           display: inline;
        }
        
        .typing-indicator {
@@ -127,56 +226,64 @@
        }
        
        .input-field {
-           width: 600px;
-           padding: 16px 60px 16px 24px;
-           border: 1px solid #e0e0e0;
-           border-radius: 30px;
-           font-size: 15px;
-           color: #404040;
+           width: 100%;
+           padding: 20px 60px 20px 24px;
+           border: 2px solid #e5e5e5;
+           border-radius: 50px;
+           font-size: 16px;
+           color: #333333;
            background: #ffffff;
            outline: none;
-           transition: border-color 0.2s;
+           transition: all 0.2s ease;
+           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
        }
        
        .input-field:focus {
-           border-color: #b0b0b0;
+           border-color: #666666;
+           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
        }
        
        .input-field::placeholder {
-           color: #a0a0a0;
+           color: #999999;
+           font-weight: 400;
        }
        
        .send-button {
            position: absolute;
-           right: 22px;
+           right: 8px;
            top: 50%;
            transform: translateY(-50%);
-           width: 36px;
-           height: 36px;
+           width: 44px;
+           height: 44px;
            border: none;
            border-radius: 50%;
-           background: #e8e8e8;
-           color: #606060;
+           background: #333333;
+           color: #ffffff;
            cursor: pointer;
            display: flex;
            align-items: center;
            justify-content: center;
-           transition: all 0.2s;
+           transition: all 0.2s ease;
+           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
        }
        
        .send-button:hover:not(:disabled) {
-           background: #d0d0d0;
+           background: #000000;
+           transform: translateY(-50%) scale(1.05);
+           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
        }
        
        .send-button:disabled {
-           background: #f5f5f5;
-           color: #c0c0c0;
+           background: #f0f0f0;
+           color: #cccccc;
            cursor: not-allowed;
+           box-shadow: none;
+           transform: translateY(-50%) scale(1);
        }
        
        .send-button svg {
-           width: 18px;
-           height: 18px;
+           width: 20px;
+           height: 20px;
            transform: rotate(-90deg);
        }
        
@@ -231,23 +338,55 @@
        let isLoading = false;
 
        function formatMessage(content) {
-           // Procesar formato específico para listas proyecto: empleados
-           content = content.replace(/^([^:]+):\s*(.+)$/gm, (match, project, employees) => {
-               // Solo aplicar formato si parece ser un proyecto con lista de empleados
-               if (employees && employees.includes(',')) {
-                   return `\n**${project}:** ${employees}\n`;
+           // Procesar en orden específico para evitar conflictos
+           let formatted = content
+               // Headers
+               .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+               .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+               .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+               
+               // Detectar y formatear proyectos con empleados
+               .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
+                   // Solo formatear si parece ser un proyecto con empleados
+                   if (employees && (employees.includes(',') || employees.includes(' '))) {
+                       const cleanProject = project.trim();
+                       const cleanEmployees = employees.trim().replace(/\.$/, '') + '.';
+                       return '<div class="project-item"><strong class="project-name">' + cleanProject + ':</strong> <span class="project-employees">' + cleanEmployees + '</span></div>';
+                   }
+                   return match;
+               })
+               
+               // Bloques de código
+               .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+               // Líneas horizontales
+               .replace(/^---$/gm, '<hr>')
+               // Negritas
+               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+               // Cursivas
+               .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+               // Código inline
+               .replace(/`(.*?)`/g, '<code>$1</code>')
+               // Enlaces
+               .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+               // Blockquotes
+               .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+               // Listas ordenadas
+               .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
+               // Listas no ordenadas
+               .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+               // Saltos de línea
+               .replace(/\n/g, '<br>');
+           
+           // Envolver listas consecutivas
+           formatted = formatted.replace(/(<li.*?>.*?<\/li><br>)+/g, (match) => {
+               const items = match.replace(/<br>/g, '');
+               if (items.includes('class="ordered"')) {
+                   return '<ol>' + items.replace(/class="ordered"/g, '') + '</ol>';
                }
-               return match;
+               return '<ul>' + items + '</ul>';
            });
            
-           // Procesar markdown estándar
-           return content
-               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-               .replace(/\n\n/g, '</p><p>')
-               .replace(/\n/g, '<br>')
-               .replace(/^/, '<p>')
-               .replace(/$/, '</p>')
-               .replace(/<p><\/p>/g, '');
+           return formatted;
        }
 
        async function sendMessage() {
@@ -288,19 +427,12 @@
                messagesDiv.appendChild(assistantDiv);
                
                const fullText = data.answer || 'No pude procesar la pregunta';
-               let currentIndex = 0;
                
-               function typeWriter() {
-                   if (currentIndex < fullText.length) {
-                       const speed = Math.random() * 20 + 10;
-                       assistantDiv.innerHTML = formatMessage(fullText.slice(0, currentIndex + 1));
-                       currentIndex++;
-                       messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                       setTimeout(typeWriter, speed);
-                   }
-               }
+               // Formatear el texto completo y mostrarlo directamente
+               const formattedHTML = formatMessage(fullText);
+               assistantDiv.innerHTML = formattedHTML;
                
-               typeWriter();
+               messagesDiv.scrollTop = messagesDiv.scrollHeight;
                
            } catch (error) {
                typingDiv.remove();
