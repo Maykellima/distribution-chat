@@ -363,38 +363,43 @@
        let isLoading = false;
 
        function formatMessage(content) {
-           // Procesar en orden específico para evitar conflictos
+           // Primero, procesar patrones específicos antes de otros elementos
            let formatted = content
-               // Headers
+               // Headers primero
                .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
                .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
                .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
                
-               // Detectar y formatear proyectos con empleados
-               // Patrón: Proyecto: lista de empleados seguida de punto y salto de línea
-               .replace(/^([A-Za-z\s&]+):\s*([^.\n]+)\.?$/gm, function(match, project, employees) {
-                   return '<div class="project-item"><strong class="project-name">' + project + ':</strong> <span class="project-employees">' + employees.trim() + '.</span></div>';
-               })
+               // Detectar proyectos con empleados ANTES de procesar negritas
+               // Patrón mejorado: captura nombre del proyecto seguido de : y empleados
+               .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
+                   // Limpiar y formatear
+                   const cleanProject = project.trim();
+                   const cleanEmployees = employees.trim().replace(/\.$/, '') + '.';
+                   return '<div class="project-item"><strong class="project-name">' + cleanProject + ':</strong> <span class="project-employees">' + cleanEmployees + '</span></div>';
+               });
                
-               // Listas ordenadas
-               .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
-               // Listas no ordenadas con viñetas
-               .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+           // Ahora procesar otros elementos markdown
+           formatted = formatted
                // Bloques de código
                .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
                // Líneas horizontales
                .replace(/^---$/gm, '<hr>')
                // Negritas
                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-               // Cursivas
-               .replace(/\*(.*?)\*/g, '<em>$1</em>')
+               // Cursivas (después de negritas para evitar conflictos)
+               .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
                // Código inline
                .replace(/`(.*?)`/g, '<code>$1</code>')
                // Enlaces
                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
                // Blockquotes
                .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-               // Saltos de línea
+               // Listas ordenadas
+               .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
+               // Listas no ordenadas
+               .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+               // Saltos de línea al final
                .replace(/\n/g, '<br>');
            
            // Envolver listas consecutivas
@@ -447,19 +452,12 @@
                messagesDiv.appendChild(assistantDiv);
                
                const fullText = data.answer || 'No pude procesar la pregunta';
-               let currentIndex = 0;
                
-               function typeWriter() {
-                   if (currentIndex < fullText.length) {
-                       const speed = Math.random() * 10 + 5;
-                       assistantDiv.innerHTML = formatMessage(fullText.slice(0, currentIndex + 1));
-                       currentIndex++;
-                       messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                       setTimeout(typeWriter, speed);
-                   }
-               }
+               // Formatear el texto completo una sola vez
+               const formattedHTML = formatMessage(fullText);
                
-               typeWriter();
+               // Mostrar directamente el contenido formateado
+               assistantDiv.innerHTML = formattedHTML;
                
            } catch (error) {
                typingDiv.remove();
