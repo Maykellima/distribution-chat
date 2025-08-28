@@ -427,12 +427,24 @@
                messagesDiv.appendChild(assistantDiv);
                
                const fullText = data.answer || 'No pude procesar la pregunta';
+               let currentIndex = 0;
                
-               // Formatear el texto completo y mostrarlo directamente
-               const formattedHTML = formatMessage(fullText);
-               assistantDiv.innerHTML = formattedHTML;
+               function typeWriter() {
+                   if (currentIndex < fullText.length) {
+                       // Mostrar texto hasta el índice actual
+                       const currentText = fullText.slice(0, currentIndex + 1);
+                       const formattedHTML = formatMessage(currentText);
+                       assistantDiv.innerHTML = formattedHTML;
+                       
+                       currentIndex++;
+                       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                       
+                       // Delay de 30ms para velocidad de ~35 caracteres por segundo
+                       setTimeout(typeWriter, 30);
+                   }
+               }
                
-               messagesDiv.scrollTop = messagesDiv.scrollHeight;
+               typeWriter();
                
            } catch (error) {
                typingDiv.remove();
