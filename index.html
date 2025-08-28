@@ -179,6 +179,50 @@
            border-bottom-color: #0366d6;
        }
        
+       /* Estilos para proyectos y empleados */
+       .assistant-message .project-item {
+           margin: 16px 0;
+           padding: 12px 16px;
+           background: #f8f9fa;
+           border-left: 4px solid #007bff;
+           border-radius: 0 6px 6px 0;
+           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+       }
+       
+       .assistant-message .project-name {
+           font-size: 16px;
+           font-weight: 700;
+           color: #000000;
+           display: block;
+           margin-bottom: 8px;
+           text-transform: uppercase;
+           letter-spacing: 0.5px;
+       }
+       
+       .assistant-message .project-employees {
+           font-size: 14px;
+           color: #404040;
+           line-height: 1.5;
+           display: block;
+       }
+       
+       /* Mejoras generales para listas */
+       .assistant-message ul {
+           margin: 16px 0;
+           padding-left: 24px;
+       }
+       
+       .assistant-message ul li {
+           margin: 8px 0;
+           padding: 4px 0;
+           line-height: 1.6;
+       }
+       
+       .assistant-message ul li::marker {
+           color: #007bff;
+           font-weight: 600;
+       }
+       
        .typing-indicator {
            margin-left: 60px;
            height: 20px;
@@ -326,6 +370,10 @@
                .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
                .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
                .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+               
+               // Formato especial para proyectos con empleados (patrón: **Proyecto:** empleados)
+               .replace(/\*\*(.*?):\*\* (.*?)(?=\*\*|$)/g, '<div class="project-item"><strong class="project-name">$1:</strong> <span class="project-employees">$2</span></div>')
+               
                // Listas ordenadas
                .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
                // Listas no ordenadas con viñetas
@@ -354,6 +402,16 @@
                    return '<ol>' + items.replace(/class="ordered"/g, '') + '</ol>';
                }
                return '<ul>' + items + '</ul>';
+           });
+           
+           // Procesar listas de proyectos especiales (formato: **Proyecto:** empleados)
+           formatted = formatted.replace(/<ul>(.*?)<\/ul>/g, (match, content) => {
+               // Si la lista contiene patrones de proyecto con empleados, aplicar formato especial
+               if (content.includes('**') && content.includes(':')) {
+                   return content.replace(/<li>\*\*(.*?):\*\* (.*?)<\/li>/g, 
+                       '<div class="project-item"><strong class="project-name">$1:</strong> <span class="project-employees">$2</span></div>');
+               }
+               return match;
            });
            
            return formatted;
