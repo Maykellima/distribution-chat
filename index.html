@@ -91,12 +91,17 @@
        }
        
        .assistant-message ul, .assistant-message ol {
-           margin: 8px 0;
-           padding-left: 20px;
+           margin: 12px 0;
+           padding-left: 24px;
        }
        
        .assistant-message li {
-           margin: 4px 0;
+           margin: 6px 0;
+           color: #404040;
+       }
+       
+       .assistant-message li::marker {
+           color: #404040;
        }
        
        .typing-indicator {
@@ -231,23 +236,35 @@
        let isLoading = false;
 
        function formatMessage(content) {
-           // Procesar formato específico para listas proyecto: empleados
+           // Primero procesamos las listas con bullets
+           content = content.replace(/^[•·]\s*(.+)$/gm, '<li>$1</li>');
+           
+           // Agrupamos los <li> consecutivos en <ul>
+           content = content.replace(/(<li>.*?<\/li>\n?)+/g, (match) => {
+               return '<ul>' + match + '</ul>';
+           });
+           
+           // Procesamos el formato para proyecto: empleados
            content = content.replace(/^([^:]+):\s*(.+)$/gm, (match, project, employees) => {
-               // Solo aplicar formato si parece ser un proyecto con lista de empleados
                if (employees && employees.includes(',')) {
                    return `\n**${project}:** ${employees}\n`;
                }
                return match;
            });
            
-           // Procesar markdown estándar
-           return content
-               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-               .replace(/\n\n/g, '</p><p>')
-               .replace(/\n/g, '<br>')
-               .replace(/^/, '<p>')
-               .replace(/$/, '</p>')
-               .replace(/<p><\/p>/g, '');
+           // Procesamos negritas **texto**
+           content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+           
+           // Convertimos saltos de línea en párrafos
+           const paragraphs = content.split('\n\n');
+           content = paragraphs.map(p => {
+               if (p.trim() && !p.includes('<ul>') && !p.includes('<li>')) {
+                   return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+               }
+               return p;
+           }).join('');
+           
+           return content;
        }
 
        async function sendMessage() {
