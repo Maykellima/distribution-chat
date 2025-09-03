@@ -328,143 +328,206 @@
    </div>
 
    <script>
-       const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
-       
-       const messagesDiv = document.getElementById('messages');
-       const input = document.getElementById('input');
-       const sendBtn = document.getElementById('sendBtn');
-       
-       let isLoading = false;
+    const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+    
+    const messagesDiv = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    let isLoading = false;
+    
+    // Sistema de memoria de conversación
+    class ConversationMemory {
+        constructor() {
+            this.context = null;
+            this.CONTEXT_DURATION = 10 * 60 * 1000;
+        }
+        
+        updateContext(query, answer) {
+            this.context = {
+                lastQuery: query,
+                lastAnswer: answer,
+                entities: this.extractEntities(query, answer),
+                timestamp: Date.now()
+            };
+        }
+        
+        extractEntities(query, answer) {
+            const combined = (query + ' ' + answer).toLowerCase();
+            return {
+                projects: this.extractProjects(combined),
+                people: this.extractPeople(answer)
+            };
+        }
+        
+        extractProjects(text) {
+            const projects = [];
+            const knownProjects = ['dataverse', 'delta', 'sid', 'hornblower', 'data'];
+            knownProjects.forEach(p => {
+                if (text.includes(p)) projects.push(p);
+            });
+            return projects;
+        }
+        
+        extractPeople(text) {
+            const people = [];
+            const namePattern = /[A-ZÁÉÍÓÚ][a-záéíóú]+ [A-ZÁÉÍÓÚ][a-záéíóú]+/g;
+            const matches = text.match(namePattern);
+            return matches || [];
+        }
+        
+        enhanceQuery(newQuery) {
+            if (!this.context || Date.now() - this.context.timestamp > this.CONTEXT_DURATION) {
+                return newQuery;
+            }
+            
+            const q = newQuery.toLowerCase();
+            
+            // Detectar referencias contextuales
+            if (q.includes('ellos') || q.includes('estos') || q.includes('esos')) {
+                if (this.context.entities.people.length > 0) {
+                    return newQuery + ` (contexto: hablábamos de ${this.context.entities.people.join(', ')})`;
+                }
+            }
+            
+            if (q.includes('ese proyecto') || q.includes('el proyecto') || q.includes('mismo')) {
+                if (this.context.entities.projects.length > 0) {
+                    return newQuery + ` (contexto: proyecto ${this.context.entities.projects[0]})`;
+                }
+            }
+            
+            // Si pregunta sobre seniority sin contexto
+            if ((q.includes('senior') || q.includes('junior') || q.includes('cuáles')) && 
+                !q.includes('empleado') && !q.includes('persona')) {
+                if (this.context.lastQuery.includes('empleado') || 
+                    this.context.lastQuery.includes('proyecto')) {
+                    return newQuery + ` (contexto anterior: ${this.context.lastQuery})`;
+                }
+            }
+            
+            return newQuery;
+        }
+    }
+    
+    const memory = new ConversationMemory();
 
-       function formatMessage(content) {
-           // Procesar en orden específico para evitar conflictos
-           let formatted = content
-               // Headers
-               .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-               .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-               .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-               
-               // Detectar y formatear proyectos con empleados
-               .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
-                   // Solo formatear si parece ser un proyecto con empleados
-                   if (employees && (employees.includes(',') || employees.includes(' '))) {
-                       const cleanProject = project.trim();
-                       const cleanEmployees = employees.trim().replace(/\.$/, '') + '.';
-                       return '<div class="project-item"><strong class="project-name">' + cleanProject + ':</strong> <span class="project-employees">' + cleanEmployees + '</span></div>';
-                   }
-                   return match;
-               })
-               
-               // Bloques de código
-               .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
-               // Líneas horizontales
-               .replace(/^---$/gm, '<hr>')
-               // Negritas
-               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-               // Cursivas
-               .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
-               // Código inline
-               .replace(/`(.*?)`/g, '<code>$1</code>')
-               // Enlaces
-               .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-               // Blockquotes
-               .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-               // Listas ordenadas
-               .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
-               // Listas no ordenadas
-               .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
-               // Saltos de línea
-               .replace(/\n/g, '<br>');
-           
-           // Envolver listas consecutivas
-           formatted = formatted.replace(/(<li.*?>.*?<\/li><br>)+/g, (match) => {
-               const items = match.replace(/<br>/g, '');
-               if (items.includes('class="ordered"')) {
-                   return '<ol>' + items.replace(/class="ordered"/g, '') + '</ol>';
-               }
-               return '<ul>' + items + '</ul>';
-           });
-           
-           return formatted;
-       }
+    function formatMessage(content) {
+        let formatted = content
+            .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+            .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
+                if (employees && (employees.includes(',') || employees.includes(' '))) {
+                    const cleanProject = project.trim();
+                    const cleanEmployees = employees.trim().replace(/\.$/, '') + '.';
+                    return '<div class="project-item"><strong class="project-name">' + cleanProject + ':</strong> <span class="project-employees">' + cleanEmployees + '</span></div>';
+                }
+                return match;
+            })
+            .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+            .replace(/^---$/gm, '<hr>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+            .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+            .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
+            .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+            .replace(/\n/g, '<br>');
+        
+        formatted = formatted.replace(/(<li.*?>.*?<\/li><br>)+/g, (match) => {
+            const items = match.replace(/<br>/g, '');
+            if (items.includes('class="ordered"')) {
+                return '<ol>' + items.replace(/class="ordered"/g, '') + '</ol>';
+            }
+            return '<ul>' + items + '</ul>';
+        });
+        
+        return formatted;
+    }
 
-       async function sendMessage() {
-           const question = input.value.trim();
-           if (!question || isLoading) return;
+    async function sendMessage() {
+        const originalQuestion = input.value.trim();
+        if (!originalQuestion || isLoading) return;
+        
+        // Aplicar contexto de memoria
+        const enhancedQuestion = memory.enhanceQuery(originalQuestion);
 
-           const userDiv = document.createElement('div');
-           userDiv.className = 'message user-message';
-           userDiv.textContent = question.toUpperCase();
-           messagesDiv.appendChild(userDiv);
-           
-           input.value = '';
-           isLoading = true;
-           sendBtn.disabled = true;
-           
-           const typingDiv = document.createElement('div');
-           typingDiv.className = 'typing-indicator';
-           typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
-           messagesDiv.appendChild(typingDiv);
-           messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        const userDiv = document.createElement('div');
+        userDiv.className = 'message user-message';
+        userDiv.textContent = originalQuestion.toUpperCase();
+        messagesDiv.appendChild(userDiv);
+        
+        input.value = '';
+        isLoading = true;
+        sendBtn.disabled = true;
+        
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-           try {
-               const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
-                   method: 'POST',
-                   headers: {
-                       'Content-Type': 'application/json',
-                       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                   },
-                   body: JSON.stringify({ question })
-               });
+        try {
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({ question: enhancedQuestion })
+            });
 
-               const data = await response.json();
-               
-               typingDiv.remove();
-               
-               const assistantDiv = document.createElement('div');
-               assistantDiv.className = 'message assistant-message';
-               messagesDiv.appendChild(assistantDiv);
-               
-               const fullText = data.answer || 'No pude procesar la pregunta';
-               let currentIndex = 0;
-               
-               function typeWriter() {
-                   if (currentIndex < fullText.length) {
-                       // Mostrar texto hasta el índice actual
-                       const currentText = fullText.slice(0, currentIndex + 1);
-                       const formattedHTML = formatMessage(currentText);
-                       assistantDiv.innerHTML = formattedHTML;
-                       
-                       currentIndex++;
-                       messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                       
-                       // Delay de 8ms para velocidad de ~120 caracteres por segundo
-                       setTimeout(typeWriter, 8);
-                   }
-               }
-               
-               typeWriter();
-               
-           } catch (error) {
-               typingDiv.remove();
-               const errorDiv = document.createElement('div');
-               errorDiv.className = 'message assistant-message';
-               errorDiv.textContent = 'Error al conectar con el servidor. Intenta de nuevo.';
-               messagesDiv.appendChild(errorDiv);
-           } finally {
-               isLoading = false;
-               sendBtn.disabled = false;
-               input.focus();
-           }
-       }
+            const data = await response.json();
+            
+            typingDiv.remove();
+            
+            const assistantDiv = document.createElement('div');
+            assistantDiv.className = 'message assistant-message';
+            messagesDiv.appendChild(assistantDiv);
+            
+            const fullText = data.answer || 'No pude procesar la pregunta';
+            
+            // Actualizar memoria con la respuesta
+            memory.updateContext(originalQuestion, fullText);
+            
+            let currentIndex = 0;
+            
+            function typeWriter() {
+                if (currentIndex < fullText.length) {
+                    const currentText = fullText.slice(0, currentIndex + 1);
+                    const formattedHTML = formatMessage(currentText);
+                    assistantDiv.innerHTML = formattedHTML;
+                    
+                    currentIndex++;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    
+                    setTimeout(typeWriter, 8);
+                }
+            }
+            
+            typeWriter();
+            
+        } catch (error) {
+            typingDiv.remove();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'message assistant-message';
+            errorDiv.textContent = 'Error al conectar con el servidor. Intenta de nuevo.';
+            messagesDiv.appendChild(errorDiv);
+        } finally {
+            isLoading = false;
+            sendBtn.disabled = false;
+            input.focus();
+        }
+    }
 
-       sendBtn.addEventListener('click', sendMessage);
-       input.addEventListener('keypress', (e) => {
-           if (e.key === 'Enter') sendMessage();
-       });
-       
-       input.focus();
-   </script>
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+    
+    input.focus();
+</script>
 </body>
 </html>
