@@ -158,78 +158,65 @@
             margin: 4px 0;
         }
         
-        /* Estilos simplificados para el bloque de proceso */
-        .process-details {
-            margin: 20px 0;
-            background: transparent;
-            border: none;
+        /* Estilo para la sección de resultado */
+        .result-section {
+            margin-bottom: 24px;
         }
         
-        .process-details summary {
-            cursor: pointer;
-            padding: 12px 0;
-            font-weight: 400;
-            font-size: 13px;
-            color: #666666;
-            user-select: none;
-            list-style: none;
+        .result-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        /* Estilos para el bloque de proceso */
+        .process-section {
+            margin-top: 20px;
+        }
+        
+        .process-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            transition: color 0.2s;
+            cursor: pointer;
+            user-select: none;
         }
         
-        .process-details summary:hover {
-            color: #333333;
+        .process-header:hover {
+            opacity: 0.7;
         }
         
-        .process-details summary::-webkit-details-marker {
-            display: none;
-        }
-        
-        .process-details summary::before {
-            content: '▶';
-            margin-right: 8px;
-            font-size: 0.7em;
-            color: #999999;
+        .process-arrow {
+            margin-left: 8px;
+            font-size: 12px;
             transition: transform 0.2s;
+            display: inline-block;
         }
         
-        .process-details[open] summary::before {
-            transform: rotate(90deg);
+        .process-arrow.expanded {
+            transform: rotate(180deg);
         }
         
-        .process-details .details-content {
-            padding: 16px 0 8px 20px;
+        .process-content {
+            display: none;
+            padding-top: 8px;
+            padding-left: 20px;
             font-size: 13px;
             color: #666666;
             line-height: 1.7;
         }
         
-        .process-details .details-content h3 {
+        .process-content.visible {
+            display: block;
+        }
+        
+        .process-content strong {
             color: #404040;
-            margin-bottom: 12px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        
-        .process-details .details-content strong {
-            color: #404040;
-        }
-        
-        /* Estilo para la sección de resultado */
-        .result-section {
-            margin-bottom: 20px;
-        }
-        
-        .result-section h3 {
-            color: #202020;
-            margin-bottom: 16px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .result-section > *:first-child {
-            margin-top: 0;
         }
         
         .typing-indicator {
@@ -453,20 +440,25 @@
         if (processMatch && resultMatch) {
             const processContent = processMatch[1].trim();
             const resultContent = resultMatch[1].trim();
+            const messageId = 'msg-' + Date.now();
             
-            formattedContent = `<div class="result-section">
-<h3>Resultado:</h3>
-${formatBasicContent(resultContent)}
+            formattedContent = `
+<div class="result-section">
+    <span class="result-label">Resultado:</span>
+    ${formatBasicContent(resultContent)}
 </div>
 
 <hr>
 
-<details class="process-details">
-<summary>Ver proceso detallado</summary>
-<div class="details-content">
-${formatBasicContent(processContent)}
-</div>
-</details>`;
+<div class="process-section">
+    <div class="process-header" onclick="toggleProcess('${messageId}')">
+        <span>Proceso</span>
+        <span class="process-arrow" id="arrow-${messageId}">↓</span>
+    </div>
+    <div class="process-content" id="process-${messageId}">
+        ${formatBasicContent(processContent)}
+    </div>
+</div>`;
         } else {
             formattedContent = formatBasicContent(content);
         }
@@ -514,6 +506,20 @@ ${formatBasicContent(processContent)}
         formatted = formatted.replace(/(<br>){2,}/g, '<br><br>');
         
         return formatted;
+    }
+    
+    // Función para toggle del proceso
+    window.toggleProcess = function(messageId) {
+        const processContent = document.getElementById('process-' + messageId);
+        const arrow = document.getElementById('arrow-' + messageId);
+        
+        if (processContent.classList.contains('visible')) {
+            processContent.classList.remove('visible');
+            arrow.classList.remove('expanded');
+        } else {
+            processContent.classList.add('visible');
+            arrow.classList.add('expanded');
+        }
     }
 
     async function sendMessage() {
