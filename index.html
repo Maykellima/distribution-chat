@@ -73,20 +73,41 @@
             max-width: 440px;
         }
         
-        .assistant-message h1, .assistant-message h2, .assistant-message h3 {
-            margin-top: 1.2em;
-            margin-bottom: 0.8em;
-            color: #202020;
+        .assistant-message h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 20px 0 12px 0;
+            color: #000000;
+            border-bottom: 2px solid #e5e5e5;
+            padding-bottom: 8px;
+        }
+        
+        .assistant-message h2 {
+            font-size: 16px;
             font-weight: 600;
+            margin: 18px 0 10px 0;
+            color: #202020;
+        }
+        
+        .assistant-message h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+            color: #202020;
         }
 
         .assistant-message p {
-            margin-bottom: 1em;
+            margin-bottom: 12px;
+            line-height: 1.6;
         }
         
         .assistant-message strong {
             font-weight: 600;
             color: #000000;
+        }
+        
+        .assistant-message em {
+            font-style: italic;
         }
         
         .assistant-message code {
@@ -103,70 +124,153 @@
             border: 1px solid #e1e4e8;
             border-radius: 6px;
             padding: 16px;
-            margin: 1em 0;
+            margin: 12px 0;
             overflow-x: auto;
+            line-height: 1.45;
+        }
+        
+        .assistant-message pre code {
+            background: none;
+            padding: 0;
+            color: #24292e;
+            font-size: 12px;
+        }
+        
+        .assistant-message blockquote {
+            margin: 12px 0;
+            padding: 0 16px;
+            border-left: 4px solid #dfe2e5;
+            color: #6a737d;
+        }
+        
+        .assistant-message hr {
+            margin: 16px 0;
+            border: 0;
+            border-top: 1px solid #e1e4e8;
         }
         
         .assistant-message ul, .assistant-message ol {
-            margin: 0.5em 0 1em 0;
+            margin: 8px 0;
             padding-left: 20px;
         }
         
-        /* Estilos para el bloque colapsable de proceso */
+        .assistant-message li {
+            margin: 4px 0;
+        }
+        
+        /* Estilos mejorados para el bloque colapsable de proceso */
         .process-details {
             margin: 20px 0;
             border: 1px solid #d0d7de;
             border-radius: 8px;
-            background: #f9f9f9;
+            background: linear-gradient(to bottom, #f6f8fa, #ffffff);
             overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
         .process-details summary {
             cursor: pointer;
             padding: 14px 20px;
             font-weight: 500;
+            font-size: 14px;
             color: #57606a;
-            background: #f1f3f5;
+            background: linear-gradient(to bottom, #f6f8fa, #f1f3f5);
             user-select: none;
             list-style: none;
             display: flex;
             align-items: center;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            border-bottom: 1px solid transparent;
         }
         
         .process-details summary:hover {
-            background: #e9ecef;
+            background: linear-gradient(to bottom, #eaeef2, #e1e4e8);
+            color: #24292f;
         }
         
-        .process-details summary::-webkit-details-marker { display: none; }
+        .process-details summary::-webkit-details-marker {
+            display: none;
+        }
         
         .process-details summary::before {
             content: '▶';
             margin-right: 10px;
             font-size: 0.75em;
+            color: #8b949e;
             transition: transform 0.2s;
         }
         
-        .process-details[open] > summary::before {
+        .process-details[open] summary::before {
             transform: rotate(90deg);
         }
         
-        .process-details[open] > summary {
+        .process-details[open] summary {
             border-bottom: 1px solid #d0d7de;
+            background: #f6f8fa;
         }
         
         .process-details .details-content {
-            padding: 10px 20px 20px 20px;
+            padding: 20px;
             font-size: 13px;
+            color: #424a53;
+            line-height: 1.7;
+            background: #ffffff;
         }
         
-        /* Estilo para la sección de resultado */
+        .process-details .details-content h3 {
+            color: #24292f;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .process-details .details-content strong {
+            color: #24292f;
+        }
+        
+        /* Estilo mejorado para la sección de resultado */
         .result-section {
-            padding-top: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
             border-top: 2px solid #d8dee4;
         }
         
-        .input-container { position: relative; }
+        .result-section h3 {
+            color: #0969da;
+            margin-bottom: 16px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .result-section > *:first-child {
+            margin-top: 0;
+        }
+        
+        .typing-indicator {
+            margin-left: 60px;
+            height: 20px;
+        }
+        
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #404040;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: typingPulse 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        .input-container {
+            position: relative;
+        }
         
         .input-field {
             width: 100%;
@@ -174,13 +278,21 @@
             border: 2px solid #e5e5e5;
             border-radius: 50px;
             font-size: 16px;
+            color: #333333;
+            background: #ffffff;
             outline: none;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         
         .input-field:focus {
             border-color: #666666;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+        
+        .input-field::placeholder {
+            color: #999999;
+            font-weight: 400;
         }
         
         .send-button {
@@ -199,21 +311,65 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
-        .send-button:hover:not(:disabled) { background: #000000; }
-        .send-button:disabled { background: #f0f0f0; cursor: not-allowed; }
-        .send-button svg { width: 20px; height: 20px; transform: rotate(-90deg); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .send-button:hover:not(:disabled) {
+            background: #000000;
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .send-button:disabled {
+            background: #f0f0f0;
+            color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: translateY(-50%) scale(1);
+        }
+        
+        .send-button svg {
+            width: 20px;
+            height: 20px;
+            transform: rotate(-90deg);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes typingPulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+            }
+            30% {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="messages" id="messages"></div>
         <div class="input-container">
-            <input type="text" class="input-field" id="input" placeholder="Pregunta lo que necesitas..." autocomplete="off"/>
+            <input 
+                type="text" 
+                class="input-field" 
+                id="input" 
+                placeholder="Pregunta lo que necesitas, encuentra lo que buscas."
+                autocomplete="off"
+            />
             <button class="send-button" id="sendBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12l14 0M12 5l7 7-7 7"/>
+                </svg>
             </button>
         </div>
     </div>
@@ -226,71 +382,171 @@
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('sendBtn');
     
-    // La clase ConversationMemory se mantiene igual, no es necesario cambiarla.
-    class ConversationMemory { /* ...código de la memoria... */ }
+    let isLoading = false;
+    
+    // Sistema de memoria de conversación
+    class ConversationMemory {
+        constructor() {
+            this.context = null;
+            this.CONTEXT_DURATION = 10 * 60 * 1000;
+        }
+        
+        updateContext(query, answer) {
+            this.context = {
+                lastQuery: query,
+                lastAnswer: answer,
+                entities: this.extractEntities(query, answer),
+                timestamp: Date.now()
+            };
+        }
+        
+        extractEntities(query, answer) {
+            const combined = (query + ' ' + answer).toLowerCase();
+            return {
+                projects: this.extractProjects(combined),
+                people: this.extractPeople(answer)
+            };
+        }
+        
+        extractProjects(text) {
+            const projects = [];
+            const knownProjects = ['dataverse', 'delta', 'sid', 'hornblower', 'data'];
+            knownProjects.forEach(p => {
+                if (text.includes(p)) projects.push(p);
+            });
+            return projects;
+        }
+        
+        extractPeople(text) {
+            const people = [];
+            const namePattern = /[A-ZÁÉÍÓÚ][a-záéíóú]+ [A-ZÁÉÍÓÚ][a-záéíóú]+/g;
+            const matches = text.match(namePattern);
+            return matches || [];
+        }
+        
+        enhanceQuery(newQuery) {
+            if (!this.context || Date.now() - this.context.timestamp > this.CONTEXT_DURATION) {
+                return newQuery;
+            }
+            
+            const q = newQuery.toLowerCase();
+            
+            if (q.includes('ellos') || q.includes('estos') || q.includes('esos')) {
+                if (this.context.entities.people.length > 0) {
+                    return newQuery + ` (contexto: hablábamos de ${this.context.entities.people.join(', ')})`;
+                }
+            }
+            
+            if (q.includes('ese proyecto') || q.includes('el proyecto') || q.includes('mismo')) {
+                if (this.context.entities.projects.length > 0) {
+                    return newQuery + ` (contexto: proyecto ${this.context.entities.projects[0]})`;
+                }
+            }
+            
+            if ((q.includes('senior') || q.includes('junior') || q.includes('cuáles')) && 
+                !q.includes('empleado') && !q.includes('persona')) {
+                if (this.context.lastQuery.includes('empleado') || 
+                    this.context.lastQuery.includes('proyecto')) {
+                    return newQuery + ` (contexto anterior: ${this.context.lastQuery})`;
+                }
+            }
+            
+            return newQuery;
+        }
+    }
+    
     const memory = new ConversationMemory();
 
     function formatMessage(content) {
-        if (typeof content !== 'string' || !content) return '';
-
         const processMatch = content.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/);
-        const resultMatch = content.match(/\[RESULTADO\]([\s\S]*?)(\[\/RESULTADO\]|$)/);
+        const resultMatch = content.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/);
+        
+        let formattedContent = '';
         
         if (processMatch && resultMatch) {
-            const resultContent = resultMatch[1].trim();
             const processContent = processMatch[1].trim();
+            const resultContent = resultMatch[1].trim();
+            
+            formattedContent = `<div class="result-section">
+<h3>✅ Resultado:</h3>
+${formatBasicContent(resultContent)}
+</div>
 
-            return `<div class="result-section">${formatBasicContent(resultContent)}</div>
-                    <details class="process-details">
-                        <summary>Ver proceso detallado</summary>
-                        <div class="details-content">${formatBasicContent(processContent)}</div>
-                    </details>`;
+<details class="process-details">
+<summary>📋 Ver proceso detallado de análisis</summary>
+<div class="details-content">
+<h3>🔍 Plan de acción ejecutado:</h3>
+${formatBasicContent(processContent)}
+</div>
+</details>`;
+        } else {
+            formattedContent = formatBasicContent(content);
         }
-        // Si no hay estructura, formatea el texto como un párrafo simple
-        return `<p>${formatBasicContent(content)}</p>`;
-    }
-
-    // VERSIÓN REVISADA Y MÁS ROBUSTA DE ESTA FUNCIÓN
-    function formatBasicContent(content) {
-        if (typeof content !== 'string' || !content) return '';
         
-        // Función simple para escapar HTML y evitar problemas de inyección
-        const escapeHTML = (str) => str.replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag]));
-
-        let html = escapeHTML(content);
-        
-        // Reglas de formato Markdown (aplicadas sobre texto seguro)
-        html = html
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`(.*?)`/g, '<code>$1</code>')
-            .replace(/^1\. (.*$)/gm, '<ol><li>$1</li></ol>') // Listas ordenadas simples
-            .replace(/^- (.*$)/gm, '<ul><li>$1</li></ul>')   // Listas con guion simples
-            .replace(/\n/g, '<br>');
-
-        // Compactar listas adyacentes
-        html = html.replace(/<\/ul><br><ul>/g, '').replace(/<\/ol><br><ol>/g, '');
-
-        return html;
+        return formattedContent;
     }
     
-    async function sendMessage() {
-        const question = input.value.trim();
-        if (!question) return;
+    function formatBasicContent(content) {
+        let formatted = content
+            // Listas numeradas mejoradas
+            .replace(/^(\d+)\.\s+(.+?)(?:\n(?!\d+\.)(.+?))?$/gm, function(match, num, firstLine, secondLine) {
+                if (secondLine && !secondLine.match(/^\d+\./)) {
+                    return `**${num}.** ${firstLine}\n   ${secondLine}`;
+                }
+                return `**${num}.** ${firstLine}`;
+            })
+            // Headers
+            .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+            // Código
+            .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+            // Separadores
+            .replace(/^---$/gm, '<hr>')
+            // Formato de texto
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            // Links
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+            // Quotes
+            .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+            // Listas con bullets
+            .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+            // Saltos de línea
+            .replace(/\n/g, '<br>');
+        
+        // Envolver items de lista en <ul>
+        formatted = formatted.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, (match) => {
+            const items = match.replace(/<br>/g, '');
+            return '<ul>' + items + '</ul>';
+        });
+        
+        // Limpiar <br> duplicados
+        formatted = formatted.replace(/(<br>){2,}/g, '<br><br>');
+        
+        return formatted;
+    }
 
-        // Muestra el mensaje del usuario
+    async function sendMessage() {
+        const originalQuestion = input.value.trim();
+        if (!originalQuestion || isLoading) return;
+        
+        const enhancedQuestion = memory.enhanceQuery(originalQuestion);
+
         const userDiv = document.createElement('div');
         userDiv.className = 'message user-message';
-        userDiv.textContent = question.toUpperCase();
+        userDiv.textContent = originalQuestion.toUpperCase();
         messagesDiv.appendChild(userDiv);
+        
         input.value = '';
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-        // Muestra un mensaje de carga
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'message assistant-message';
-        loadingDiv.innerHTML = 'Procesando...';
-        messagesDiv.appendChild(loadingDiv);
+        isLoading = true;
+        sendBtn.disabled = true;
+        
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+        messagesDiv.appendChild(typingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
         try {
@@ -300,32 +556,65 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                 },
-                body: JSON.stringify({ question: question }) // Usamos la pregunta directa por ahora
+                body: JSON.stringify({ question: enhancedQuestion })
             });
 
-            if (!response.ok) {
-                throw new Error('La respuesta del servidor no fue válida.');
-            }
-
             const data = await response.json();
-            const fullText = data.answer || 'No se recibió una respuesta.';
             
-            // Reemplaza el mensaje "Procesando..." con la respuesta real
-            loadingDiv.innerHTML = formatMessage(fullText);
-
+            typingDiv.remove();
+            
+            const assistantDiv = document.createElement('div');
+            assistantDiv.className = 'message assistant-message';
+            messagesDiv.appendChild(assistantDiv);
+            
+            const fullText = data.answer || 'No pude procesar la pregunta';
+            
+            memory.updateContext(originalQuestion, fullText);
+            
+            // Mostrar directamente si tiene estructura, o con animación si no
+            const hasStructure = fullText.includes('[PROCESO]') && fullText.includes('[RESULTADO]');
+            
+            if (hasStructure) {
+                assistantDiv.innerHTML = formatMessage(fullText);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } else {
+                let currentIndex = 0;
+                
+                function typeWriter() {
+                    if (currentIndex < fullText.length) {
+                        const currentText = fullText.slice(0, currentIndex + 1);
+                        const formattedHTML = formatMessage(currentText);
+                        assistantDiv.innerHTML = formattedHTML;
+                        
+                        currentIndex++;
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        
+                        setTimeout(typeWriter, 8);
+                    }
+                }
+                
+                typeWriter();
+            }
+            
         } catch (error) {
-            // Reemplaza "Procesando..." con un mensaje de error de conexión
-            loadingDiv.textContent = 'Error de conexión con el servidor. Intenta de nuevo.';
-            console.error(error);
+            typingDiv.remove();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'message assistant-message';
+            errorDiv.textContent = 'Error al conectar con el servidor. Intenta de nuevo.';
+            messagesDiv.appendChild(errorDiv);
         } finally {
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            isLoading = false;
+            sendBtn.disabled = false;
+            input.focus();
         }
     }
 
     sendBtn.addEventListener('click', sendMessage);
-    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
     
     input.focus();
-    </script>
+</script>
 </body>
 </html>
