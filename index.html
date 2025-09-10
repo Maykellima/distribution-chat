@@ -46,15 +46,14 @@
     .assistant-message pre code{ background:none; padding:0; color:#24292e; font-size:12px; }
     .assistant-message blockquote{ margin:12px 0; padding:0 16px; border-left:4px solid #dfe2e5; color:#6a737d; }
 
-    /* Separadores en 90% negro y 1px */
+    /* Separadores 1px #111 */
     .assistant-message hr{ margin:16px 0; border:0; border-top:1px solid #111; }
 
     /* Resultado SIN caja */
     .result-section{ margin-bottom:16px; }
     .result-label{
       font-size:14px; font-weight:600; color:#111; margin-bottom:8px; display:block; text-transform:uppercase;
-      border-bottom:none; /* sin línea bajo “Resultado” */
-      padding-bottom:0;
+      border-bottom:none; padding-bottom:0;
     }
 
     /* Proceso (collapsible Bootstrap) */
@@ -125,6 +124,13 @@
     let isLoading = false;
     const TYPE_DELAY_MS = 4; // rápido
 
+    /* ===== Auto-scroll siempre al final ===== */
+    const autoScroll = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
+    // Observa cambios en el contenedor y fuerza scroll al final
+    const observer = new MutationObserver(() => { autoScroll(); });
+    observer.observe(messagesDiv, { childList: true, subtree: true, characterData: true });
+    window.addEventListener('resize', autoScroll);
+
     /* ===== Memoria conversación ===== */
     class ConversationMemory{
       constructor(){ this.context=null; this.CONTEXT_DURATION=10*60*1000; }
@@ -183,7 +189,7 @@
       return formatted;
     }
 
-    /* ===== Composición estructurada con placeholder para typing ===== */
+    /* ===== Composición con placeholder para typing ===== */
     function composeStructuredHTML(result, process, messageId){
       let html = '';
       if(result){
@@ -233,6 +239,7 @@
         if(i <= fullText.length){
           node.innerHTML = formatBasicContent(fullText.slice(0, i));
           i++;
+          autoScroll(); // asegura scroll durante el typewriter
           setTimeout(step, TYPE_DELAY_MS);
         }
       })();
@@ -249,6 +256,7 @@
       userDiv.className='message user-message';
       userDiv.textContent=originalQuestion.toUpperCase();
       messagesDiv.appendChild(userDiv);
+      autoScroll();
 
       input.value=''; isLoading=true; sendBtn.disabled=true;
 
@@ -256,7 +264,7 @@
       typingDiv.className='typing-indicator';
       typingDiv.innerHTML='<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
       messagesDiv.appendChild(typingDiv);
-      messagesDiv.scrollTop=messagesDiv.scrollHeight;
+      autoScroll();
 
       try{
         const res=await fetch(`${SUPABASE_URL}/functions/v1/chat-query`,{
@@ -267,6 +275,7 @@
         const data=await res.json();
 
         typingDiv.remove();
+        autoScroll();
 
         const assistantDiv=document.createElement('div');
         assistantDiv.className='message assistant-message';
@@ -280,19 +289,14 @@
         if(hasAny){
           const messageId = 'msg-'+Date.now();
           assistantDiv.innerHTML = composeStructuredHTML(result, process, messageId);
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-          // Máquina de escribir SOLO sobre el contenido de Resultado
-          if(result){
-            typeWriterInto(`tw-${messageId}`, result);
-          }
+          autoScroll();
+          if(result){ typeWriterInto(`tw-${messageId}`, result); }
         } else {
-          // Respuesta sin estructura → typewriter del texto completo
           let i=0;
           (function typeWriter(){
             if(i<fullText.length){
               assistantDiv.innerHTML = formatBasicContent(fullText.slice(0,i+1));
-              i++; messagesDiv.scrollTop=messagesDiv.scrollHeight; setTimeout(typeWriter, TYPE_DELAY_MS);
+              i++; autoScroll(); setTimeout(typeWriter, TYPE_DELAY_MS);
             }
           })();
         }
@@ -302,6 +306,7 @@
         errDiv.className='message assistant-message';
         errDiv.textContent='Error al conectar con el servidor. Intenta de nuevo.';
         messagesDiv.appendChild(errDiv);
+        autoScroll();
       }finally{
         isLoading=false; sendBtn.disabled=false; input.focus();
       }
@@ -310,6 +315,7 @@
     sendBtn.addEventListener('click', sendMessage);
     input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
     input.focus();
+    autoScroll(); // al cargar
   </script>
 </body>
 </html>
