@@ -49,12 +49,8 @@
     /* Separadores 1px #111 */
     .assistant-message hr{ margin:16px 0; border:0; border-top:1px solid #111; }
 
-    /* Resultado SIN caja */
+    /* Resultado SIN caja ni título */
     .result-section{ margin-bottom:16px; }
-    .result-label{
-      font-size:14px; font-weight:600; color:#111; margin-bottom:8px; display:block; text-transform:uppercase;
-      border-bottom:none; padding-bottom:0;
-    }
 
     /* Proceso (collapsible Bootstrap) */
     .process-section{ margin-top:12px; }
@@ -123,16 +119,38 @@
 
     let isLoading = false;
 
-    /* ===== Typewriter config (≈30% más lento + natural) ===== */
-    const TYPE_BASE_MS   = 5;  // antes 4ms → ~30% más lento
-    const TYPE_JITTER_MS = 2;  // variación 0–2ms
-    const TYPE_PUNCT_MS  = { '.':140, '!':140, '?':140, ',':80, ';':80, ':':80, '\n':100, ')':10 };
+    /* ===== Typewriter por fragmentos ===== */
+    const CHUNK_MIN_WORDS = 3;
+    const CHUNK_MAX_WORDS = 5;
+    const CHUNK_DELAY_MS  = 120;
 
-    const delayFor = (ch) => {
-      let d = TYPE_BASE_MS + Math.random() * TYPE_JITTER_MS;
-      if (TYPE_PUNCT_MS[ch]) d += TYPE_PUNCT_MS[ch];
-      return d;
-    };
+    function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+    // Divide el texto en chunks de 3–5 palabras preservando espacios/nuevas líneas lo justo
+    function splitIntoWordChunks(text, minW = CHUNK_MIN_WORDS, maxW = CHUNK_MAX_WORDS){
+      const tokens = text.split(/(\s+)/); // conserva separadores
+      const chunks = [];
+      let current = '';
+      let wordCount = 0;
+      let target = randInt(minW, maxW);
+
+      for (let i = 0; i < tokens.length; i++){
+        const t = tokens[i];
+        if (t === '') continue;
+        current += t;
+        if (!/^\s+$/.test(t)) { // es palabra (no solo espacios)
+          wordCount++;
+        }
+        if (wordCount >= target){
+          chunks.push(current.trim());
+          current = '';
+          wordCount = 0;
+          target = randInt(minW, maxW);
+        }
+      }
+      if (current.trim().length) chunks.push(current.trim());
+      return chunks;
+    }
 
     /* ===== Auto-scroll ===== */
     const autoScroll = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
@@ -198,13 +216,12 @@
       return formatted;
     }
 
-    /* ===== Composición con placeholder para typing ===== */
+    /* ===== Composición con placeholder para typing (sin título Resultado) ===== */
     function composeStructuredHTML(result, process, messageId){
       let html = '';
       if(result){
         html += `
 <div class="result-section">
-  <span class="result-label">Resultado:</span>
   <div id="tw-${messageId}"></div>
 </div>`;
       }
@@ -239,18 +256,18 @@
       return html;
     }
 
-    /* ===== Typewriter natural ===== */
-    function typeWriterInto(elementId, fullText){
+    /* ===== Typewriter por CHUNKS ===== */
+    function chunkWriterInto(elementId, fullText){
       const node = document.getElementById(elementId);
       if(!node){ return; }
+      const chunks = splitIntoWordChunks(fullText);
       let i = 0;
       (function step(){
-        if(i <= fullText.length){
-          node.innerHTML = formatBasicContent(fullText.slice(0, i));
-          const prev = fullText[i - 1] || '';
+        if(i < chunks.length){
+          node.innerHTML = formatBasicContent(chunks.slice(0, i+1).join(' '));
           i++;
           autoScroll();
-          setTimeout(step, delayFor(prev));
+          setTimeout(step, CHUNK_DELAY_MS);
         }
       })();
     }
@@ -300,14 +317,15 @@
           const messageId = 'msg-'+Date.now();
           assistantDiv.innerHTML = composeStructuredHTML(result, process, messageId);
           autoScroll();
-          if(result){ typeWriterInto(`tw-${messageId}`, result); }
+          if(result){ chunkWriterInto(`tw-${messageId}`, result); }
         } else {
+          // Sin estructura → chunks sobre todo el texto
+          const chunks = splitIntoWordChunks(fullText);
           let i=0;
-          (function typeWriter(){
-            if(i<fullText.length){
-              assistantDiv.innerHTML = formatBasicContent(fullText.slice(0,i+1));
-              const prev = fullText[i] || '';
-              i++; autoScroll(); setTimeout(typeWriter, delayFor(prev));
+          (function typeChunks(){
+            if(i < chunks.length){
+              assistantDiv.innerHTML = formatBasicContent(chunks.slice(0,i+1).join(' '));
+              i++; autoScroll(); setTimeout(typeChunks, CHUNK_DELAY_MS);
             }
           })();
         }
