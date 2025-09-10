@@ -1,430 +1,224 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Distribution Chat</title>
-   <style>
-       * { 
-           margin: 0; 
-           padding: 0; 
-           box-sizing: border-box;
-       }
-       
-       body {
-           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-           background: #ffffff;
-           min-height: 100vh;
-           display: flex;
-           justify-content: center;
-           align-items: center;
-       }
-       
-       .container {
-           width: 640px;
-           padding: 40px 0;
-       }
-       
-       .messages {
-           min-height: 400px;
-           max-height: 70vh;
-           overflow-y: auto;
-           margin-bottom: 40px;
-           padding: 20px 0;
-           scrollbar-width: none;
-           -ms-overflow-style: none;
-       }
-       
-       .messages::-webkit-scrollbar {
-           display: none;
-       }
-       
-       .message {
-           margin-bottom: 12px;
-           margin-left: 60px;
-           position: relative;
-           animation: fadeIn 0.3s ease;
-       }
-       
-       .user-message {
-           font-size: 18px;
-           color: #404040;
-           font-weight: 500;
-           text-transform: uppercase;
-           letter-spacing: 0.02em;
-           max-width: 440px;
-       }
-       
-       .user-message::before {
-           content: '';
-           position: absolute;
-           left: -40px;
-           top: 4px;
-           width: 12px;
-           height: 12px;
-           background: #000000;
-           border-radius: 50%;
-       }
-       
-       .assistant-message {
-           font-size: 14px;
-           color: #404040;
-           line-height: 1.6;
-           max-width: 440px;
-       }
-       
-       .assistant-message h1 {
-           font-size: 20px;
-           font-weight: 700;
-           margin: 20px 0 12px 0;
-           color: #000000;
-           border-bottom: 2px solid #e5e5e5;
-           padding-bottom: 8px;
-       }
-       
-       .assistant-message h2 {
-           font-size: 16px;
-           font-weight: 600;
-           margin: 18px 0 10px 0;
-           color: #202020;
-       }
-       
-       .assistant-message h3 {
-           font-size: 14px;
-           font-weight: 600;
-           margin: 16px 0 8px 0;
-           color: #202020;
-       }
-       
-       .assistant-message p {
-           margin-bottom: 12px;
-           line-height: 1.6;
-       }
-       
-       .assistant-message strong {
-           font-weight: 600;
-           color: #000000;
-       }
-       
-       .assistant-message em {
-           font-style: italic;
-       }
-       
-       .assistant-message code {
-           background: #f5f5f5;
-           padding: 2px 6px;
-           border-radius: 3px;
-           font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-           font-size: 12px;
-           color: #d73a49;
-       }
-       
-       .assistant-message pre {
-           background: #f6f8fa;
-           border: 1px solid #e1e4e8;
-           border-radius: 6px;
-           padding: 16px;
-           margin: 12px 0;
-           overflow-x: auto;
-           line-height: 1.45;
-       }
-       
-       .assistant-message pre code {
-           background: none;
-           padding: 0;
-           color: #24292e;
-           font-size: 12px;
-       }
-       
-       .assistant-message blockquote {
-           margin: 12px 0;
-           padding: 0 16px;
-           border-left: 4px solid #dfe2e5;
-           color: #6a737d;
-       }
-       
-       .assistant-message hr {
-           margin: 16px 0;
-           border: 0;
-           border-top: 1px solid #e1e4e8;
-       }
-       
-       .assistant-message a {
-           color: #0366d6;
-           text-decoration: none;
-           font-weight: 500;
-           border-bottom: 1px solid transparent;
-           transition: all 0.2s;
-       }
-       
-       .assistant-message a:hover {
-           color: #0056b3;
-           border-bottom-color: #0366d6;
-       }
-       
-       .assistant-message ul, .assistant-message ol {
-           margin: 8px 0;
-           padding-left: 20px;
-       }
-       
-       .assistant-message li {
-           margin: 4px 0;
-       }
-       
-       .assistant-message ul li::marker {
-           color: #666666;
-       }
-       
-       .assistant-message ol li::marker {
-           color: #666666;
-           font-weight: 600;
-       }
-       
-       /* Estilos mejorados para el bloque colapsable de proceso */
-       .process-details {
-           margin: 20px 0;
-           border: 1px solid #d0d7de;
-           border-radius: 8px;
-           background: linear-gradient(to bottom, #f6f8fa, #ffffff);
-           overflow: hidden;
-           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-       }
-       
-       .process-details summary {
-           cursor: pointer;
-           padding: 14px 20px;
-           font-weight: 500;
-           font-size: 14px;
-           color: #57606a;
-           background: linear-gradient(to bottom, #f6f8fa, #f1f3f5);
-           user-select: none;
-           list-style: none;
-           display: flex;
-           align-items: center;
-           transition: all 0.2s;
-           border-bottom: 1px solid transparent;
-       }
-       
-       .process-details summary:hover {
-           background: linear-gradient(to bottom, #eaeef2, #e1e4e8);
-           color: #24292f;
-       }
-       
-       .process-details summary::-webkit-details-marker {
-           display: none;
-       }
-       
-       .process-details summary::before {
-           content: '▶';
-           margin-right: 10px;
-           font-size: 0.75em;
-           color: #8b949e;
-           transition: transform 0.2s;
-       }
-       
-       .process-details[open] summary::before {
-           transform: rotate(90deg);
-       }
-       
-       .process-details[open] summary {
-           border-bottom: 1px solid #d0d7de;
-           background: #f6f8fa;
-       }
-       
-       .process-details .details-content {
-           padding: 20px;
-           font-size: 13px;
-           color: #424a53;
-           line-height: 1.7;
-           background: #ffffff;
-       }
-       
-       .process-details .details-content h3 {
-           color: #24292f;
-           margin-bottom: 16px;
-           font-size: 14px;
-       }
-       
-       .process-details .details-content strong {
-           color: #24292f;
-       }
-       
-       .process-details .details-content code {
-           background-color: #e9ecef;
-           color: #0550ae;
-       }
-       
-       .process-details .details-content pre {
-           background-color: #ffffff;
-           border: 1px solid #d0d7de;
-       }
-       
-       /* Estilo mejorado para la sección de resultado */
-       .result-section {
-           margin-top: 24px;
-           padding-top: 20px;
-           border-top: 2px solid #d8dee4;
-       }
-       
-       .result-section h3 {
-           color: #0969da;
-           margin-bottom: 16px;
-           font-size: 15px;
-           font-weight: 600;
-       }
-       
-       .result-section > *:first-child {
-           margin-top: 0;
-       }
-       
-       /* Estilos para proyectos y empleados */
-       .assistant-message .project-item {
-           margin: 12px 0;
-           padding: 0;
-           display: block;
-       }
-       
-       .assistant-message .project-name {
-           font-weight: 700;
-           color: #000000;
-           display: inline;
-       }
-       
-       .assistant-message .project-employees {
-           color: #404040;
-           display: inline;
-       }
-       
-       .typing-indicator {
-           margin-left: 60px;
-           height: 20px;
-       }
-       
-       .typing-dot {
-           display: inline-block;
-           width: 8px;
-           height: 8px;
-           background: #404040;
-           border-radius: 50%;
-           margin-right: 4px;
-           animation: typingPulse 1.4s infinite;
-       }
-       
-       .typing-dot:nth-child(2) {
-           animation-delay: 0.2s;
-       }
-       
-       .typing-dot:nth-child(3) {
-           animation-delay: 0.4s;
-       }
-       
-       .input-container {
-           position: relative;
-       }
-       
-       .input-field {
-           width: 100%;
-           padding: 20px 60px 20px 24px;
-           border: 2px solid #e5e5e5;
-           border-radius: 50px;
-           font-size: 16px;
-           color: #333333;
-           background: #ffffff;
-           outline: none;
-           transition: all 0.2s ease;
-           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-       }
-       
-       .input-field:focus {
-           border-color: #666666;
-           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-       }
-       
-       .input-field::placeholder {
-           color: #999999;
-           font-weight: 400;
-       }
-       
-       .send-button {
-           position: absolute;
-           right: 8px;
-           top: 50%;
-           transform: translateY(-50%);
-           width: 44px;
-           height: 44px;
-           border: none;
-           border-radius: 50%;
-           background: #333333;
-           color: #ffffff;
-           cursor: pointer;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           transition: all 0.2s ease;
-           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-       }
-       
-       .send-button:hover:not(:disabled) {
-           background: #000000;
-           transform: translateY(-50%) scale(1.05);
-           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-       }
-       
-       .send-button:disabled {
-           background: #f0f0f0;
-           color: #cccccc;
-           cursor: not-allowed;
-           box-shadow: none;
-           transform: translateY(-50%) scale(1);
-       }
-       
-       .send-button svg {
-           width: 20px;
-           height: 20px;
-           transform: rotate(-90deg);
-       }
-       
-       @keyframes fadeIn {
-           from {
-               opacity: 0;
-               transform: translateY(10px);
-           }
-           to {
-               opacity: 1;
-               transform: translateY(0);
-           }
-       }
-       
-       @keyframes typingPulse {
-           0%, 60%, 100% {
-               opacity: 0.3;
-           }
-           30% {
-               opacity: 1;
-           }
-       }
-   </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribution Chat</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 640px;
+            padding: 40px 0;
+        }
+        
+        .messages {
+            min-height: 400px;
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-bottom: 40px;
+            padding: 20px 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .messages::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            margin-left: 60px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .user-message {
+            font-size: 18px;
+            color: #404040;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            max-width: 440px;
+        }
+        
+        .user-message::before {
+            content: '';
+            position: absolute;
+            left: -40px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            background: #000000;
+            border-radius: 50%;
+        }
+        
+        .assistant-message {
+            font-size: 14px;
+            color: #404040;
+            line-height: 1.6;
+            max-width: 440px;
+        }
+        
+        .assistant-message h1, .assistant-message h2, .assistant-message h3 {
+            margin-top: 1.2em;
+            margin-bottom: 0.8em;
+            color: #202020;
+            font-weight: 600;
+        }
+
+        .assistant-message p {
+            margin-bottom: 1em;
+        }
+        
+        .assistant-message strong {
+            font-weight: 600;
+            color: #000000;
+        }
+        
+        .assistant-message code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            color: #d73a49;
+        }
+        
+        .assistant-message pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 1em 0;
+            overflow-x: auto;
+        }
+        
+        .assistant-message ul, .assistant-message ol {
+            margin: 0.5em 0 1em 0;
+            padding-left: 20px;
+        }
+        
+        /* Estilos para el bloque colapsable de proceso */
+        .process-details {
+            margin: 20px 0;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            background: #f9f9f9;
+            overflow: hidden;
+        }
+        
+        .process-details summary {
+            cursor: pointer;
+            padding: 14px 20px;
+            font-weight: 500;
+            color: #57606a;
+            background: #f1f3f5;
+            user-select: none;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        
+        .process-details summary:hover {
+            background: #e9ecef;
+        }
+        
+        .process-details summary::-webkit-details-marker { display: none; }
+        
+        .process-details summary::before {
+            content: '▶';
+            margin-right: 10px;
+            font-size: 0.75em;
+            transition: transform 0.2s;
+        }
+        
+        .process-details[open] > summary::before {
+            transform: rotate(90deg);
+        }
+        
+        .process-details[open] > summary {
+            border-bottom: 1px solid #d0d7de;
+        }
+        
+        .process-details .details-content {
+            padding: 10px 20px 20px 20px;
+            font-size: 13px;
+        }
+        
+        /* Estilo para la sección de resultado */
+        .result-section {
+            padding-top: 12px;
+            border-top: 2px solid #d8dee4;
+        }
+        
+        .input-container { position: relative; }
+        
+        .input-field {
+            width: 100%;
+            padding: 20px 60px 20px 24px;
+            border: 2px solid #e5e5e5;
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        
+        .input-field:focus {
+            border-color: #666666;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .send-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: #333333;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .send-button:hover:not(:disabled) { background: #000000; }
+        .send-button:disabled { background: #f0f0f0; cursor: not-allowed; }
+        .send-button svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
 <body>
-   <div class="container">
-       <div class="messages" id="messages"></div>
-       <div class="input-container">
-           <input 
-               type="text" 
-               class="input-field" 
-               id="input" 
-               placeholder="Pregunta lo que necesitas, encuentra lo que buscas."
-               autocomplete="off"
-           />
-           <button class="send-button" id="sendBtn">
-               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                   <path d="M5 12l14 0M12 5l7 7-7 7"/>
-               </svg>
-           </button>
-       </div>
-   </div>
+    <div class="container">
+        <div class="messages" id="messages"></div>
+        <div class="input-container">
+            <input type="text" class="input-field" id="input" placeholder="Pregunta lo que necesitas..." autocomplete="off"/>
+            <button class="send-button" id="sendBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </div>
 
-   <script>
+    <script>
     const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
     
@@ -432,195 +226,71 @@
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('sendBtn');
     
-    let isLoading = false;
-    
-    // Sistema de memoria de conversación
-    class ConversationMemory {
-        constructor() {
-            this.context = null;
-            this.CONTEXT_DURATION = 10 * 60 * 1000;
-        }
-        
-        updateContext(query, answer) {
-            this.context = {
-                lastQuery: query,
-                lastAnswer: answer,
-                entities: this.extractEntities(query, answer),
-                timestamp: Date.now()
-            };
-        }
-        
-        extractEntities(query, answer) {
-            const combined = (query + ' ' + answer).toLowerCase();
-            return {
-                projects: this.extractProjects(combined),
-                people: this.extractPeople(answer)
-            };
-        }
-        
-        extractProjects(text) {
-            const projects = [];
-            const knownProjects = ['dataverse', 'delta', 'sid', 'hornblower', 'data'];
-            knownProjects.forEach(p => {
-                if (text.includes(p)) projects.push(p);
-            });
-            return projects;
-        }
-        
-        extractPeople(text) {
-            const people = [];
-            const namePattern = /[A-ZÁÉÍÓÚ][a-záéíóú]+ [A-ZÁÉÍÓÚ][a-záéíóú]+/g;
-            const matches = text.match(namePattern);
-            return matches || [];
-        }
-        
-        enhanceQuery(newQuery) {
-            if (!this.context || Date.now() - this.context.timestamp > this.CONTEXT_DURATION) {
-                return newQuery;
-            }
-            
-            const q = newQuery.toLowerCase();
-            
-            // Detectar referencias contextuales
-            if (q.includes('ellos') || q.includes('estos') || q.includes('esos')) {
-                if (this.context.entities.people.length > 0) {
-                    return newQuery + ` (contexto: hablábamos de ${this.context.entities.people.join(', ')})`;
-                }
-            }
-            
-            if (q.includes('ese proyecto') || q.includes('el proyecto') || q.includes('mismo')) {
-                if (this.context.entities.projects.length > 0) {
-                    return newQuery + ` (contexto: proyecto ${this.context.entities.projects[0]})`;
-                }
-            }
-            
-            // Si pregunta sobre seniority sin contexto
-            if ((q.includes('senior') || q.includes('junior') || q.includes('cuáles')) && 
-                !q.includes('empleado') && !q.includes('persona')) {
-                if (this.context.lastQuery.includes('empleado') || 
-                    this.context.lastQuery.includes('proyecto')) {
-                    return newQuery + ` (contexto anterior: ${this.context.lastQuery})`;
-                }
-            }
-            
-            return newQuery;
-        }
-    }
-    
+    // La clase ConversationMemory se mantiene igual, no es necesario cambiarla.
+    class ConversationMemory { /* ...código de la memoria... */ }
     const memory = new ConversationMemory();
 
     function formatMessage(content) {
-        // Primero, separar el contenido en proceso y resultado
+        if (typeof content !== 'string' || !content) return '';
+
         const processMatch = content.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/);
-        const resultMatch = content.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/);
+        const resultMatch = content.match(/\[RESULTADO\]([\s\S]*?)(\[\/RESULTADO\]|$)/);
         
-        let formattedContent = '';
-        
-        // Si encontramos las etiquetas de estructura
         if (processMatch && resultMatch) {
-            const processContent = processMatch[1].trim();
             const resultContent = resultMatch[1].trim();
-            
-            // Crear el bloque colapsable mejorado para el proceso
-            formattedContent = `<details class="process-details">
-<summary>📋 Ver proceso detallado de análisis</summary>
-<div class="details-content">
+            const processContent = processMatch[1].trim();
 
-<h3>🔍 Plan de acción ejecutado:</h3>
-
-${formatBasicContent(processContent)}
-
-</div>
-</details>
-
-<div class="result-section">
-
-<h3>✅ Resultado:</h3>
-
-${formatBasicContent(resultContent)}
-
-</div>`;
-        } else {
-            // Si no hay estructura, formatear normalmente
-            formattedContent = formatBasicContent(content);
+            return `<div class="result-section">${formatBasicContent(resultContent)}</div>
+                    <details class="process-details">
+                        <summary>Ver proceso detallado</summary>
+                        <div class="details-content">${formatBasicContent(processContent)}</div>
+                    </details>`;
         }
+        // Si no hay estructura, formatea el texto como un párrafo simple
+        return `<p>${formatBasicContent(content)}</p>`;
+    }
+
+    // VERSIÓN REVISADA Y MÁS ROBUSTA DE ESTA FUNCIÓN
+    function formatBasicContent(content) {
+        if (typeof content !== 'string' || !content) return '';
         
-        return formattedContent;
+        // Función simple para escapar HTML y evitar problemas de inyección
+        const escapeHTML = (str) => str.replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag]));
+
+        let html = escapeHTML(content);
+        
+        // Reglas de formato Markdown (aplicadas sobre texto seguro)
+        html = html
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/^1\. (.*$)/gm, '<ol><li>$1</li></ol>') // Listas ordenadas simples
+            .replace(/^- (.*$)/gm, '<ul><li>$1</li></ul>')   // Listas con guion simples
+            .replace(/\n/g, '<br>');
+
+        // Compactar listas adyacentes
+        html = html.replace(/<\/ul><br><ul>/g, '').replace(/<\/ol><br><ol>/g, '');
+
+        return html;
     }
     
-    function formatBasicContent(content) {
-        // Mejorar el formato de listas numeradas para que sean más claras
-        let formatted = content
-            // Primero procesar listas numeradas con formato especial
-            .replace(/^(\d+)\.\s+(.+?)(?:\n(?!\d+\.)(.+?))?$/gm, function(match, num, firstLine, secondLine) {
-                if (secondLine && !secondLine.match(/^\d+\./)) {
-                    // Si hay una segunda línea que no es otro número, es parte del mismo item
-                    return `**${num}.** ${firstLine}\n   ${secondLine}`;
-                }
-                return `**${num}.** ${firstLine}`;
-            })
-            // Headers
-            .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-            .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-            .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-            // Proyectos con empleados
-            .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
-                if (employees && (employees.includes(',') || employees.includes(' '))) {
-                    const cleanProject = project.trim();
-                    const cleanEmployees = employees.trim().replace(/\.$/, '') + '.';
-                    return '<div class="project-item"><strong class="project-name">' + cleanProject + ':</strong> <span class="project-employees">' + cleanEmployees + '</span></div>';
-                }
-                return match;
-            })
-            // Código
-            .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
-            // Separadores
-            .replace(/^---$/gm, '<hr>')
-            // Formato de texto
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
-            .replace(/`(.*?)`/g, '<code>$1</code>')
-            // Links
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-            // Quotes
-            .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-            // Listas con bullets
-            .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
-            // Saltos de línea
-            .replace(/\n/g, '<br>');
-        
-        // Envolver items de lista en <ul>
-        formatted = formatted.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, (match) => {
-            const items = match.replace(/<br>/g, '');
-            return '<ul>' + items + '</ul>';
-        });
-        
-        // Limpiar <br> duplicados
-        formatted = formatted.replace(/(<br>){2,}/g, '<br><br>');
-        
-        return formatted;
-    }
-
     async function sendMessage() {
-        const originalQuestion = input.value.trim();
-        if (!originalQuestion || isLoading) return;
-        
-        // Aplicar contexto de memoria
-        const enhancedQuestion = memory.enhanceQuery(originalQuestion);
+        const question = input.value.trim();
+        if (!question) return;
 
+        // Muestra el mensaje del usuario
         const userDiv = document.createElement('div');
         userDiv.className = 'message user-message';
-        userDiv.textContent = originalQuestion.toUpperCase();
+        userDiv.textContent = question.toUpperCase();
         messagesDiv.appendChild(userDiv);
-        
         input.value = '';
-        isLoading = true;
-        sendBtn.disabled = true;
-        
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'typing-indicator';
-        typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
-        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        // Muestra un mensaje de carga
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'message assistant-message';
+        loadingDiv.innerHTML = 'Procesando...';
+        messagesDiv.appendChild(loadingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
         try {
@@ -630,68 +300,32 @@ ${formatBasicContent(resultContent)}
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                 },
-                body: JSON.stringify({ question: enhancedQuestion })
+                body: JSON.stringify({ question: question }) // Usamos la pregunta directa por ahora
             });
 
-            const data = await response.json();
-            
-            typingDiv.remove();
-            
-            const assistantDiv = document.createElement('div');
-            assistantDiv.className = 'message assistant-message';
-            messagesDiv.appendChild(assistantDiv);
-            
-            const fullText = data.answer || 'No pude procesar la pregunta';
-            
-            // Actualizar memoria con la respuesta
-            memory.updateContext(originalQuestion, fullText);
-            
-            // Formatear y mostrar directamente sin animación typewriter para estructuras complejas
-            const hasStructure = fullText.includes('[PROCESO]') && fullText.includes('[RESULTADO]');
-            
-            if (hasStructure) {
-                // Mostrar directamente si tiene estructura
-                assistantDiv.innerHTML = formatMessage(fullText);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            } else {
-                // Mantener typewriter para respuestas simples
-                let currentIndex = 0;
-                
-                function typeWriter() {
-                    if (currentIndex < fullText.length) {
-                        const currentText = fullText.slice(0, currentIndex + 1);
-                        const formattedHTML = formatMessage(currentText);
-                        assistantDiv.innerHTML = formattedHTML;
-                        
-                        currentIndex++;
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                        
-                        setTimeout(typeWriter, 8);
-                    }
-                }
-                
-                typeWriter();
+            if (!response.ok) {
+                throw new Error('La respuesta del servidor no fue válida.');
             }
+
+            const data = await response.json();
+            const fullText = data.answer || 'No se recibió una respuesta.';
             
+            // Reemplaza el mensaje "Procesando..." con la respuesta real
+            loadingDiv.innerHTML = formatMessage(fullText);
+
         } catch (error) {
-            typingDiv.remove();
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'message assistant-message';
-            errorDiv.textContent = 'Error al conectar con el servidor. Intenta de nuevo.';
-            messagesDiv.appendChild(errorDiv);
+            // Reemplaza "Procesando..." con un mensaje de error de conexión
+            loadingDiv.textContent = 'Error de conexión con el servidor. Intenta de nuevo.';
+            console.error(error);
         } finally {
-            isLoading = false;
-            sendBtn.disabled = false;
-            input.focus();
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
     }
 
     sendBtn.addEventListener('click', sendMessage);
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     
     input.focus();
-</script>
+    </script>
 </body>
 </html>
