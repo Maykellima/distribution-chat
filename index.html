@@ -182,29 +182,31 @@
        
        /* Estilos mejorados para el bloque colapsable de proceso */
        .process-details {
-           margin: 16px 0;
+           margin: 20px 0;
            border: 1px solid #d0d7de;
            border-radius: 8px;
-           background-color: #f6f8fa;
+           background: linear-gradient(to bottom, #f6f8fa, #ffffff);
            overflow: hidden;
+           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
        }
        
        .process-details summary {
            cursor: pointer;
-           padding: 12px 16px;
+           padding: 14px 20px;
            font-weight: 500;
-           font-size: 13px;
+           font-size: 14px;
            color: #57606a;
-           background-color: #f6f8fa;
+           background: linear-gradient(to bottom, #f6f8fa, #f1f3f5);
            user-select: none;
            list-style: none;
            display: flex;
            align-items: center;
            transition: all 0.2s;
+           border-bottom: 1px solid transparent;
        }
        
        .process-details summary:hover {
-           background-color: #eaeef2;
+           background: linear-gradient(to bottom, #eaeef2, #e1e4e8);
            color: #24292f;
        }
        
@@ -214,7 +216,7 @@
        
        .process-details summary::before {
            content: '▶';
-           margin-right: 8px;
+           margin-right: 10px;
            font-size: 0.75em;
            color: #8b949e;
            transition: transform 0.2s;
@@ -226,13 +228,25 @@
        
        .process-details[open] summary {
            border-bottom: 1px solid #d0d7de;
+           background: #f6f8fa;
        }
        
        .process-details .details-content {
-           padding: 16px;
+           padding: 20px;
            font-size: 13px;
-           color: #57606a;
-           line-height: 1.6;
+           color: #424a53;
+           line-height: 1.7;
+           background: #ffffff;
+       }
+       
+       .process-details .details-content h3 {
+           color: #24292f;
+           margin-bottom: 16px;
+           font-size: 14px;
+       }
+       
+       .process-details .details-content strong {
+           color: #24292f;
        }
        
        .process-details .details-content code {
@@ -245,11 +259,18 @@
            border: 1px solid #d0d7de;
        }
        
-       /* Estilo para la sección de resultado */
+       /* Estilo mejorado para la sección de resultado */
        .result-section {
-           margin-top: 20px;
-           padding-top: 16px;
-           border-top: 2px solid #e1e4e8;
+           margin-top: 24px;
+           padding-top: 20px;
+           border-top: 2px solid #d8dee4;
+       }
+       
+       .result-section h3 {
+           color: #0969da;
+           margin-bottom: 16px;
+           font-size: 15px;
+           font-weight: 600;
        }
        
        .result-section > *:first-child {
@@ -500,12 +521,25 @@
             const processContent = processMatch[1].trim();
             const resultContent = resultMatch[1].trim();
             
-            // Crear el bloque colapsable para el proceso
+            // Crear el bloque colapsable mejorado para el proceso
             formattedContent = `<details class="process-details">
-                <summary>📋 Ver plan de acción</summary>
-                <div class="details-content">${formatBasicContent(processContent)}</div>
-            </details>
-            <div class="result-section">${formatBasicContent(resultContent)}</div>`;
+<summary>📋 Ver proceso detallado de análisis</summary>
+<div class="details-content">
+
+<h3>🔍 Plan de acción ejecutado:</h3>
+
+${formatBasicContent(processContent)}
+
+</div>
+</details>
+
+<div class="result-section">
+
+<h3>✅ Resultado:</h3>
+
+${formatBasicContent(resultContent)}
+
+</div>`;
         } else {
             // Si no hay estructura, formatear normalmente
             formattedContent = formatBasicContent(content);
@@ -515,10 +549,21 @@
     }
     
     function formatBasicContent(content) {
+        // Mejorar el formato de listas numeradas para que sean más claras
         let formatted = content
+            // Primero procesar listas numeradas con formato especial
+            .replace(/^(\d+)\.\s+(.+?)(?:\n(?!\d+\.)(.+?))?$/gm, function(match, num, firstLine, secondLine) {
+                if (secondLine && !secondLine.match(/^\d+\./)) {
+                    // Si hay una segunda línea que no es otro número, es parte del mismo item
+                    return `**${num}.** ${firstLine}\n   ${secondLine}`;
+                }
+                return `**${num}.** ${firstLine}`;
+            })
+            // Headers
             .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
             .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
             .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+            // Proyectos con empleados
             .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
                 if (employees && (employees.includes(',') || employees.includes(' '))) {
                     const cleanProject = project.trim();
@@ -527,24 +572,31 @@
                 }
                 return match;
             })
+            // Código
             .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+            // Separadores
             .replace(/^---$/gm, '<hr>')
+            // Formato de texto
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
             .replace(/`(.*?)`/g, '<code>$1</code>')
+            // Links
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+            // Quotes
             .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-            .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
+            // Listas con bullets
             .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+            // Saltos de línea
             .replace(/\n/g, '<br>');
         
-        formatted = formatted.replace(/(<li.*?>.*?<\/li><br>)+/g, (match) => {
+        // Envolver items de lista en <ul>
+        formatted = formatted.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, (match) => {
             const items = match.replace(/<br>/g, '');
-            if (items.includes('class="ordered"')) {
-                return '<ol>' + items.replace(/class="ordered"/g, '') + '</ol>';
-            }
             return '<ul>' + items + '</ul>';
         });
+        
+        // Limpiar <br> duplicados
+        formatted = formatted.replace(/(<br>){2,}/g, '<br><br>');
         
         return formatted;
     }
