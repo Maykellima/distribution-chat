@@ -146,7 +146,7 @@
         .assistant-message hr {
             margin: 16px 0;
             border: 0;
-            border-top: 1px solid #e1e4e8;
+            border-top: 1.5px solid rgba(0, 0, 0, 0.8);
         }
         
         .assistant-message ul, .assistant-message ol {
@@ -158,34 +158,28 @@
             margin: 4px 0;
         }
         
-        /* Estilos mejorados para el bloque colapsable de proceso */
+        /* Estilos simplificados para el bloque de proceso */
         .process-details {
             margin: 20px 0;
-            border: 1px solid #d0d7de;
-            border-radius: 8px;
-            background: linear-gradient(to bottom, #f6f8fa, #ffffff);
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background: transparent;
+            border: none;
         }
         
         .process-details summary {
             cursor: pointer;
-            padding: 14px 20px;
-            font-weight: 500;
-            font-size: 14px;
-            color: #57606a;
-            background: linear-gradient(to bottom, #f6f8fa, #f1f3f5);
+            padding: 12px 0;
+            font-weight: 400;
+            font-size: 13px;
+            color: #666666;
             user-select: none;
             list-style: none;
             display: flex;
             align-items: center;
-            transition: all 0.2s;
-            border-bottom: 1px solid transparent;
+            transition: color 0.2s;
         }
         
         .process-details summary:hover {
-            background: linear-gradient(to bottom, #eaeef2, #e1e4e8);
-            color: #24292f;
+            color: #333333;
         }
         
         .process-details summary::-webkit-details-marker {
@@ -194,9 +188,9 @@
         
         .process-details summary::before {
             content: '▶';
-            margin-right: 10px;
-            font-size: 0.75em;
-            color: #8b949e;
+            margin-right: 8px;
+            font-size: 0.7em;
+            color: #999999;
             transition: transform 0.2s;
         }
         
@@ -204,40 +198,33 @@
             transform: rotate(90deg);
         }
         
-        .process-details[open] summary {
-            border-bottom: 1px solid #d0d7de;
-            background: #f6f8fa;
-        }
-        
         .process-details .details-content {
-            padding: 20px;
+            padding: 16px 0 8px 20px;
             font-size: 13px;
-            color: #424a53;
+            color: #666666;
             line-height: 1.7;
-            background: #ffffff;
         }
         
         .process-details .details-content h3 {
-            color: #24292f;
-            margin-bottom: 16px;
-            font-size: 14px;
+            color: #404040;
+            margin-bottom: 12px;
+            font-size: 13px;
+            font-weight: 500;
         }
         
         .process-details .details-content strong {
-            color: #24292f;
+            color: #404040;
         }
         
-        /* Estilo mejorado para la sección de resultado */
+        /* Estilo para la sección de resultado */
         .result-section {
-            margin-top: 24px;
-            padding-top: 20px;
-            border-top: 2px solid #d8dee4;
+            margin-bottom: 20px;
         }
         
         .result-section h3 {
-            color: #0969da;
+            color: #202020;
             margin-bottom: 16px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
         }
         
@@ -468,14 +455,15 @@
             const resultContent = resultMatch[1].trim();
             
             formattedContent = `<div class="result-section">
-<h3>✅ Resultado:</h3>
+<h3>Resultado:</h3>
 ${formatBasicContent(resultContent)}
 </div>
 
+<hr>
+
 <details class="process-details">
-<summary>📋 Ver proceso detallado de análisis</summary>
+<summary>Ver proceso detallado</summary>
 <div class="details-content">
-<h3>🔍 Plan de acción ejecutado:</h3>
 ${formatBasicContent(processContent)}
 </div>
 </details>`;
