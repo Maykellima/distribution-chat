@@ -10,7 +10,6 @@
     :root{
       --black-90: rgba(0,0,0,.9);
       --black-80: rgba(0,0,0,.8);
-      --black-70: rgba(0,0,0,.7);
       --border: rgba(0,0,0,.2);
       --bg: #ffffff;
     }
@@ -35,19 +34,9 @@
       content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%;
     }
     .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px}
-    .assistant-message h1{font-size:20px;font-weight:700;margin:20px 0 12px;color:#000;border-bottom:2px solid #e5e5e5;padding-bottom:8px}
-    .assistant-message h2{font-size:16px;font-weight:600;margin:18px 0 10px;color:#111}
-    .assistant-message h3{font-size:14px;font-weight:600;margin:16px 0 8px;color:#111}
-    .assistant-message p{margin-bottom:12px;line-height:1.65}
     .assistant-message strong{font-weight:700;color:#000}
-    .assistant-message em{font-style:italic}
-    .assistant-message code{background:#f6f6f6;padding:2px 6px;border-radius:3px;font-family:'SF Mono',Monaco,'Courier New',monospace;font-size:12px;color:#333}
-    .assistant-message pre{background:#f6f8fa;border:1px solid #e1e4e8;border-radius:6px;padding:16px;margin:12px 0;overflow-x:auto;line-height:1.45}
-    .assistant-message pre code{background:none;padding:0;color:#24292e;font-size:12px}
-    .assistant-message blockquote{margin:12px 0;padding:0 16px;border-left:4px solid #dfe2e5;color:#6a737d}
-    .assistant-message ul,.assistant-message ol{margin:8px 0;padding-left:20px}
+    .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
     .assistant-message li{margin:4px 0}
-
     .proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
 
     .process-section{margin-top:10px}
@@ -55,7 +44,7 @@
       font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer
     }
     .process-arrow{font-size:13px;display:inline-block;min-width:14px}
-    .process-content{display:none;padding-top:8px;padding-left:0;font-size:13px;color:#444;line-height:1.7}
+    .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
     .process-content.visible{display:block}
 
     .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
@@ -101,47 +90,30 @@ const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
 let isLoading = false;
 
-/* ===== Memoria breve de conversación ===== */
+/* ===== Memoria breve ===== */
 class ConversationMemory{
   constructor(){this.context=null;this.DUR=10*60*1000}
-  update(q,a){
-    this.context={lastQuery:q,lastAnswer:a,entities:this.extract(q,a),ts:Date.now()}
-  }
-  extract(q,a){
-    const c=(q+' '+a).toLowerCase()
-    return {
-      projects:this.extractProjects(c),
-      people:this.extractPeople(a)
-    }
-  }
-  extractProjects(txt){
-    const known=['dataverse','delta','sid','hornblower','data','al findr','solutran','control plane','infrastructure team','zeta'];
-    return known.filter(p=>txt.includes(p))
-  }
-  extractPeople(text){
-    const re=/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ [A-ZÁÉÍÓÚÑ][a-záéíóúñ]+/g;
-    return text.match(re) || []
-  }
+  update(q,a){this.context={lastQuery:q,lastAnswer:a,entities:this.extract(q,a),ts:Date.now()}}
+  extract(q,a){const c=(q+' '+a).toLowerCase();return {projects:this.extractProjects(c),people:this.extractPeople(a)}}
+  extractProjects(txt){const known=['dataverse','delta','sid','hornblower','data','al findr','solutran','control plane','infrastructure team','zeta'];return known.filter(p=>txt.includes(p))}
+  extractPeople(t){const re=/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+/g;return t.match(re)||[]}
   enhance(q){
     if(!this.context || Date.now()-this.context.ts>this.DUR) return q
     const lq=q.toLowerCase()
-    if((lq.includes('ellos')||lq.includes('estos')) && this.context.entities.people.length)
-      return q+` (contexto: ${this.context.entities.people.join(', ')})`
-    if((lq.includes('ese proyecto')||lq.includes('el proyecto')) && this.context.entities.projects.length)
-      return q+` (contexto: proyecto ${this.context.entities.projects[0]})`
+    if((lq.includes('ellos')||lq.includes('estos')) && this.context.entities.people.length) return q+` (contexto: ${this.context.entities.people.join(', ')})`
+    if((lq.includes('ese proyecto')||lq.includes('el proyecto')) && this.context.entities.projects.length) return q+` (contexto: proyecto ${this.context.entities.projects[0]})`
     return q
   }
 }
 const memory=new ConversationMemory();
 
-/* ===== Formateo básico Markdown → HTML ===== */
+/* ===== Markdown básico → HTML ===== */
 function formatBasicContent(content){
   let f = content
     .replace(/^### (.*?)$/gm,'<h3>$1</h3>')
     .replace(/^## (.*?)$/gm,'<h2>$1</h2>')
     .replace(/^# (.*?)$/gm,'<h1>$1</h1>')
     .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code class="language-$1">$2</code></pre>')
-    .replace(/^---$/gm,'<hr>')
     .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
     .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>')
     .replace(/`(.*?)`/g,'<code>$1</code>')
@@ -149,13 +121,80 @@ function formatBasicContent(content){
     .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
     .replace(/^[\*\-\+] (.+)$/gm,'<li>$1</li>')
     .replace(/\n/g,'<br>');
-
   f = f.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, m => '<ul>' + m.replace(/<br>/g,'') + '</ul>');
   f = f.replace(/(<br>){2,}/g,'<br><br>');
   return f;
 }
 
-/* ===== Construcción del bloque Res/Proceso ===== */
+/* ===== Post-formateo rico para [RESULTADO] ===== */
+function formatResultRich(text){
+  const original = text.trim();
+
+  // 1) separar Nota:
+  let note = '';
+  let body = original;
+  const noteMatch = body.match(/\bNota:\s*([\s\S]*)$/i);
+  if (noteMatch){
+    note = noteMatch[1].trim();
+    body = body.slice(0, noteMatch.index).trim();
+  }
+
+  // 2) intentar detectar listado "1. ... 2. ...".
+  const itemRe = /(\d+)\.\s+([\s\S]+?)(?=(?:\s+\d+\.\s+)|$)/g;
+  const items = [];
+  let m;
+  while ((m = itemRe.exec(body)) !== null){
+    items.push(m[2].trim());
+  }
+
+  // Intro (si existe antes de "1.")
+  let intro = body;
+  if (items.length){
+    const firstIdx = body.search(/\d+\.\s+/);
+    intro = firstIdx > 0 ? body.slice(0, firstIdx).trim().replace(/[;:,–—-]\s*$/,'') : '';
+  }
+
+  // 3) enriquecer cada ítem: nombre, proyecto y departamento en negrita
+  const enhanceItem = (s) => {
+    let t = s;
+
+    // Nombre al inicio (hasta ' (' o ' – ' o ' - ')
+    t = t.replace(
+      /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)(?=\s*(?:\(|–|—|-|$))/,
+      '<strong>$1</strong>'
+    );
+
+    // Proyecto / Departamento → negrita etiqueta y valor
+    t = t.replace(/(Proyecto|Project):\s*([^–—\-\n]+)/gi, '<strong>$1:</strong> <strong>$2</strong>');
+    t = t.replace(/(Departamento|Department):\s*([^–—\-\n]+)/gi, '<strong>$1:</strong> <strong>$2</strong>');
+
+    // limpiar dobles espacios
+    t = t.replace(/\s{2,}/g,' ').trim();
+    return t;
+  };
+
+  // 4) construir HTML
+  let html = '';
+  if (intro) html += `<p>${formatBasicContent(intro)}</p>`;
+  if (items.length){
+    html += '<ol>';
+    for (const it of items){
+      html += `<li>${formatBasicContent(enhanceItem(it))}</li>`;
+    }
+    html += '</ol>';
+  }else{
+    // si no hay numeración, al menos formatear básico
+    html += formatBasicContent(body);
+  }
+
+  if (note){
+    html += `<br><strong>Nota:</strong> ${formatBasicContent(note)}`;
+  }
+
+  return html;
+}
+
+/* ===== Bloque Resultado/Proceso ===== */
 function buildStructuredMessage(resultText, processText){
   const id='m'+Date.now()+Math.floor(Math.random()*1e4);
   const html = `
@@ -168,12 +207,11 @@ function buildStructuredMessage(resultText, processText){
       <div class="process-content" id="process-${id}">
         ${formatBasicContent(processText)}
       </div>
-    </div>
-  `;
+    </div>`;
   return {id, html};
 }
 
-/* ===== Toggle del proceso ===== */
+/* ===== Toggle Proceso ===== */
 function toggleProcess(id){
   const proc=document.getElementById('process-'+id);
   const arrow=document.getElementById('arrow-'+id);
@@ -183,9 +221,7 @@ function toggleProcess(id){
 }
 
 /* ===== Auto-scroll ===== */
-function scrollToBottom(){
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+function scrollToBottom(){ messagesDiv.scrollTop = messagesDiv.scrollHeight; }
 
 /* ===== Typewriter por CHUNKS (3–5 palabras, ~120ms) ===== */
 function typeChunks(text, el, onDone){
@@ -198,15 +234,11 @@ function typeChunks(text, el, onDone){
     i+=size;
   }
   let idx=0;
-  function step(){
+  (function step(){
     if(idx >= chunks.length){ onDone && onDone(); return; }
-    const current = chunks.slice(0, idx+1).join(' ');
-    el.innerHTML = formatBasicContent(current);
-    idx++;
-    scrollToBottom();
-    setTimeout(step, 120);
-  }
-  step();
+    el.innerHTML = formatBasicContent(chunks.slice(0, idx+1).join(' '));
+    idx++; scrollToBottom(); setTimeout(step, 120);
+  })();
 }
 
 /* ===== Envío ===== */
@@ -216,6 +248,7 @@ async function sendMessage(){
 
   const enhanced = memory.enhance(original);
 
+  // Usuario
   const u = document.createElement('div');
   u.className='message user-message';
   u.textContent=original.toUpperCase();
@@ -224,6 +257,7 @@ async function sendMessage(){
   input.value=''; input.focus();
   isLoading=true; sendBtn.disabled=true;
 
+  // typing
   const typing=document.createElement('div');
   typing.className='typing-indicator';
   typing.textContent='escribiendo…';
@@ -259,8 +293,14 @@ async function sendMessage(){
 
       const {id, html} = buildStructuredMessage(resultText, processText);
       a.innerHTML = html;
+
+      // 1) animar el texto sencillo primero
       const resultEl = document.getElementById('result-'+id);
-      typeChunks(resultText, resultEl, ()=>{});
+      typeChunks(resultText, resultEl, ()=>{
+        // 2) al terminar, re-render rico (listas, negritas, notas)
+        resultEl.innerHTML = formatResultRich(resultText);
+        scrollToBottom();
+      });
 
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
       header.addEventListener('click', ()=>toggleProcess(id));
