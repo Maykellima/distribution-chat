@@ -46,7 +46,6 @@
             animation: fadeIn 0.3s ease;
         }
         
-        /* Espaciado especial para preguntas del usuario */
         .user-message {
             font-size: 18px;
             color: #404040;
@@ -54,11 +53,10 @@
             text-transform: uppercase;
             letter-spacing: 0.02em;
             max-width: 440px;
-            margin-top: 100px;  /* Espacio de 100px antes de cada nueva pregunta */
+            margin-top: 100px;
             margin-bottom: 20px;
         }
         
-        /* La primera pregunta no necesita espacio arriba */
         .messages .user-message:first-child {
             margin-top: 0;
         }
@@ -74,16 +72,14 @@
             border-radius: 50%;
         }
         
-        /* Respuestas del asistente */
         .assistant-message {
             font-size: 14px;
             color: #404040;
             line-height: 1.6;
             max-width: 440px;
-            margin-bottom: 30px;  /* Espacio después de la respuesta */
+            margin-bottom: 30px;
         }
         
-        /* Resto de estilos sin cambios... */
         .assistant-message h1 {
             font-size: 20px;
             font-weight: 700;
@@ -169,7 +165,6 @@
             margin: 4px 0;
         }
         
-        /* Estilos simplificados para el bloque de proceso */
         .process-details {
             margin: 20px 0;
             background: transparent;
@@ -227,7 +222,6 @@
             color: #404040;
         }
         
-        /* Estilo para la sección de resultado */
         .result-section {
             margin-bottom: 20px;
         }
@@ -351,7 +345,6 @@
     </style>
 </head>
 <body>
-    <!-- El resto del HTML sigue igual, no necesita cambios -->
     <div class="container">
         <div class="messages" id="messages"></div>
         <div class="input-container">
@@ -380,221 +373,48 @@
         
         let isLoading = false;
 
-        // Sistema de memoria conversacional
-        class ConversationMemory {
-            constructor() {
-                this.context = {
-                    lastQueries: [],
-                    extractedEntities: {
-                        projects: new Set(),
-                        people: new Set(),
-                        technologies: new Set(),
-                        departments: new Set()
-                    },
-                    timestamp: Date.now()
-                };
-                this.contextDuration = 10 * 60 * 1000; // 10 minutos
-            }
-
-            extractEntities(text) {
-                const entities = {
-                    projects: [],
-                    people: [],
-                    technologies: [],
-                    departments: []
-                };
-
-                // Patrones para extraer entidades comunes
-                const projectPatterns = [
-                    /proyecto\s+([A-Za-z0-9\s]+)/gi,
-                    /en\s+el\s+([A-Za-z0-9\s]+)\s+proyecto/gi,
-                    /desarrollando\s+([A-Za-z0-9\s]+)/gi
-                ];
-
-                const peoplePatterns = [
-                    /([A-Z][a-z]+\s+[A-Z][a-z]+)/g, // Nombres propios
-                    /empleado[s]?\s+([A-Za-z\s,]+)/gi,
-                    /trabajador[es]?\s+([A-Za-z\s,]+)/gi
-                ];
-
-                const techPatterns = [
-                    /(React|Angular|Vue|Node\.js|Python|Java|\.NET|SQL|PostgreSQL|MongoDB)/gi,
-                    /usando\s+([A-Za-z0-9.]+)/gi,
-                    /tecnología\s+([A-Za-z0-9\s]+)/gi
-                ];
-
-                const deptPatterns = [
-                    /(departamento|área|división)\s+de\s+([A-Za-z\s]+)/gi,
-                    /(IT|Sistemas|Desarrollo|Marketing|Ventas|RRHH)/gi
-                ];
-
-                // Extraer proyectos
-                projectPatterns.forEach(pattern => {
-                    const matches = text.matchAll(pattern);
-                    for (let match of matches) {
-                        entities.projects.push(match[1].trim());
-                    }
-                });
-
-                // Extraer personas
-                peoplePatterns.forEach(pattern => {
-                    const matches = text.matchAll(pattern);
-                    for (let match of matches) {
-                        const names = match[1].split(',').map(name => name.trim());
-                        entities.people.push(...names);
-                    }
-                });
-
-                // Extraer tecnologías
-                techPatterns.forEach(pattern => {
-                    const matches = text.matchAll(pattern);
-                    for (let match of matches) {
-                        entities.technologies.push(match[1].trim());
-                    }
-                });
-
-                // Extraer departamentos
-                deptPatterns.forEach(pattern => {
-                    const matches = text.matchAll(pattern);
-                    for (let match of matches) {
-                        entities.departments.push(match[1] ? match[2].trim() : match[1].trim());
-                    }
-                });
-
-                return entities;
-            }
-
-            updateContext(question, response) {
-                // Limpiar contexto antiguo
-                if (Date.now() - this.context.timestamp > this.contextDuration) {
-                    this.context = {
-                        lastQueries: [],
-                        extractedEntities: {
-                            projects: new Set(),
-                            people: new Set(),
-                            technologies: new Set(),
-                            departments: new Set()
-                        },
-                        timestamp: Date.now()
-                    };
-                }
-
-                // Agregar pregunta actual
-                this.context.lastQueries.push({
-                    question,
-                    response,
-                    timestamp: Date.now()
-                });
-
-                // Mantener solo las últimas 5 preguntas
-                if (this.context.lastQueries.length > 5) {
-                    this.context.lastQueries.shift();
-                }
-
-                // Extraer entidades de la pregunta y respuesta
-                const questionEntities = this.extractEntities(question);
-                const responseEntities = this.extractEntities(response);
-
-                // Agregar entidades al contexto
-                ['projects', 'people', 'technologies', 'departments'].forEach(type => {
-                    questionEntities[type].forEach(entity => this.context.extractedEntities[type].add(entity));
-                    responseEntities[type].forEach(entity => this.context.extractedEntities[type].add(entity));
-                });
-
-                this.context.timestamp = Date.now();
-            }
-
-            enhanceQuery(currentQuery) {
-                // Si no hay contexto, devolver la consulta original
-                if (this.context.lastQueries.length === 0) {
-                    return currentQuery;
-                }
-
-                // Verificar si es una pregunta de seguimiento
-                const followUpIndicators = [
-                    /^(y\s+)?(qué\s+más|más\s+info|también|además)/i,
-                    /^(y\s+)?(cuánto[s]?|cuándo|dónde|cómo|quién)/i,
-                    /^(y\s+)?(el|la|los|las|ese|esa|esos|esas)/i,
-                    /^(y\s+)?(otros?|otras?)/i
-                ];
-
-                const isFollowUp = followUpIndicators.some(pattern => pattern.test(currentQuery));
-
-                if (isFollowUp && this.context.lastQueries.length > 0) {
-                    const lastQuery = this.context.lastQueries[this.context.lastQueries.length - 1];
-                    
-                    // Crear contexto relevante
-                    let contextInfo = `Contexto de la conversación anterior: "${lastQuery.question}" - ${lastQuery.response.substring(0, 200)}...`;
-                    
-                    // Agregar entidades relevantes
-                    let entities = [];
-                    this.context.extractedEntities.projects.forEach(p => entities.push(`proyecto: ${p}`));
-                    this.context.extractedEntities.people.forEach(p => entities.push(`persona: ${p}`));
-                    this.context.extractedEntities.technologies.forEach(t => entities.push(`tecnología: ${t}`));
-                    this.context.extractedEntities.departments.forEach(d => entities.push(`departamento: ${d}`));
-                    
-                    if (entities.length > 0) {
-                        contextInfo += `\nEntidades mencionadas: ${entities.slice(0, 10).join(', ')}`;
-                    }
-
-                    return `${contextInfo}\n\nPregunta actual: ${currentQuery}`;
-                }
-
-                return currentQuery;
-            }
-        }
-
-        const memory = new ConversationMemory();
-
         function formatMessage(content) {
-            let formatted = content
-                // Procesar details/summary primero para preservar el formato correcto
-                .replace(/<details class="process-details">\s*<summary>(.*?)<\/summary>\s*([\s\S]*?)<\/details>/g, function(match, summary, content) {
-                    return '<details class="process-details"><summary>' + summary + '</summary><div class="details-content">' + content + '</div></details>';
-                })
-                .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-                .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-                .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-                .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
-                    if (employees && (employees.includes(',') || employees.includes(' '))) {
-                        const cleanProject = project.trim();
-                        const cleanEmployees = employees.trim().replace(/\.$/, '') + '.';
-                        return '<div class="project-item"><strong class="project-name">' + cleanProject + ':</strong> <span class="project-employees">' + cleanEmployees + '</span></div>';
-                    }
-                    return match;
-                })
-                .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
-                .replace(/^---$/gm, '<hr>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
-                .replace(/`(.*?)`/g, '<code>$1</code>')
-                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-                .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-                .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
-                .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
-                .replace(/\n/g, '<br>');
+            // Separar PROCESO y RESULTADO si existen
+            const resultMatch = content.match(/\[RESULTADO\]([\s\S]*?)(?:\[\/RESULTADO\]|\[PROCESO\])/);
+            const processMatch = content.match(/\[PROCESO\]([\s\S]*?)(?:\[\/PROCESO\]|$)/);
             
-            formatted = formatted.replace(/(<li.*?>.*?<\/li><br>)+/g, (match) => {
-                const items = match.replace(/<br>/g, '');
-                if (items.includes('class="ordered"')) {
-                    return '<ol>' + items.replace(/class="ordered"/g, '') + '</ol>';
-                }
-                return '<ul>' + items + '</ul>';
-            });
+            let html = '';
             
-            return formatted;
+            if (resultMatch && resultMatch[1]) {
+                const resultContent = resultMatch[1].trim()
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                html += `<div class="result-section">${resultContent}</div>`;
+            }
+            
+            if (processMatch && processMatch[1]) {
+                const processContent = processMatch[1].trim()
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                html += `
+                    <details class="process-details">
+                        <summary>Proceso</summary>
+                        <div class="details-content">${processContent}</div>
+                    </details>`;
+            }
+            
+            // Si no hay formato PROCESO/RESULTADO, formatear normal
+            if (!html) {
+                html = content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+            }
+            
+            return html;
         }
 
         async function sendMessage() {
-            const originalQuestion = input.value.trim();
-            if (!originalQuestion || isLoading) return;
-            
-            // Aplicar contexto de memoria
-            const enhancedQuestion = memory.enhanceQuery(originalQuestion);
+            const question = input.value.trim();
+            if (!question || isLoading) return;
 
             const userDiv = document.createElement('div');
             userDiv.className = 'message user-message';
-            userDiv.textContent = originalQuestion.toUpperCase();
+            userDiv.textContent = question.toUpperCase();
             messagesDiv.appendChild(userDiv);
             
             input.value = '';
@@ -608,55 +428,52 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             try {
+                console.log('Enviando pregunta:', question);
+                
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     },
-                    body: JSON.stringify({ question: enhancedQuestion })
+                    body: JSON.stringify({ question: question })
                 });
 
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`Error ${response.status}: ${errorText}`);
+                }
+
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 typingDiv.remove();
                 
                 const assistantDiv = document.createElement('div');
                 assistantDiv.className = 'message assistant-message';
+                
+                const responseText = data.answer || 'No se recibió respuesta';
+                assistantDiv.innerHTML = formatMessage(responseText);
+                
                 messagesDiv.appendChild(assistantDiv);
-                
-                const fullText = data.answer || 'No pude procesar la pregunta';
-                
-                // Actualizar memoria con la respuesta
-                memory.updateContext(originalQuestion, fullText);
-                
-                let currentIndex = 0;
-                
-                function typeWriter() {
-                    if (currentIndex < fullText.length) {
-                        const currentText = fullText.slice(0, currentIndex + 1);
-                        const formattedHTML = formatMessage(currentText);
-                        assistantDiv.innerHTML = formattedHTML;
-                        
-                        currentIndex++;
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                        
-                        setTimeout(typeWriter, 8);
-                    }
-                }
-                
-                typeWriter();
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 
             } catch (error) {
+                console.error('Error completo:', error);
                 typingDiv.remove();
+                
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'message assistant-message';
-                errorDiv.textContent = 'Error al conectar con el servidor';
+                errorDiv.textContent = `Error: ${error.message}`;
                 messagesDiv.appendChild(errorDiv);
-                console.error('Error:', error);
             } finally {
                 isLoading = false;
                 sendBtn.disabled = false;
+                input.focus();
             }
         }
 
@@ -669,6 +486,9 @@
                 sendMessage();
             }
         });
+        
+        // Focus inicial
+        input.focus();
     </script>
 </body>
 </html>
