@@ -1,30 +1,11 @@
-cat << 'EOF' > chat.html
+cat > chat-mejorado.html << 'EOF'
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distribution Chat</title>
+    <title>Distribution Chat - Enhanced</title>
     <style>
-        /* --- 1. MEJORA: Variables CSS para fácil mantenimiento y theming --- */
-        :root {
-            --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            --font-monospace: 'SF Mono', Monaco, 'Courier New', monospace;
-            
-            --color-background: #ffffff;
-            --color-text-primary: #333333;
-            --color-text-secondary: #888888;
-            --color-text-accent: #000000;
-            --color-border: #e5e5e5;
-            --color-background-code: #f5f5f5;
-            --color-button: #333333;
-            --color-button-hover: #000000;
-            --color-button-text: #ffffff;
-            --color-placeholder: #999999;
-            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
-            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
-        }
-
         * { 
             margin: 0; 
             padding: 0; 
@@ -32,30 +13,18 @@ cat << 'EOF' > chat.html
         }
         
         body {
-            font-family: var(--font-primary);
-            background: var(--color-background);
-            color: var(--color-text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            margin: -1px;
-            padding: 0;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
+            color: #333333;
         }
         
         .container {
-            width: 100%;
-            max-width: 640px;
-            padding: 40px 20px;
+            width: 640px;
+            padding: 40px 0;
         }
         
         .messages {
@@ -64,95 +33,501 @@ cat << 'EOF' > chat.html
             overflow-y: auto;
             margin-bottom: 40px;
             padding: 20px 0;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            scrollbar-width: thin;
+            scrollbar-color: #e0e0e0 transparent;
         }
         
         .messages::-webkit-scrollbar {
-            display: none;
+            width: 6px;
         }
         
-        /* --- 2. CAMBIO: Espaciado de mensajes más conversacional --- */
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .messages::-webkit-scrollbar-thumb {
+            background: #e0e0e0;
+            border-radius: 3px;
+        }
+        
         .message {
-            margin-bottom: 24px;
-            margin-left: 40px;
+            margin-bottom: 20px;
+            margin-left: 60px;
             position: relative;
             animation: fadeIn 0.3s ease;
-            max-width: 440px;
         }
         
         .user-message {
             font-size: 16px;
-            color: var(--color-text-accent);
+            color: #404040;
             font-weight: 500;
+            max-width: 440px;
+            margin-top: 60px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .messages .user-message:first-child {
+            margin-top: 0;
         }
         
         .user-message::before {
             content: '';
             position: absolute;
-            left: -30px;
+            left: -40px;
             top: 6px;
             width: 10px;
             height: 10px;
-            background: var(--color-text-accent);
+            background: #333333;
             border-radius: 50%;
         }
         
         .assistant-message {
-            font-size: 14px;
-            color: var(--color-text-primary);
-            line-height: 1.6;
+            font-size: 15px;
+            color: #404040;
+            line-height: 1.7;
+            max-width: 440px;
+            margin-bottom: 30px;
         }
         
-        /* Estilos de Markdown para las respuestas */
-        .assistant-message h1, .assistant-message h2, .assistant-message h3 {
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
-            color: var(--color-text-accent);
+        .assistant-message h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 24px 0 16px 0;
+            color: #000000;
+            border-bottom: 2px solid #e5e5e5;
+            padding-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .assistant-message h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+        
+        .assistant-message h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 18px 0 10px 0;
+            color: #2a2a2a;
+            line-height: 1.4;
+        }
+        
+        .assistant-message h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+            color: #333333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .assistant-message p {
+            margin-bottom: 14px;
+            line-height: 1.7;
+            color: #404040;
+        }
+        
+        .assistant-message strong,
+        .assistant-message b {
+            font-weight: 700;
+            color: #000000;
+            letter-spacing: -0.2px;
+        }
+        
+        .assistant-message em,
+        .assistant-message i {
+            font-style: italic;
+            color: #555555;
+        }
+        
+        .assistant-message del,
+        .assistant-message s {
+            text-decoration: line-through;
+            color: #999999;
+            opacity: 0.7;
+        }
+        
+        .assistant-message code {
+            background: #f6f6f6;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 13px;
+            color: #d73a49;
+            border: 1px solid #e8e8e8;
+            white-space: nowrap;
+        }
+        
+        .assistant-message pre {
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+            line-height: 1.5;
+            position: relative;
+        }
+        
+        .assistant-message pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: #24292e;
+            font-size: 13px;
+            white-space: pre;
+        }
+        
+        .assistant-message blockquote {
+            margin: 16px 0;
+            padding: 12px 20px;
+            border-left: 4px solid #333333;
+            background: #f9f9f9;
+            color: #555555;
+            font-style: italic;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .assistant-message blockquote p {
+            margin-bottom: 8px;
+        }
+        
+        .assistant-message blockquote p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .assistant-message hr {
+            margin: 24px 0;
+            border: 0;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #333333 20%, #333333 80%, transparent);
+            opacity: 0.3;
+        }
+        
+        .assistant-message ul {
+            margin: 12px 0;
+            padding-left: 0;
+            list-style: none;
+        }
+        
+        .assistant-message ul li {
+            position: relative;
+            padding-left: 24px;
+            margin: 8px 0;
+            line-height: 1.7;
+        }
+        
+        .assistant-message ul li::before {
+            content: '•';
+            position: absolute;
+            left: 8px;
+            color: #333333;
+            font-weight: bold;
+            font-size: 18px;
+            line-height: 1.2;
+        }
+        
+        .assistant-message ol {
+            margin: 12px 0;
+            padding-left: 0;
+            list-style: none;
+            counter-reset: li-counter;
+        }
+        
+        .assistant-message ol li {
+            position: relative;
+            padding-left: 32px;
+            margin: 8px 0;
+            counter-increment: li-counter;
+            line-height: 1.7;
+        }
+        
+        .assistant-message ol li::before {
+            content: counter(li-counter) ".";
+            position: absolute;
+            left: 8px;
+            color: #333333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .assistant-message ul ul,
+        .assistant-message ol ul,
+        .assistant-message ul ol,
+        .assistant-message ol ol {
+            margin-top: 6px;
+            margin-bottom: 6px;
+        }
+        
+        .assistant-message ul ul li::before {
+            content: '◦';
+            font-size: 14px;
+        }
+        
+        .assistant-message a {
+            color: #333333;
+            text-decoration: none;
+            border-bottom: 1px solid #999999;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .assistant-message a:hover {
+            color: #000000;
+            border-bottom-color: #333333;
+            border-bottom-width: 2px;
+        }
+        
+        /* TABLAS MARKDOWN ELEGANTES */
+        .markdown-table-wrapper {
+            width: 100%;
+            margin: 24px 0;
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .markdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            overflow: hidden;
+        }
+        
+        .markdown-table thead {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .markdown-table thead th {
+            padding: 14px 16px;
+            font-weight: 600;
+            color: #000000;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #dee2e6;
+            position: relative;
+        }
+        
+        .markdown-table thead th:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 20px;
+            width: 1px;
+            background: #ced4da;
+        }
+        
+        .markdown-table tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f3f5;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+        
+        .markdown-table tbody tr {
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+        
+        .markdown-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .markdown-table tbody tr:hover {
+            background: #e7f5ff;
+            transform: scale(1.01);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+        
+        .markdown-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .markdown-table tbody td:first-child {
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .markdown-table .percentage-cell {
+            color: #0ca678;
             font-weight: 600;
         }
-        .assistant-message h1 { font-size: 20px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; }
-        .assistant-message h2 { font-size: 16px; }
-        .assistant-message h3 { font-size: 14px; }
-        .assistant-message p { margin-bottom: 1em; line-height: 1.6; }
-        .assistant-message strong { font-weight: 600; color: var(--color-text-accent); }
-        .assistant-message em { font-style: italic; }
-        .assistant-message code { background: var(--color-background-code); padding: 2px 6px; border-radius: 3px; font-family: var(--font-monospace); font-size: 12px; }
-        .assistant-message pre { background: var(--color-background-code); border: 1px solid var(--color-border); border-radius: 6px; padding: 16px; margin: 1em 0; overflow-x: auto; }
-        .assistant-message pre code { background: none; padding: 0; font-size: 12px; }
-        .assistant-message blockquote { margin: 1em 0; padding: 0 16px; border-left: 4px solid var(--color-border); color: var(--color-text-secondary); }
-        .assistant-message hr { margin: 1.5em 0; border: 0; border-top: 1.5px solid var(--color-border); }
-        .assistant-message ul, .assistant-message ol { margin: 1em 0; padding-left: 20px; }
+        
+        .markdown-table .high-value {
+            position: relative;
+        }
+        
+        .markdown-table .high-value::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: #dc3545;
+            border-radius: 50%;
+            margin-left: -8px;
+        }
+        
+        .markdown-table .medium-value {
+            position: relative;
+        }
+        
+        .markdown-table .medium-value::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: #ffc107;
+            border-radius: 50%;
+            margin-left: -8px;
+        }
+        
+        .markdown-table .low-value {
+            position: relative;
+        }
+        
+        .markdown-table .low-value::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-left: -8px;
+        }
+        
+        .markdown-table code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            color: #d73a49;
+        }
+        
+        .markdown-table a {
+            color: #0066cc;
+            text-decoration: none;
+            border-bottom: 1px dotted #0066cc;
+        }
+        
+        .markdown-table a:hover {
+            color: #0052a3;
+            border-bottom-style: solid;
+        }
+        
+        .assistant-message mark {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 2px;
+            color: #000000;
+        }
+        
+        .process-details {
+            margin: 20px 0;
+            background: transparent;
+            border: none;
+        }
+        
+        .process-details summary {
+            cursor: pointer;
+            padding: 12px 0;
+            font-weight: 400;
+            font-size: 13px;
+            color: #666666;
+            user-select: none;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        
+        .process-details summary:hover {
+            color: #333333;
+        }
+        
+        .process-details summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        .process-details summary::before {
+            content: '▶';
+            margin-right: 8px;
+            font-size: 0.7em;
+            color: #999999;
+            transition: transform 0.2s;
+        }
+        
+        .process-details[open] summary::before {
+            transform: rotate(90deg);
+        }
         
         .typing-indicator {
-            margin-left: 40px;
+            margin-left: 60px;
             height: 20px;
         }
-        .typing-dot { display: inline-block; width: 8px; height: 8px; background: var(--color-text-primary); border-radius: 50%; margin-right: 4px; animation: typingPulse 1.4s infinite; }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        .input-container { position: relative; }
+        
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #404040;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: typingPulse 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        .input-container {
+            position: relative;
+        }
         
         .input-field {
             width: 100%;
             padding: 20px 60px 20px 24px;
-            border: 2px solid var(--color-border);
+            border: 2px solid #e5e5e5;
             border-radius: 50px;
             font-size: 16px;
-            color: var(--color-text-primary);
-            background: var(--color-background);
+            color: #333333;
+            background: #ffffff;
             outline: none;
             transition: all 0.2s ease;
-            box-shadow: var(--shadow-light);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         
         .input-field:focus {
-            border-color: var(--color-text-secondary);
-            box-shadow: var(--shadow-medium);
+            border-color: #666666;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
         
-        .input-field::placeholder { color: var(--color-placeholder); font-weight: 400; }
+        .input-field::placeholder {
+            color: #999999;
+            font-weight: 400;
+        }
         
         .send-button {
             position: absolute;
@@ -163,107 +538,499 @@ cat << 'EOF' > chat.html
             height: 44px;
             border: none;
             border-radius: 50%;
-            background: var(--color-button);
-            color: var(--color-button-text);
+            background: #333333;
+            color: #ffffff;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
         .send-button:hover:not(:disabled) {
-            background: var(--color-button-hover);
+            background: #000000;
             transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
         
-        .send-button:disabled { background: #f0f0f0; color: #cccccc; cursor: not-allowed; }
-        .send-button svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+        .send-button:disabled {
+            background: #f0f0f0;
+            color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes typingPulse { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
-
-        /* --- 3. MEJORA: Diseño Responsivo para Móviles --- */
+        .send-button svg {
+            width: 20px;
+            height: 20px;
+            transform: rotate(-90deg);
+        }
+        
+        .format-help {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #999999;
+            text-align: center;
+        }
+        
+        .format-help code {
+            background: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        
         @media (max-width: 768px) {
-            body { align-items: flex-start; }
-            .container { padding: 20px 16px; }
-            .messages { max-height: none; padding: 10px 0; }
-            .message, .typing-indicator { margin-left: 0; max-width: 95%; }
-            .user-message::before { display: none; }
-            .input-field { padding: 16px 56px 16px 20px; }
+            .markdown-table-wrapper {
+                border-radius: 8px;
+            }
+            
+            .markdown-table {
+                font-size: 13px;
+            }
+            
+            .markdown-table thead th,
+            .markdown-table tbody td {
+                padding: 10px 12px;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes typingPulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+            }
+            30% {
+                opacity: 1;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="messages" id="messages">
-            </div>
+        <div class="messages" id="messages"></div>
         <div class="input-container">
-            <label for="input" class="visually-hidden">Escribe tu mensaje</label>
             <input 
                 type="text" 
                 class="input-field" 
                 id="input" 
-                placeholder="Pregunta lo que necesitas..."
+                placeholder="Pregunta lo que necesitas, encuentra lo que buscas."
                 autocomplete="off"
             />
-            <button class="send-button" id="sendBtn" aria-label="Enviar mensaje">
+            <button class="send-button" id="sendBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12l14 0M12 5l7 7-7 7"/>
                 </svg>
             </button>
         </div>
+        <div class="format-help">
+            <code>**negrita**</code> • <code>*cursiva*</code> • <code>\`código\`</code> • <code>[enlace](url)</code> • <code>| tabla |</code>
+        </div>
     </div>
 
     <script>
-        // Tu código JavaScript para manejar la lógica del chat iría aquí.
-        // Ejemplo básico:
+        // Función mejorada para procesar Markdown con soporte de tablas
+        function parseMarkdown(text) {
+            // Primero procesamos las tablas antes de escapar HTML
+            let html = parseMarkdownTables(text);
+            
+            // Luego procesamos el resto del contenido que no está en tablas
+            html = processNonTableMarkdown(html);
+            
+            return html;
+        }
+        
+        // Función para detectar y procesar tablas Markdown
+        function parseMarkdownTables(text) {
+            // Patrón para detectar tablas Markdown
+            const tableRegex = /(\|[^\n]+\|\n)(\|[\s:]*-+[\s:]*\|[\s:]*)+\n((\|[^\n]+\|\n?)+)/g;
+            
+            return text.replace(tableRegex, (match) => {
+                const lines = match.trim().split('\n');
+                
+                // Extraer headers
+                const headers = lines[0].split('|').filter(h => h.trim());
+                
+                // Detectar alineación de las columnas
+                const alignments = [];
+                if (lines[1]) {
+                    const alignLine = lines[1].split('|').filter(a => a.trim());
+                    alignLine.forEach(align => {
+                        if (align.trim().startsWith(':') && align.trim().endsWith(':')) {
+                            alignments.push('center');
+                        } else if (align.trim().endsWith(':')) {
+                            alignments.push('right');
+                        } else {
+                            alignments.push('left');
+                        }
+                    });
+                }
+                
+                // Extraer filas de datos
+                const rows = [];
+                for (let i = 2; i < lines.length; i++) {
+                    const cells = lines[i].split('|').filter(c => c.trim());
+                    if (cells.length > 0) {
+                        rows.push(cells);
+                    }
+                }
+                
+                // Construir tabla HTML con estilos elegantes
+                return buildElegantTable(headers, rows, alignments);
+            });
+        }
+        
+        // Función para construir tabla HTML elegante
+        function buildElegantTable(headers, rows, alignments) {
+            let tableHtml = '<div class="markdown-table-wrapper"><table class="markdown-table">';
+            
+            // Headers
+            tableHtml += '<thead><tr>';
+            headers.forEach((header, index) => {
+                const align = alignments[index] || 'left';
+                tableHtml += \`<th style="text-align: \${align}">\${processInlineMarkdown(header.trim())}</th>\`;
+            });
+            tableHtml += '</tr></thead>';
+            
+            // Body
+            tableHtml += '<tbody>';
+            rows.forEach(row => {
+                tableHtml += '<tr>';
+                row.forEach((cell, index) => {
+                    const align = alignments[index] || 'left';
+                    const cellContent = processInlineMarkdown(cell.trim());
+                    
+                    // Aplicar estilos especiales según el contenido
+                    let cellClass = '';
+                    if (cell.includes('%')) {
+                        cellClass = 'percentage-cell';
+                    } else if (cell.toLowerCase().includes('alta') || cell.toLowerCase().includes('high')) {
+                        cellClass = 'high-value';
+                    } else if (cell.toLowerCase().includes('media') || cell.toLowerCase().includes('medium')) {
+                        cellClass = 'medium-value';
+                    } else if (cell.toLowerCase().includes('baja') || cell.toLowerCase().includes('low')) {
+                        cellClass = 'low-value';
+                    }
+                    
+                    tableHtml += \`<td class="\${cellClass}" style="text-align: \${align}">\${cellContent}</td>\`;
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody>';
+            
+            tableHtml += '</table></div>';
+            return tableHtml;
+        }
+        
+        // Procesar markdown inline (negrita, cursiva, código)
+        function processInlineMarkdown(text) {
+            let processed = text;
+            
+            // Código inline
+            processed = processed.replace(/\`([^\`]+)\`/g, '<code>$1</code>');
+            
+            // Negrita
+            processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            processed = processed.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+            
+            // Cursiva
+            processed = processed.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            processed = processed.replace(/_([^_]+)_/g, '<em>$1</em>');
+            
+            // Enlaces
+            processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            
+            return processed;
+        }
+        
+        // Procesar el resto del markdown (no tablas)
+        function processNonTableMarkdown(html) {
+            // Escapar HTML solo en partes que no son tablas
+            const parts = html.split(/(<div class="markdown-table-wrapper">[\s\S]*?<\/div>)/g);
+            
+            return parts.map(part => {
+                if (part.includes('markdown-table-wrapper')) {
+                    return part; // Dejar las tablas sin modificar
+                }
+                
+                // Procesar el resto del contenido
+                let processed = part.replace(/&/g, '&amp;')
+                                   .replace(/</g, '&lt;')
+                                   .replace(/>/g, '&gt;');
+                
+                // Bloques de código
+                processed = processed.replace(/\`\`\`([\s\S]*?)\`\`\`/g, '<pre><code>$1</code></pre>');
+                
+                // Código inline
+                processed = processed.replace(/\`([^\`]+)\`/g, '<code>$1</code>');
+                
+                // Headers
+                processed = processed.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+                processed = processed.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+                processed = processed.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                processed = processed.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                
+                // Negrita
+                processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                processed = processed.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+                
+                // Cursiva
+                processed = processed.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                processed = processed.replace(/_([^_]+)_/g, '<em>$1</em>');
+                
+                // Tachado
+                processed = processed.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+                
+                // Enlaces
+                processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+                
+                // Blockquotes
+                processed = processed.replace(/^> (.*$)/gim, '<blockquote><p>$1</p></blockquote>');
+                
+                // Líneas horizontales
+                processed = processed.replace(/^---$/gim, '<hr>');
+                processed = processed.replace(/^\*\*\*$/gim, '<hr>');
+                
+                // Listas sin orden
+                processed = processed.replace(/^\* (.+)/gim, '<ul><li>$1</li></ul>');
+                processed = processed.replace(/^- (.+)/gim, '<ul><li>$1</li></ul>');
+                
+                // Listas ordenadas
+                processed = processed.replace(/^\d+\. (.+)/gim, '<ol><li>$1</li></ol>');
+                
+                // Combinar listas consecutivas
+                processed = processed.replace(/<\/ul>\n<ul>/g, '');
+                processed = processed.replace(/<\/ol>\n<ol>/g, '');
+                
+                // Párrafos
+                processed = processed.split('\n\n').map(para => {
+                    if (!para.startsWith('<') && para.trim() !== '') {
+                        return \`<p>\${para}</p>\`;
+                    }
+                    return para;
+                }).join('\n');
+                
+                // Saltos de línea
+                processed = processed.replace(/\n/g, '<br>');
+                
+                return processed;
+            }).join('');
+        }
+        
+        // Datos de ejemplo
+        const exampleMessages = [
+            {
+                type: 'user',
+                content: '¿Cómo puedo mejorar la **productividad** de mi equipo?'
+            },
+            {
+                type: 'assistant',
+                content: \`# Estrategias para Mejorar la Productividad del Equipo
+
+La **productividad del equipo** es fundamental para el éxito. Aquí las estrategias más efectivas:
+
+## 1. Comunicación Clara y Efectiva
+
+La comunicación es la *base fundamental* de todo equipo productivo:
+
+- **Reuniones diarias breves** (15 minutos máximo)
+- Canales de comunicación bien definidos
+- Documentación clara de procesos
+- Retroalimentación constante
+
+> "La comunicación efectiva es el 80% del éxito en la gestión de equipos"
+
+## 2. Herramientas y Tecnología
+
+| Categoría | Herramienta | Beneficio Principal |
+|-----------|------------|-------------------|
+| **Gestión de Proyectos** | Asana, Trello | Visualización clara del progreso |
+| **Comunicación** | Slack, Teams | Reducción de emails en 70% |
+| **Documentación** | Notion | Conocimiento centralizado |
+| **Análisis** | Tableau | Decisiones basadas en datos |
+
+## 3. Métricas de Rendimiento
+
+| Métrica | Objetivo | Estado Actual | Prioridad |
+|:--------|:--------:|-------------:|:---------:|
+| Velocidad de entrega | 85% | 72% | Alta |
+| Satisfacción del equipo | 90% | 88% | Media |
+| Calidad del código | 95% | 91% | Alta |
+| Tiempo de respuesta | <2h | 3.5h | Media |
+
+Con estas estrategias implementadas correctamente, puedes esperar:
+
+- **30-40%** de aumento en la productividad
+- Mayor satisfacción laboral
+- Mejor clima organizacional
+
+*Recuerda:* La productividad no es trabajar más, sino **trabajar mejor**.\`
+            },
+            {
+                type: 'user',
+                content: 'Muéstrame una comparación de las estrategias de marketing'
+            },
+            {
+                type: 'assistant',
+                content: \`## Comparación de Estrategias de Marketing Digital
+
+Aquí tienes una **comparación detallada** de las principales estrategias:
+
+| Característica | Tabla ASCII | Módulo Nuevo |
+|---|---|---|
+| **Legibilidad** | Básica | Excelente con jerarquía visual |
+| **Interactividad** | Ninguna | Hover effects y animaciones |
+| **Formato** | Monoespaciado | Tipografía elegante y variada |
+| **Colores** | No soportado | Badges y destacados coloridos |
+| **Responsivo** | Problemático | Totalmente adaptable |
+| **Copiar/Pegar** | Difícil formato | Un click para copiar Markdown |
+
+### Análisis de ROI por Canal
+
+| Canal | ROI Esperado | Inversión Inicial | Tiempo de Retorno | Dificultad |
+|:------|:------------:|------------------:|:------------------|:----------:|
+| **SEO** | 300-500% | Media | 6-12 meses | Alta |
+| **SEM** | 200-300% | Alta | 1-2 meses | Media |
+| **Email Marketing** | 400-600% | Baja | 2-4 semanas | Baja |
+| **Social Media** | 150-250% | Media | 3-6 meses | Media |
+| **Content Marketing** | 250-400% | Media | 4-8 meses | Alta |
+| **Influencer Marketing** | 100-300% | Alta | 1-3 meses | Media |
+
+> **Nota importante:** Los valores de ROI son estimaciones basadas en promedios de la industria y pueden variar significativamente según el sector y la implementación.
+
+### Métricas Clave por Estrategia
+
+| Estrategia | CTR Promedio | Conversión | CAC | LTV/CAC Ratio |
+|------------|:------------:|:----------:|:---:|:-------------:|
+| **Búsqueda Pagada** | \`3.17%\` | \`2.35%\` | $50 | 3:1 |
+| **Display Ads** | \`0.46%\` | \`0.77%\` | $75 | 2:1 |
+| **Facebook Ads** | \`0.90%\` | \`1.85%\` | $40 | 4:1 |
+| **Email** | \`2.62%\` | \`6.05%\` | $10 | 8:1 |
+| **SEO Orgánico** | \`31.7%\` | \`2.40%\` | $20 | 5:1 |
+
+*Los datos reflejan benchmarks actualizados del sector tecnológico B2B.*\`
+            }
+        ];
+        
+        // Elementos del DOM
         const messagesContainer = document.getElementById('messages');
         const inputField = document.getElementById('input');
-        const sendBtn = document.getElementById('sendBtn');
-
-        // Función para añadir un mensaje a la vista
-        function addMessage(text, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', `${sender}-message`);
-            
-            // Si quieres que el asistente renderice HTML/Markdown
-            if (sender === 'assistant') {
-                 messageElement.innerHTML = text; // ¡Cuidado! Usar solo con contenido de confianza para evitar XSS.
-            } else {
-                messageElement.textContent = text;
-            }
-            
-            messagesContainer.appendChild(messageElement);
+        const sendButton = document.getElementById('sendBtn');
+        
+        // Función para añadir mensaje
+        function addMessage(content, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = \`message \${type}-message\`;
+            messageDiv.innerHTML = parseMarkdown(content);
+            messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
-
-        function handleSend() {
-            const userText = inputField.value.trim();
-            if (userText) {
-                addMessage(userText, 'user');
-                inputField.value = '';
-                
-                // Simular respuesta del asistente después de un segundo
-                setTimeout(() => {
-                    const botResponse = `Recibí tu mensaje: "<strong>${userText}</strong>". <p>Ahora estoy procesando tu solicitud.</p> <blockquote>Esto es un ejemplo de cómo se vería una cita.</blockquote>`;
-                    addMessage(botResponse, 'assistant');
-                }, 1000);
+        
+        // Función para mostrar indicador de escritura
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing';
+            typingDiv.innerHTML = \`
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            \`;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Función para remover indicador de escritura
+        function hideTypingIndicator() {
+            const typing = document.getElementById('typing');
+            if (typing) {
+                typing.remove();
             }
         }
+        
+        // Función para simular respuesta del asistente
+        function simulateResponse() {
+            showTypingIndicator();
+            
+            const responses = [
+                \`**¡Excelente pregunta!** Aquí una tabla comparativa:
 
-        sendBtn.addEventListener('click', handleSend);
-        inputField.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                handleSend();
+| Aspecto | Opción A | Opción B | Recomendación |
+|---------|:--------:|:--------:|---------------|
+| **Costo** | $1,000 | $2,500 | Baja |
+| **Tiempo** | 2 meses | 1 mes | Media |
+| **Calidad** | 85% | 95% | Alta |
+| **Soporte** | 24/7 | Horario oficina | Media |
+
+### Análisis Detallado
+
+- La **Opción A** ofrece mejor relación costo-beneficio
+- La **Opción B** es ideal si el tiempo es crítico
+- Ambas opciones incluyen \`soporte técnico\` básico
+
+*¿Necesitas más detalles sobre alguna opción específica?*\`,
+
+                \`## Resultados del Análisis
+
+| Métrica | Q1 2024 | Q2 2024 | Variación | Tendencia |
+|---------|--------:|--------:|----------:|:---------:|
+| **Ventas** | $45,000 | $52,000 | +15.6% | Alta |
+| **Clientes** | 1,200 | 1,450 | +20.8% | Alta |
+| **Retención** | 78% | 82% | +5.1% | Media |
+| **NPS** | 72 | 75 | +4.2% | Media |
+
+Los datos muestran una **tendencia positiva** en todos los indicadores clave.\`
+            ];
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addMessage(randomResponse, 'assistant');
+            }, 1500);
+        }
+        
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
         });
-
-        // Mensaje inicial de ejemplo
-        addMessage('<h1>Hola</h1><p>¿En qué puedo ayudarte hoy?</p>', 'assistant');
+        
+        function sendMessage() {
+            const message = inputField.value.trim();
+            if (message) {
+                addMessage(message, 'user');
+                inputField.value = '';
+                simulateResponse();
+            }
+        }
+        
+        // Cargar mensajes de ejemplo al inicio
+        window.addEventListener('load', () => {
+            exampleMessages.forEach((msg, index) => {
+                setTimeout(() => {
+                    addMessage(msg.content, msg.type);
+                }, index * 500);
+            });
+        });
     </script>
 </body>
 </html>
 EOF
 
-echo "Archivo chat.html creado con éxito."
+echo "✅ Archivo 'chat-mejorado.html' creado exitosamente!"
+echo "📂 Ubicación: $(pwd)/chat-mejorado.html"
+echo "🌐 Para abrir: open chat-mejorado.html (Mac) o xdg-open chat-mejorado.html (Linux)"
