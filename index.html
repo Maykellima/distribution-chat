@@ -1,10 +1,9 @@
-cat > chat-mejorado-final.html << 'EOF'
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distribution Chat - Enhanced</title>
+    <title>Distribution Chat</title>
     <style>
         * { 
             margin: 0; 
@@ -19,7 +18,6 @@ cat > chat-mejorado-final.html << 'EOF'
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #333333;
         }
         
         .container {
@@ -33,21 +31,12 @@ cat > chat-mejorado-final.html << 'EOF'
             overflow-y: auto;
             margin-bottom: 40px;
             padding: 20px 0;
-            scrollbar-width: thin;
-            scrollbar-color: #e0e0e0 transparent;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
         
         .messages::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .messages::-webkit-scrollbar-thumb {
-            background: #e0e0e0;
-            border-radius: 3px;
+            display: none;
         }
         
         .message {
@@ -57,16 +46,19 @@ cat > chat-mejorado-final.html << 'EOF'
             animation: fadeIn 0.3s ease;
         }
         
+        /* Espaciado especial para preguntas del usuario */
         .user-message {
-            font-size: 16px;
+            font-size: 18px;
             color: #404040;
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
             max-width: 440px;
-            margin-top: 60px;
+            margin-top: 100px;  /* Espacio de 100px antes de cada nueva pregunta */
             margin-bottom: 20px;
-            line-height: 1.5;
         }
         
+        /* La primera pregunta no necesita espacio arriba */
         .messages .user-message:first-child {
             margin-top: 0;
         }
@@ -75,345 +67,62 @@ cat > chat-mejorado-final.html << 'EOF'
             content: '';
             position: absolute;
             left: -40px;
-            top: 6px;
-            width: 10px;
-            height: 10px;
-            background: #333333;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            background: #000000;
             border-radius: 50%;
         }
         
+        /* Respuestas del asistente */
         .assistant-message {
-            font-size: 15px;
+            font-size: 14px;
             color: #404040;
-            line-height: 1.7;
+            line-height: 1.6;
             max-width: 440px;
-            margin-bottom: 30px;
+            margin-bottom: 30px;  /* Espacio después de la respuesta */
         }
         
+        /* Resto de estilos sin cambios... */
         .assistant-message h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
-            margin: 24px 0 16px 0;
+            margin: 20px 0 12px 0;
             color: #000000;
             border-bottom: 2px solid #e5e5e5;
             padding-bottom: 8px;
-            line-height: 1.3;
         }
         
         .assistant-message h2 {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 600;
-            margin: 20px 0 12px 0;
-            color: #1a1a1a;
-            line-height: 1.4;
+            margin: 18px 0 10px 0;
+            color: #202020;
         }
         
         .assistant-message h3 {
-            font-size: 17px;
-            font-weight: 600;
-            margin: 18px 0 10px 0;
-            color: #2a2a2a;
-            line-height: 1.4;
-        }
-        
-        .assistant-message h4 {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             margin: 16px 0 8px 0;
-            color: #333333;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #202020;
         }
 
         .assistant-message p {
-            margin-bottom: 14px;
-            line-height: 1.7;
-            color: #404040;
+            margin-bottom: 12px;
+            line-height: 1.6;
         }
         
-        .assistant-message strong,
-        .assistant-message b {
-            font-weight: 700;
+        .assistant-message strong {
+            font-weight: 600;
             color: #000000;
-            letter-spacing: -0.2px;
         }
         
-        .assistant-message em,
-        .assistant-message i {
+        .assistant-message em {
             font-style: italic;
-            color: #555555;
-        }
-        
-        .assistant-message del,
-        .assistant-message s {
-            text-decoration: line-through;
-            color: #999999;
-            opacity: 0.7;
         }
         
         .assistant-message code {
-            background: #f6f6f6;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 13px;
-            color: #d73a49;
-            border: 1px solid #e8e8e8;
-            white-space: nowrap;
-        }
-        
-        .assistant-message pre {
-            background: #f8f9fa;
-            border: 1px solid #e1e4e8;
-            border-radius: 8px;
-            padding: 16px;
-            margin: 16px 0;
-            overflow-x: auto;
-            line-height: 1.5;
-            position: relative;
-        }
-        
-        .assistant-message pre code {
-            background: none;
-            padding: 0;
-            border: none;
-            color: #24292e;
-            font-size: 13px;
-            white-space: pre;
-        }
-        
-        .assistant-message blockquote {
-            margin: 16px 0;
-            padding: 12px 20px;
-            border-left: 4px solid #333333;
-            background: #f9f9f9;
-            color: #555555;
-            font-style: italic;
-            border-radius: 0 4px 4px 0;
-        }
-        
-        .assistant-message blockquote p {
-            margin-bottom: 8px;
-        }
-        
-        .assistant-message blockquote p:last-child {
-            margin-bottom: 0;
-        }
-        
-        .assistant-message hr {
-            margin: 24px 0;
-            border: 0;
-            height: 2px;
-            background: linear-gradient(to right, transparent, #333333 20%, #333333 80%, transparent);
-            opacity: 0.3;
-        }
-        
-        .assistant-message ul {
-            margin: 12px 0;
-            padding-left: 0;
-            list-style: none;
-        }
-        
-        .assistant-message ul li {
-            position: relative;
-            padding-left: 24px;
-            margin: 8px 0;
-            line-height: 1.7;
-        }
-        
-        .assistant-message ul li::before {
-            content: '•';
-            position: absolute;
-            left: 8px;
-            color: #333333;
-            font-weight: bold;
-            font-size: 18px;
-            line-height: 1.2;
-        }
-        
-        .assistant-message ol {
-            margin: 12px 0;
-            padding-left: 0;
-            list-style: none;
-            counter-reset: li-counter;
-        }
-        
-        .assistant-message ol li {
-            position: relative;
-            padding-left: 32px;
-            margin: 8px 0;
-            counter-increment: li-counter;
-            line-height: 1.7;
-        }
-        
-        .assistant-message ol li::before {
-            content: counter(li-counter) ".";
-            position: absolute;
-            left: 8px;
-            color: #333333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .assistant-message ul ul,
-        .assistant-message ol ul,
-        .assistant-message ul ol,
-        .assistant-message ol ol {
-            margin-top: 6px;
-            margin-bottom: 6px;
-        }
-        
-        .assistant-message ul ul li::before {
-            content: '◦';
-            font-size: 14px;
-        }
-        
-        .assistant-message a {
-            color: #333333;
-            text-decoration: none;
-            border-bottom: 1px solid #999999;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-        
-        .assistant-message a:hover {
-            color: #000000;
-            border-bottom-color: #333333;
-            border-bottom-width: 2px;
-        }
-        
-        .markdown-table-wrapper {
-            width: 100%;
-            margin: 24px 0;
-            overflow-x: auto;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
-            background: #ffffff;
-            animation: fadeIn 0.4s ease;
-        }
-        
-        .markdown-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            overflow: hidden;
-        }
-        
-        .markdown-table thead {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        }
-        
-        .markdown-table thead th {
-            padding: 14px 16px;
-            font-weight: 600;
-            color: #000000;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #dee2e6;
-            position: relative;
-        }
-        
-        .markdown-table thead th:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 20px;
-            width: 1px;
-            background: #ced4da;
-        }
-        
-        .markdown-table tbody td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #f1f3f5;
-            color: #495057;
-            transition: all 0.2s ease;
-        }
-        
-        .markdown-table tbody tr {
-            background: #ffffff;
-            transition: all 0.2s ease;
-        }
-        
-        .markdown-table tbody tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-        
-        .markdown-table tbody tr:hover {
-            background: #e7f5ff;
-            transform: scale(1.01);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-        }
-        
-        .markdown-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .markdown-table tbody td:first-child {
-            font-weight: 600;
-            color: #212529;
-        }
-        
-        .markdown-table .percentage-cell {
-            color: #0ca678;
-            font-weight: 600;
-        }
-        
-        .markdown-table .high-value {
-            position: relative;
-        }
-        
-        .markdown-table .high-value::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 4px;
-            background: #dc3545;
-            border-radius: 50%;
-            margin-left: -8px;
-        }
-        
-        .markdown-table .medium-value {
-            position: relative;
-        }
-        
-        .markdown-table .medium-value::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 4px;
-            background: #ffc107;
-            border-radius: 50%;
-            margin-left: -8px;
-        }
-        
-        .markdown-table .low-value {
-            position: relative;
-        }
-        
-        .markdown-table .low-value::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 4px;
-            background: #28a745;
-            border-radius: 50%;
-            margin-left: -8px;
-        }
-        
-        .markdown-table code {
-            background: #f6f8fa;
+            background: #f5f5f5;
             padding: 2px 6px;
             border-radius: 3px;
             font-family: 'SF Mono', Monaco, 'Courier New', monospace;
@@ -421,22 +130,114 @@ cat > chat-mejorado-final.html << 'EOF'
             color: #d73a49;
         }
         
-        .markdown-table a {
-            color: #0066cc;
-            text-decoration: none;
-            border-bottom: 1px dotted #0066cc;
+        .assistant-message pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            line-height: 1.45;
         }
         
-        .markdown-table a:hover {
-            color: #0052a3;
-            border-bottom-style: solid;
+        .assistant-message pre code {
+            background: none;
+            padding: 0;
+            color: #24292e;
+            font-size: 12px;
         }
         
-        .assistant-message mark {
-            background: #fff3cd;
-            padding: 2px 4px;
-            border-radius: 2px;
+        .assistant-message blockquote {
+            margin: 12px 0;
+            padding: 0 16px;
+            border-left: 4px solid #dfe2e5;
+            color: #6a737d;
+        }
+        
+        .assistant-message hr {
+            margin: 16px 0;
+            border: 0;
+            border-top: 1.5px solid rgba(0, 0, 0, 0.8);
+        }
+        
+        .assistant-message ul, .assistant-message ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .assistant-message li {
+            margin: 4px 0;
+        }
+        
+        /* Estilos simplificados para el bloque de proceso */
+        .process-details {
+            margin: 20px 0;
+            background: transparent;
+            border: none;
+        }
+        
+        .process-details summary {
+            cursor: pointer;
+            padding: 12px 0;
+            font-weight: 400;
+            font-size: 13px;
+            color: #666666;
+            user-select: none;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        
+        .process-details summary:hover {
+            color: #333333;
+        }
+        
+        .process-details summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        .process-details summary::before {
+            content: '▶';
+            margin-right: 8px;
+            font-size: 0.7em;
+            color: #999999;
+            transition: transform 0.2s;
+        }
+        
+        .process-details[open] summary::before {
+            transform: rotate(90deg);
+        }
+        
+        .process-details .details-content {
+            padding: 16px 0 8px 20px;
+            font-size: 13px;
+            color: #666666;
+            line-height: 1.7;
+        }
+        
+        .process-details .details-content h3 {
+            color: #404040;
+            margin-bottom: 12px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .process-details .details-content strong {
+            color: #404040;
+        }
+        
+        /* Estilo para la sección de resultado */
+        .result-section {
+            margin-bottom: 20px;
+        }
+        
+        .result-label {
+            font-size: 14px;
+            font-weight: 600;
             color: #000000;
+            margin-bottom: 12px;
+            display: block;
         }
         
         .typing-indicator {
@@ -519,42 +320,13 @@ cat > chat-mejorado-final.html << 'EOF'
             color: #cccccc;
             cursor: not-allowed;
             box-shadow: none;
+            transform: translateY(-50%) scale(1);
         }
         
         .send-button svg {
             width: 20px;
             height: 20px;
             transform: rotate(-90deg);
-        }
-        
-        .format-help {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #999999;
-            text-align: center;
-        }
-        
-        .format-help code {
-            background: #f5f5f5;
-            padding: 2px 4px;
-            border-radius: 2px;
-            font-family: monospace;
-            font-size: 11px;
-        }
-        
-        @media (max-width: 768px) {
-            .markdown-table-wrapper {
-                border-radius: 8px;
-            }
-            
-            .markdown-table {
-                font-size: 13px;
-            }
-            
-            .markdown-table thead th,
-            .markdown-table tbody td {
-                padding: 10px 12px;
-            }
         }
         
         @keyframes fadeIn {
@@ -579,6 +351,7 @@ cat > chat-mejorado-final.html << 'EOF'
     </style>
 </head>
 <body>
+    <!-- El resto del HTML sigue igual, no necesita cambios -->
     <div class="container">
         <div class="messages" id="messages"></div>
         <div class="input-container">
@@ -595,315 +368,307 @@ cat > chat-mejorado-final.html << 'EOF'
                 </svg>
             </button>
         </div>
-        <div class="format-help">
-            <code>**negrita**</code> • <code>*cursiva*</code> • <code>`código`</code> • <code>[enlace](url)</code> • <code>| tabla |</code>
-        </div>
     </div>
 
-    <script src="chat-script.js"></script>
+    <script>
+        const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY1NDE1MTQsImV4cCI6MjA1MjExNzUxNH0.sO1zE4Z7vkJeFqYfE1Rts1cJ7IjO0OP6fgxnqTnPXfE';
+        
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+        
+        let isLoading = false;
+
+        // Sistema de memoria conversacional
+        class ConversationMemory {
+            constructor() {
+                this.context = {
+                    lastQueries: [],
+                    extractedEntities: {
+                        projects: new Set(),
+                        people: new Set(),
+                        technologies: new Set(),
+                        departments: new Set()
+                    },
+                    timestamp: Date.now()
+                };
+                this.contextDuration = 10 * 60 * 1000; // 10 minutos
+            }
+
+            extractEntities(text) {
+                const entities = {
+                    projects: [],
+                    people: [],
+                    technologies: [],
+                    departments: []
+                };
+
+                // Patrones para extraer entidades comunes
+                const projectPatterns = [
+                    /proyecto\s+([A-Za-z0-9\s]+)/gi,
+                    /en\s+el\s+([A-Za-z0-9\s]+)\s+proyecto/gi,
+                    /desarrollando\s+([A-Za-z0-9\s]+)/gi
+                ];
+
+                const peoplePatterns = [
+                    /([A-Z][a-z]+\s+[A-Z][a-z]+)/g, // Nombres propios
+                    /empleado[s]?\s+([A-Za-z\s,]+)/gi,
+                    /trabajador[es]?\s+([A-Za-z\s,]+)/gi
+                ];
+
+                const techPatterns = [
+                    /(React|Angular|Vue|Node\.js|Python|Java|\.NET|SQL|PostgreSQL|MongoDB)/gi,
+                    /usando\s+([A-Za-z0-9.]+)/gi,
+                    /tecnología\s+([A-Za-z0-9\s]+)/gi
+                ];
+
+                const deptPatterns = [
+                    /(departamento|área|división)\s+de\s+([A-Za-z\s]+)/gi,
+                    /(IT|Sistemas|Desarrollo|Marketing|Ventas|RRHH)/gi
+                ];
+
+                // Extraer proyectos
+                projectPatterns.forEach(pattern => {
+                    const matches = text.matchAll(pattern);
+                    for (let match of matches) {
+                        entities.projects.push(match[1].trim());
+                    }
+                });
+
+                // Extraer personas
+                peoplePatterns.forEach(pattern => {
+                    const matches = text.matchAll(pattern);
+                    for (let match of matches) {
+                        const names = match[1].split(',').map(name => name.trim());
+                        entities.people.push(...names);
+                    }
+                });
+
+                // Extraer tecnologías
+                techPatterns.forEach(pattern => {
+                    const matches = text.matchAll(pattern);
+                    for (let match of matches) {
+                        entities.technologies.push(match[1].trim());
+                    }
+                });
+
+                // Extraer departamentos
+                deptPatterns.forEach(pattern => {
+                    const matches = text.matchAll(pattern);
+                    for (let match of matches) {
+                        entities.departments.push(match[1] ? match[2].trim() : match[1].trim());
+                    }
+                });
+
+                return entities;
+            }
+
+            updateContext(question, response) {
+                // Limpiar contexto antiguo
+                if (Date.now() - this.context.timestamp > this.contextDuration) {
+                    this.context = {
+                        lastQueries: [],
+                        extractedEntities: {
+                            projects: new Set(),
+                            people: new Set(),
+                            technologies: new Set(),
+                            departments: new Set()
+                        },
+                        timestamp: Date.now()
+                    };
+                }
+
+                // Agregar pregunta actual
+                this.context.lastQueries.push({
+                    question,
+                    response,
+                    timestamp: Date.now()
+                });
+
+                // Mantener solo las últimas 5 preguntas
+                if (this.context.lastQueries.length > 5) {
+                    this.context.lastQueries.shift();
+                }
+
+                // Extraer entidades de la pregunta y respuesta
+                const questionEntities = this.extractEntities(question);
+                const responseEntities = this.extractEntities(response);
+
+                // Agregar entidades al contexto
+                ['projects', 'people', 'technologies', 'departments'].forEach(type => {
+                    questionEntities[type].forEach(entity => this.context.extractedEntities[type].add(entity));
+                    responseEntities[type].forEach(entity => this.context.extractedEntities[type].add(entity));
+                });
+
+                this.context.timestamp = Date.now();
+            }
+
+            enhanceQuery(currentQuery) {
+                // Si no hay contexto, devolver la consulta original
+                if (this.context.lastQueries.length === 0) {
+                    return currentQuery;
+                }
+
+                // Verificar si es una pregunta de seguimiento
+                const followUpIndicators = [
+                    /^(y\s+)?(qué\s+más|más\s+info|también|además)/i,
+                    /^(y\s+)?(cuánto[s]?|cuándo|dónde|cómo|quién)/i,
+                    /^(y\s+)?(el|la|los|las|ese|esa|esos|esas)/i,
+                    /^(y\s+)?(otros?|otras?)/i
+                ];
+
+                const isFollowUp = followUpIndicators.some(pattern => pattern.test(currentQuery));
+
+                if (isFollowUp && this.context.lastQueries.length > 0) {
+                    const lastQuery = this.context.lastQueries[this.context.lastQueries.length - 1];
+                    
+                    // Crear contexto relevante
+                    let contextInfo = `Contexto de la conversación anterior: "${lastQuery.question}" - ${lastQuery.response.substring(0, 200)}...`;
+                    
+                    // Agregar entidades relevantes
+                    let entities = [];
+                    this.context.extractedEntities.projects.forEach(p => entities.push(`proyecto: ${p}`));
+                    this.context.extractedEntities.people.forEach(p => entities.push(`persona: ${p}`));
+                    this.context.extractedEntities.technologies.forEach(t => entities.push(`tecnología: ${t}`));
+                    this.context.extractedEntities.departments.forEach(d => entities.push(`departamento: ${d}`));
+                    
+                    if (entities.length > 0) {
+                        contextInfo += `\nEntidades mencionadas: ${entities.slice(0, 10).join(', ')}`;
+                    }
+
+                    return `${contextInfo}\n\nPregunta actual: ${currentQuery}`;
+                }
+
+                return currentQuery;
+            }
+        }
+
+        const memory = new ConversationMemory();
+
+        function formatMessage(content) {
+            let formatted = content
+                // Procesar details/summary primero para preservar el formato correcto
+                .replace(/<details class="process-details">\s*<summary>(.*?)<\/summary>\s*([\s\S]*?)<\/details>/g, function(match, summary, content) {
+                    return '<details class="process-details"><summary>' + summary + '</summary><div class="details-content">' + content + '</div></details>';
+                })
+                .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+                .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+                .replace(/^([A-Za-z\s&]+):\s*([^\n]+?)\.?\s*$/gm, function(match, project, employees) {
+                    if (employees && (employees.includes(',') || employees.includes(' '))) {
+                        const cleanProject = project.trim();
+                        const cleanEmployees = employees.trim().replace(/\.$/, '') + '.';
+                        return '<div class="project-item"><strong class="project-name">' + cleanProject + ':</strong> <span class="project-employees">' + cleanEmployees + '</span></div>';
+                    }
+                    return match;
+                })
+                .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+                .replace(/^---$/gm, '<hr>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+                .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+                .replace(/^\d+\. (.+)$/gm, '<li class="ordered">$1</li>')
+                .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+                .replace(/\n/g, '<br>');
+            
+            formatted = formatted.replace(/(<li.*?>.*?<\/li><br>)+/g, (match) => {
+                const items = match.replace(/<br>/g, '');
+                if (items.includes('class="ordered"')) {
+                    return '<ol>' + items.replace(/class="ordered"/g, '') + '</ol>';
+                }
+                return '<ul>' + items + '</ul>';
+            });
+            
+            return formatted;
+        }
+
+        async function sendMessage() {
+            const originalQuestion = input.value.trim();
+            if (!originalQuestion || isLoading) return;
+            
+            // Aplicar contexto de memoria
+            const enhancedQuestion = memory.enhanceQuery(originalQuestion);
+
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user-message';
+            userDiv.textContent = originalQuestion.toUpperCase();
+            messagesDiv.appendChild(userDiv);
+            
+            input.value = '';
+            isLoading = true;
+            sendBtn.disabled = true;
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ question: enhancedQuestion })
+                });
+
+                const data = await response.json();
+                
+                typingDiv.remove();
+                
+                const assistantDiv = document.createElement('div');
+                assistantDiv.className = 'message assistant-message';
+                messagesDiv.appendChild(assistantDiv);
+                
+                const fullText = data.answer || 'No pude procesar la pregunta';
+                
+                // Actualizar memoria con la respuesta
+                memory.updateContext(originalQuestion, fullText);
+                
+                let currentIndex = 0;
+                
+                function typeWriter() {
+                    if (currentIndex < fullText.length) {
+                        const currentText = fullText.slice(0, currentIndex + 1);
+                        const formattedHTML = formatMessage(currentText);
+                        assistantDiv.innerHTML = formattedHTML;
+                        
+                        currentIndex++;
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        
+                        setTimeout(typeWriter, 8);
+                    }
+                }
+                
+                typeWriter();
+                
+            } catch (error) {
+                typingDiv.remove();
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message assistant-message';
+                errorDiv.textContent = 'Error al conectar con el servidor';
+                messagesDiv.appendChild(errorDiv);
+                console.error('Error:', error);
+            } finally {
+                isLoading = false;
+                sendBtn.disabled = false;
+            }
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html>
-EOF
-
-cat > chat-script.js << 'EOF'
-// Función mejorada para procesar Markdown con soporte de tablas
-function parseMarkdown(text) {
-    let html = parseMarkdownTables(text);
-    html = processNonTableMarkdown(html);
-    return html;
-}
-
-// Función para detectar y procesar tablas Markdown
-function parseMarkdownTables(text) {
-    const tableRegex = /(\|[^\n]+\|\n)(\|[\s:]*-+[\s:]*\|[\s:]*)+\n((\|[^\n]+\|\n?)+)/g;
-    
-    return text.replace(tableRegex, (match) => {
-        const lines = match.trim().split('\n');
-        const headers = lines[0].split('|').filter(h => h.trim());
-        
-        const alignments = [];
-        if (lines[1]) {
-            const alignLine = lines[1].split('|').filter(a => a.trim());
-            alignLine.forEach(align => {
-                if (align.trim().startsWith(':') && align.trim().endsWith(':')) {
-                    alignments.push('center');
-                } else if (align.trim().endsWith(':')) {
-                    alignments.push('right');
-                } else {
-                    alignments.push('left');
-                }
-            });
-        }
-        
-        const rows = [];
-        for (let i = 2; i < lines.length; i++) {
-            const cells = lines[i].split('|').filter(c => c.trim());
-            if (cells.length > 0) {
-                rows.push(cells);
-            }
-        }
-        
-        return buildElegantTable(headers, rows, alignments);
-    });
-}
-
-// Función para construir tabla HTML elegante
-function buildElegantTable(headers, rows, alignments) {
-    let tableHtml = '<div class="markdown-table-wrapper"><table class="markdown-table">';
-    
-    tableHtml += '<thead><tr>';
-    headers.forEach((header, index) => {
-        const align = alignments[index] || 'left';
-        tableHtml += '<th style="text-align: ' + align + '">' + processInlineMarkdown(header.trim()) + '</th>';
-    });
-    tableHtml += '</tr></thead>';
-    
-    tableHtml += '<tbody>';
-    rows.forEach(row => {
-        tableHtml += '<tr>';
-        row.forEach((cell, index) => {
-            const align = alignments[index] || 'left';
-            const cellContent = processInlineMarkdown(cell.trim());
-            
-            let cellClass = '';
-            if (cell.includes('%')) {
-                cellClass = 'percentage-cell';
-            } else if (cell.toLowerCase().includes('alta') || cell.toLowerCase().includes('high')) {
-                cellClass = 'high-value';
-            } else if (cell.toLowerCase().includes('media') || cell.toLowerCase().includes('medium')) {
-                cellClass = 'medium-value';
-            } else if (cell.toLowerCase().includes('baja') || cell.toLowerCase().includes('low')) {
-                cellClass = 'low-value';
-            }
-            
-            tableHtml += '<td class="' + cellClass + '" style="text-align: ' + align + '">' + cellContent + '</td>';
-        });
-        tableHtml += '</tr>';
-    });
-    tableHtml += '</tbody>';
-    
-    tableHtml += '</table></div>';
-    return tableHtml;
-}
-
-// Procesar markdown inline con detección inteligente
-function processInlineMarkdown(text) {
-    let processed = text;
-    
-    processed = applySmartFormatting(processed);
-    
-    processed = processed.replace(/`([^`]+)`/g, '<code>$1</code>');
-    processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    processed = processed.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-    processed = processed.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    processed = processed.replace(/_([^_]+)_/g, '<em>$1</em>');
-    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-    
-    return processed;
-}
-
-// Función para aplicar formato inteligente automático
-function applySmartFormatting(text) {
-    let formatted = text;
-    
-    // Nombres de personas
-    formatted = formatted.replace(/\b([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+)(?=\s*[\(\[]|\s*$|\s*,|\s*:)/g, '**$1**');
-    
-    // Proyectos entre paréntesis
-    formatted = formatted.replace(/\(([^)]+(?:Project|Proyecto|SID|CAFE|Harvard|Dataverse|CrisisReady)[^)]*)\)/g, '(**$1**)');
-    
-    // Palabras clave importantes
-    formatted = formatted.replace(/\b(Nota|Notas|Importante|Atención|Advertencia|Proceso|Resumen|Conclusión|Recomendación|Observación)(?=\s*:)/gi, '**$1**');
-    
-    // Empresas conocidas
-    const companies = ['Harvard', 'MIT', 'Stanford', 'Google', 'Microsoft', 'Apple', 'Amazon'];
-    companies.forEach(company => {
-        const regex = new RegExp('\\b' + company + '\\b', 'g');
-        formatted = formatted.replace(regex, (match) => {
-            if (!formatted.includes('**' + match)) {
-                return '**' + match + '**';
-            }
-            return match;
-        });
-    });
-    
-    // Ubicaciones
-    formatted = formatted.replace(/\b(Basado en|Based in|Ubicado en|Located in):\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:,?\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/g, '$1: **$2**');
-    
-    // Números de lista
-    formatted = formatted.replace(/^(\d+)\.\s+/gm, '**$1.** ');
-    
-    // Porcentajes y métricas
-    formatted = formatted.replace(/\b(\d+(?:\.\d+)?%|\$\d+(?:,\d{3})*(?:\.\d+)?[KMB]?|\d+(?:,\d{3})+)\b/g, '**$1**');
-    
-    return formatted;
-}
-
-// Procesar el resto del markdown
-function processNonTableMarkdown(html) {
-    const parts = html.split(/(<div class="markdown-table-wrapper">[\s\S]*?<\/div>)/g);
-    
-    return parts.map(part => {
-        if (part.includes('markdown-table-wrapper')) {
-            return part;
-        }
-        
-        let processed = part;
-        processed = applySmartFormatting(processed);
-        
-        processed = processed.replace(/&/g, '&amp;')
-                           .replace(/</g, '&lt;')
-                           .replace(/>/g, '&gt;');
-        
-        processed = processed.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-        processed = processed.replace(/`([^`]+)`/g, '<code>$1</code>');
-        
-        processed = processed.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
-        processed = processed.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        processed = processed.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-        processed = processed.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-        
-        processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        processed = processed.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-        processed = processed.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        processed = processed.replace(/_([^_]+)_/g, '<em>$1</em>');
-        processed = processed.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-        processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-        
-        processed = processed.replace(/^> (.*$)/gim, '<blockquote><p>$1</p></blockquote>');
-        processed = processed.replace(/^---$/gim, '<hr>');
-        processed = processed.replace(/^\*\*\*$/gim, '<hr>');
-        
-        processed = processed.replace(/^\* (.+)/gim, '<ul><li>$1</li></ul>');
-        processed = processed.replace(/^- (.+)/gim, '<ul><li>$1</li></ul>');
-        processed = processed.replace(/^\d+\. (.+)/gim, '<ol><li>$1</li></ol>');
-        
-        processed = processed.replace(/<\/ul>\n<ul>/g, '');
-        processed = processed.replace(/<\/ol>\n<ol>/g, '');
-        
-        processed = processed.split('\n\n').map(para => {
-            if (!para.startsWith('<') && para.trim() !== '') {
-                return '<p>' + para + '</p>';
-            }
-            return para;
-        }).join('\n');
-        
-        processed = processed.replace(/\n/g, '<br>');
-        
-        return processed;
-    }).join('');
-}
-
-// Datos de ejemplo
-const exampleMessages = [
-    {
-        type: 'user',
-        content: '¿Qué empleados trabajan en proyectos de Harvard pero no están en el departamento de Consulting?'
-    },
-    {
-        type: 'assistant',
-        content: `Los empleados que trabajan en proyectos de Harvard pero no están en Consulting son:
-
-1. David Verde (Senior Software Developer)
-   - Proyecto: Harvard SID
-   - Basado en: Gran Canaria
-
-2. Guillermo Portas (Lead Software Developer)
-   - Proyecto: Dataverse
-   - Basado en: Tenerife
-
-3. Germán Saracca (Senior Software Developer)
-   - Proyecto: Dataverse
-   - Basado en: Argentina
-
-4. Alexis Guanche (Junior Software Developer)
-   - Proyecto: CAFE
-   - Basado en: Tenerife
-
-Nota: Todos estos empleados están asignados a proyectos activos de Harvard y reportan al departamento de Engineering.
-
-Proceso ▼`
-    }
-];
-
-// Elementos del DOM
-const messagesContainer = document.getElementById('messages');
-const inputField = document.getElementById('input');
-const sendButton = document.getElementById('sendBtn');
-
-// Función para añadir mensaje
-function addMessage(content, type) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message ' + type + '-message';
-    messageDiv.innerHTML = parseMarkdown(content);
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-// Función para mostrar indicador de escritura
-function showTypingIndicator() {
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'typing-indicator';
-    typingDiv.id = 'typing';
-    typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
-    messagesContainer.appendChild(typingDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-// Función para remover indicador
-function hideTypingIndicator() {
-    const typing = document.getElementById('typing');
-    if (typing) {
-        typing.remove();
-    }
-}
-
-// Función para simular respuesta
-function simulateResponse() {
-    showTypingIndicator();
-    
-    const responses = [
-        'Los empleados en proyectos de Harvard fuera de Consulting son:\n\n1. Carlos Méndez (Senior Developer)\n   - Proyecto: Harvard DataHub\n   - Basado en: Madrid\n\n2. Ana García (Lead Engineer)\n   - Proyecto: Harvard Research Platform\n   - Basado en: Barcelona\n\nNota: Estos empleados pertenecen al departamento de Engineering.\n\nProceso ▼'
-    ];
-    
-    setTimeout(() => {
-        hideTypingIndicator();
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        addMessage(randomResponse, 'assistant');
-    }, 1500);
-}
-
-// Event listeners
-sendButton.addEventListener('click', sendMessage);
-inputField.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        sendMessage();
-    }
-});
-
-function sendMessage() {
-    const message = inputField.value.trim();
-    if (message) {
-        addMessage(message, 'user');
-        inputField.value = '';
-        simulateResponse();
-    }
-}
-
-// Cargar mensajes de ejemplo
-window.addEventListener('load', () => {
-    exampleMessages.forEach((msg, index) => {
-        setTimeout(() => {
-            addMessage(msg.content, msg.type);
-        }, index * 500);
-    });
-});
-EOF
-
-echo "✅ Archivos creados exitosamente!"
-echo "📂 Archivos generados:"
-echo "   - chat-mejorado-final.html"
-echo "   - chat-script.js"
-echo ""
-echo "🚀 Para abrir:"
-echo "   open chat-mejorado-final.html"
