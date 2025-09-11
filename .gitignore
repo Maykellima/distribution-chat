@@ -1,0 +1,12 @@
+# Variables de entorno
+.env
+
+# Logs
+*.log
+
+# Node modules (si se usa npm en el futuro)
+node_modules/
+
+# Sistema
+.DS_Store
+Thumbs.db

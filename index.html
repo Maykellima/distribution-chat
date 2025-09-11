@@ -46,7 +46,6 @@
             animation: fadeIn 0.3s ease;
         }
         
-        /* Espaciado especial para preguntas del usuario */
         .user-message {
             font-size: 18px;
             color: #404040;
@@ -54,11 +53,10 @@
             text-transform: uppercase;
             letter-spacing: 0.02em;
             max-width: 440px;
-            margin-top: 100px;  /* Espacio de 100px antes de cada nueva pregunta */
+            margin-top: 100px;
             margin-bottom: 20px;
         }
         
-        /* La primera pregunta no necesita espacio arriba */
         .messages .user-message:first-child {
             margin-top: 0;
         }
@@ -74,42 +72,12 @@
             border-radius: 50%;
         }
         
-        /* Respuestas del asistente */
         .assistant-message {
             font-size: 14px;
             color: #404040;
             line-height: 1.6;
             max-width: 440px;
-            margin-bottom: 30px;  /* Espacio después de la respuesta */
-        }
-        
-        /* Resto de estilos sin cambios... */
-        .assistant-message h1 {
-            font-size: 20px;
-            font-weight: 700;
-            margin: 20px 0 12px 0;
-            color: #000000;
-            border-bottom: 2px solid #e5e5e5;
-            padding-bottom: 8px;
-        }
-        
-        .assistant-message h2 {
-            font-size: 16px;
-            font-weight: 600;
-            margin: 18px 0 10px 0;
-            color: #202020;
-        }
-        
-        .assistant-message h3 {
-            font-size: 14px;
-            font-weight: 600;
-            margin: 16px 0 8px 0;
-            color: #202020;
-        }
-
-        .assistant-message p {
-            margin-bottom: 12px;
-            line-height: 1.6;
+            margin-bottom: 30px;
         }
         
         .assistant-message strong {
@@ -117,59 +85,6 @@
             color: #000000;
         }
         
-        .assistant-message em {
-            font-style: italic;
-        }
-        
-        .assistant-message code {
-            background: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 12px;
-            color: #d73a49;
-        }
-        
-        .assistant-message pre {
-            background: #f6f8fa;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            padding: 16px;
-            margin: 12px 0;
-            overflow-x: auto;
-            line-height: 1.45;
-        }
-        
-        .assistant-message pre code {
-            background: none;
-            padding: 0;
-            color: #24292e;
-            font-size: 12px;
-        }
-        
-        .assistant-message blockquote {
-            margin: 12px 0;
-            padding: 0 16px;
-            border-left: 4px solid #dfe2e5;
-            color: #6a737d;
-        }
-        
-        .assistant-message hr {
-            margin: 16px 0;
-            border: 0;
-            border-top: 1.5px solid rgba(0, 0, 0, 0.8);
-        }
-        
-        .assistant-message ul, .assistant-message ol {
-            margin: 8px 0;
-            padding-left: 20px;
-        }
-        
-        .assistant-message li {
-            margin: 4px 0;
-        }
-        
-        /* Estilos simplificados para el bloque de proceso */
         .process-details {
             margin: 20px 0;
             background: transparent;
@@ -216,28 +131,8 @@
             line-height: 1.7;
         }
         
-        .process-details .details-content h3 {
-            color: #404040;
-            margin-bottom: 12px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        
-        .process-details .details-content strong {
-            color: #404040;
-        }
-        
-        /* Estilo para la sección de resultado */
         .result-section {
             margin-bottom: 20px;
-        }
-        
-        .result-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #000000;
-            margin-bottom: 12px;
-            display: block;
         }
         
         .typing-indicator {
@@ -285,11 +180,6 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
         
-        .input-field::placeholder {
-            color: #999999;
-            font-weight: 400;
-        }
-        
         .send-button {
             position: absolute;
             right: 8px;
@@ -320,7 +210,6 @@
             color: #cccccc;
             cursor: not-allowed;
             box-shadow: none;
-            transform: translateY(-50%) scale(1);
         }
         
         .send-button svg {
@@ -351,7 +240,6 @@
     </style>
 </head>
 <body>
-    <!-- El resto del HTML sigue igual, no necesita cambios -->
     <div class="container">
         <div class="messages" id="messages"></div>
         <div class="input-container">
@@ -370,10 +258,141 @@
         </div>
     </div>
 
-    <!-- El JavaScript sigue igual, no necesita cambios para el espaciado -->
     <script>
-        // Todo el código JavaScript existente permanece igual
-        // ...
+        // CONFIGURACIÓN DIRECTA - SIN ARCHIVOS EXTERNOS
+        const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+        
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+        
+        let isLoading = false;
+
+        function formatMessage(content) {
+            // Separar PROCESO y RESULTADO
+            const resultMatch = content.match(/\[RESULTADO\]([\s\S]*?)(?:\[\/RESULTADO\]|\[PROCESO\])/);
+            const processMatch = content.match(/\[PROCESO\]([\s\S]*?)(?:\[\/PROCESO\]|$)/);
+            
+            let html = '';
+            
+            if (resultMatch && resultMatch[1]) {
+                const resultContent = resultMatch[1].trim()
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                html += `<div class="result-section">${resultContent}</div>`;
+            }
+            
+            if (processMatch && processMatch[1]) {
+                const processContent = processMatch[1].trim()
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                html += `
+                    <details class="process-details">
+                        <summary>Proceso</summary>
+                        <div class="details-content">${processContent}</div>
+                    </details>`;
+            }
+            
+            // Si no hay formato PROCESO/RESULTADO, formatear normal
+            if (!html) {
+                html = content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+            }
+            
+            return html;
+        }
+
+        async function sendMessage() {
+            const question = input.value.trim();
+            if (!question || isLoading) return;
+
+            // Agregar mensaje del usuario
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user-message';
+            userDiv.textContent = question.toUpperCase();
+            messagesDiv.appendChild(userDiv);
+            
+            input.value = '';
+            isLoading = true;
+            sendBtn.disabled = true;
+            
+            // Mostrar indicador de escritura
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            try {
+                console.log('Enviando pregunta:', question);
+                
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`Error ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                typingDiv.remove();
+                
+                // Agregar respuesta del asistente
+                const assistantDiv = document.createElement('div');
+                assistantDiv.className = 'message assistant-message';
+                
+                const responseText = data.answer || 'No se recibió respuesta';
+                assistantDiv.innerHTML = formatMessage(responseText);
+                
+                messagesDiv.appendChild(assistantDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                
+            } catch (error) {
+                console.error('Error completo:', error);
+                typingDiv.remove();
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message assistant-message';
+                errorDiv.textContent = `Error: ${error.message}`;
+                messagesDiv.appendChild(errorDiv);
+            } finally {
+                isLoading = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Focus inicial
+        input.focus();
+        
+        // Mensaje de bienvenida
+        console.log('✅ Chat inicializado correctamente');
+        console.log('📝 URL:', SUPABASE_URL);
+        console.log('🔑 API Key configurada');
     </script>
 </body>
 </html>
