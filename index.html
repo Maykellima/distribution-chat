@@ -1,4 +1,4 @@
-cat > chat-mejorado.html << 'EOF'
+cat > chat-mejorado-final.html << 'EOF'
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -734,9 +734,12 @@ cat > chat-mejorado.html << 'EOF'
             return tableHtml;
         }
         
-        // Procesar markdown inline (negrita, cursiva, código)
+        // Procesar markdown inline con detección inteligente
         function processInlineMarkdown(text) {
             let processed = text;
+            
+            // Aplicar formato inteligente automático ANTES del markdown manual
+            processed = applySmartFormatting(processed);
             
             // Código inline
             processed = processed.replace(/\`([^\`]+)\`/g, '<code>$1</code>');
@@ -755,6 +758,62 @@ cat > chat-mejorado.html << 'EOF'
             return processed;
         }
         
+        // Función para aplicar formato inteligente automático
+        function applySmartFormatting(text) {
+            let formatted = text;
+            
+            // Detectar y formatear automáticamente elementos clave
+            
+            // 1. Nombres de personas (Nombre Apellido con mayúsculas)
+            formatted = formatted.replace(/\b([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+)(?=\s*[\(\[]|\s*$|\s*,|\s*:)/g, '**$1**');
+            
+            // 2. Nombres de proyectos entre paréntesis
+            formatted = formatted.replace(/\(([^)]+(?:Project|Proyecto|SID|CAFE|Harvard|Dataverse|CrisisReady)[^)]*)\)/g, '(**$1**)');
+            
+            // 3. Roles/Cargos (Senior, Junior, Lead, Developer, etc.)
+            formatted = formatted.replace(/\b(Senior|Junior|Lead|Principal|Staff|Engineering|Software|Hardware|Product|Project|Data|Business|Marketing|Sales|Customer|Technical|Team Lead|Manager|Director|VP|CTO|CEO|Developer|Engineer|Designer|Analyst|Consultant|Specialist|Coordinator|Administrator|Architect)\b/g, function(match) {
+                // Solo si no está ya en negrita
+                if (!formatted.includes('**' + match)) {
+                    return match;
+                }
+                return match;
+            });
+            
+            // 4. Palabras clave importantes
+            formatted = formatted.replace(/\b(Nota|Notas|Importante|Atención|Advertencia|Proceso|Resumen|Conclusión|Recomendación|Observación)(?=\s*:)/gi, '**$1**');
+            
+            // 5. Empresas y organizaciones conocidas
+            formatted = formatted.replace(/\b(Harvard|MIT|Stanford|Google|Microsoft|Apple|Amazon|Meta|Facebook|Twitter|LinkedIn|GitHub|Slack|Asana|Trello|Notion|Tableau|Salesforce|Oracle|IBM|SAP|Adobe|Cisco|Intel|NVIDIA|Tesla|SpaceX|OpenAI|Anthropic|DeepMind)\b/g, function(match) {
+                // Solo si no está ya formateado
+                if (!formatted.includes('**' + match) && !formatted.includes('*' + match)) {
+                    return '**' + match + '**';
+                }
+                return match;
+            });
+            
+            // 6. Departamentos y áreas
+            formatted = formatted.replace(/\b(Departamento de [A-ZÁÉÍÓÚÑ][a-záéíóúñ]+|Department of [A-Z][a-z]+|Consulting|Engineering|Marketing|Sales|HR|IT|Finance|Operations|Legal|R&D|Customer Success|Product Management)\b/g, function(match) {
+                if (!formatted.includes('**' + match)) {
+                    return '**' + match + '**';
+                }
+                return match;
+            });
+            
+            // 7. Ubicaciones (Ciudad, País)
+            formatted = formatted.replace(/\b(Basado en|Based in|Ubicado en|Located in):\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:,?\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/g, '$1: **$2**');
+            
+            // 8. Números de lista mejorados
+            formatted = formatted.replace(/^(\d+)\.\s+/gm, '**$1.** ');
+            
+            // 9. Bullets con formato
+            formatted = formatted.replace(/^[•·-]\s+/gm, '• ');
+            
+            // 10. Porcentajes y métricas
+            formatted = formatted.replace(/\b(\d+(?:\.\d+)?%|\$\d+(?:,\d{3})*(?:\.\d+)?[KMB]?|\d+(?:,\d{3})+)\b/g, '**$1**');
+            
+            return formatted;
+        }
+        
         // Procesar el resto del markdown (no tablas)
         function processNonTableMarkdown(html) {
             // Escapar HTML solo en partes que no son tablas
@@ -766,7 +825,13 @@ cat > chat-mejorado.html << 'EOF'
                 }
                 
                 // Procesar el resto del contenido
-                let processed = part.replace(/&/g, '&amp;')
+                let processed = part;
+                
+                // Aplicar formato inteligente ANTES de escapar HTML
+                processed = applySmartFormatting(processed);
+                
+                // Ahora escapar HTML
+                processed = processed.replace(/&/g, '&amp;')
                                    .replace(/</g, '&lt;')
                                    .replace(/>/g, '&gt;');
                 
@@ -833,94 +898,79 @@ cat > chat-mejorado.html << 'EOF'
         const exampleMessages = [
             {
                 type: 'user',
-                content: '¿Cómo puedo mejorar la **productividad** de mi equipo?'
+                content: '¿Qué empleados trabajan en proyectos de Harvard pero no están en el departamento de Consulting?'
             },
             {
                 type: 'assistant',
-                content: \`# Estrategias para Mejorar la Productividad del Equipo
+                content: \`Los empleados que trabajan en proyectos de Harvard pero no están en Consulting son:
 
-La **productividad del equipo** es fundamental para el éxito. Aquí las estrategias más efectivas:
+1. David Verde (Senior Software Developer)
+   - Proyecto: Harvard SID
+   - Basado en: Gran Canaria
 
-## 1. Comunicación Clara y Efectiva
+2. Guillermo Portas (Lead Software Developer)
+   - Proyecto: Dataverse
+   - Basado en: Tenerife
 
-La comunicación es la *base fundamental* de todo equipo productivo:
+3. Germán Saracca (Senior Software Developer)
+   - Proyecto: Dataverse
+   - Basado en: Argentina
 
-- **Reuniones diarias breves** (15 minutos máximo)
-- Canales de comunicación bien definidos
-- Documentación clara de procesos
-- Retroalimentación constante
+4. Alexis Guanche (Junior Software Developer)
+   - Proyecto: CAFE
+   - Basado en: Tenerife
 
-> "La comunicación efectiva es el 80% del éxito en la gestión de equipos"
+Nota: Todos estos empleados están asignados a proyectos activos de Harvard y reportan al departamento de Engineering.
 
-## 2. Herramientas y Tecnología
-
-| Categoría | Herramienta | Beneficio Principal |
-|-----------|------------|-------------------|
-| **Gestión de Proyectos** | Asana, Trello | Visualización clara del progreso |
-| **Comunicación** | Slack, Teams | Reducción de emails en 70% |
-| **Documentación** | Notion | Conocimiento centralizado |
-| **Análisis** | Tableau | Decisiones basadas en datos |
-
-## 3. Métricas de Rendimiento
-
-| Métrica | Objetivo | Estado Actual | Prioridad |
-|:--------|:--------:|-------------:|:---------:|
-| Velocidad de entrega | 85% | 72% | Alta |
-| Satisfacción del equipo | 90% | 88% | Media |
-| Calidad del código | 95% | 91% | Alta |
-| Tiempo de respuesta | <2h | 3.5h | Media |
-
-Con estas estrategias implementadas correctamente, puedes esperar:
-
-- **30-40%** de aumento en la productividad
-- Mayor satisfacción laboral
-- Mejor clima organizacional
-
-*Recuerda:* La productividad no es trabajar más, sino **trabajar mejor**.\`
+Proceso ▼\`
             },
             {
                 type: 'user',
-                content: 'Muéstrame una comparación de las estrategias de marketing'
+                content: '¿Qué empleados trabajan en proyectos de Harvard pero no están en el departamento de Consulting?'
             },
             {
                 type: 'assistant',
-                content: \`## Comparación de Estrategias de Marketing Digital
+                content: \`Empleados trabajando en proyectos de Harvard:
 
-Aquí tienes una **comparación detallada** de las principales estrategias:
+CAFE:
+- Alexis Guanche (Junior Software Developer)
 
-| Característica | Tabla ASCII | Módulo Nuevo |
-|---|---|---|
-| **Legibilidad** | Básica | Excelente con jerarquía visual |
-| **Interactividad** | Ninguna | Hover effects y animaciones |
-| **Formato** | Monoespaciado | Tipografía elegante y variada |
-| **Colores** | No soportado | Badges y destacados coloridos |
-| **Responsivo** | Problemático | Totalmente adaptable |
-| **Copiar/Pegar** | Difícil formato | Un click para copiar Markdown |
+CrisisReady:
+- Carlos Pérez (Senior Software Developer)
 
-### Análisis de ROI por Canal
+Dataverse:
+- Germán Saracca (Senior Software Developer)
+- Guillermo Portas (Lead Software Developer)
 
-| Canal | ROI Esperado | Inversión Inicial | Tiempo de Retorno | Dificultad |
-|:------|:------------:|------------------:|:------------------|:----------:|
-| **SEO** | 300-500% | Media | 6-12 meses | Alta |
-| **SEM** | 200-300% | Alta | 1-2 meses | Media |
-| **Email Marketing** | 400-600% | Baja | 2-4 semanas | Baja |
-| **Social Media** | 150-250% | Media | 3-6 meses | Media |
-| **Content Marketing** | 250-400% | Media | 4-8 meses | Alta |
-| **Influencer Marketing** | 100-300% | Alta | 1-3 meses | Media |
+D^3:
+- Felipe Hernández (Senior Software Developer)
+- Roberto Díaz (Engineering Team Lead)
 
-> **Nota importante:** Los valores de ROI son estimaciones basadas en promedios de la industria y pueden variar significativamente según el sector y la implementación.
+Nota: Todos estos empleados están asignados a proyectos de Harvard pero pertenecen a otros departamentos diferentes a Consulting.
 
-### Métricas Clave por Estrategia
+Proceso ▼\`
+            },
+            {
+                type: 'user',
+                content: '¿Qué empleados trabajan en proyectos de Harvard pero no están en el departamento de Consulting?'
+            },
+            {
+                type: 'assistant',
+                content: \`Las personas que trabajan en proyectos de Harvard son:
 
-| Estrategia | CTR Promedio | Conversión | CAC | LTV/CAC Ratio |
-|------------|:------------:|:----------:|:---:|:-------------:|
-| **Búsqueda Pagada** | \`3.17%\` | \`2.35%\` | $50 | 3:1 |
-| **Display Ads** | \`0.46%\` | \`0.77%\` | $75 | 2:1 |
-| **Facebook Ads** | \`0.90%\` | \`1.85%\` | $40 | 4:1 |
-| **Email** | \`2.62%\` | \`6.05%\` | $10 | 8:1 |
-| **SEO Orgánico** | \`31.7%\` | \`2.40%\` | $20 | 5:1 |
+1. David Verde (Senior Software Developer)
+2. Guillermo Portas (Lead Software Developer)
+3. Germán Saracca (Senior Software Developer)
+4. Alexis Guanche (Junior Software Developer)
+5. Carlos Pérez (Senior Software Developer)
+6. Chema Díaz Del Corral (Product Designer)
 
-*Los datos reflejan benchmarks actualizados del sector tecnológico B2B.*\`
+Notas:
+- Todos están asignados a uno o más de los siguientes proyectos: CAFE, Harvard SID, CrisisReady o D^3
+- Algunos están asignados a múltiples proyectos de Harvard simultáneamente
+- La persona de contacto para el cliente Harvard es Levi Wisniewski
+
+Proceso ▼\`
             }
         ];
         
@@ -965,33 +1015,46 @@ Aquí tienes una **comparación detallada** de las principales estrategias:
             showTypingIndicator();
             
             const responses = [
-                \`**¡Excelente pregunta!** Aquí una tabla comparativa:
+                \`Los empleados en proyectos de Harvard fuera de Consulting son:
 
-| Aspecto | Opción A | Opción B | Recomendación |
-|---------|:--------:|:--------:|---------------|
-| **Costo** | $1,000 | $2,500 | Baja |
-| **Tiempo** | 2 meses | 1 mes | Media |
-| **Calidad** | 85% | 95% | Alta |
-| **Soporte** | 24/7 | Horario oficina | Media |
+1. Carlos Méndez (Senior Developer)
+   - Proyecto: Harvard DataHub
+   - Basado en: Madrid
 
-### Análisis Detallado
+2. Ana García (Lead Engineer)  
+   - Proyecto: Harvard Research Platform
+   - Basado en: Barcelona
 
-- La **Opción A** ofrece mejor relación costo-beneficio
-- La **Opción B** es ideal si el tiempo es crítico
-- Ambas opciones incluyen \`soporte técnico\` básico
+3. Miguel Torres (Junior Developer)
+   - Proyecto: CAFE System
+   - Basado en: Valencia
 
-*¿Necesitas más detalles sobre alguna opción específica?*\`,
+Nota: Estos empleados pertenecen al departamento de Engineering y trabajan activamente en proyectos de Harvard.
 
-                \`## Resultados del Análisis
+| Empleado | Proyecto | Ubicación | Departamento |
+|----------|----------|-----------|--------------|
+| Carlos Méndez | DataHub | Madrid | Engineering |
+| Ana García | Research Platform | Barcelona | Engineering |
+| Miguel Torres | CAFE | Valencia | Engineering |
 
-| Métrica | Q1 2024 | Q2 2024 | Variación | Tendencia |
-|---------|--------:|--------:|----------:|:---------:|
-| **Ventas** | $45,000 | $52,000 | +15.6% | Alta |
-| **Clientes** | 1,200 | 1,450 | +20.8% | Alta |
-| **Retención** | 78% | 82% | +5.1% | Media |
-| **NPS** | 72 | 75 | +4.2% | Media |
+Proceso ▼\`,
 
-Los datos muestran una **tendencia positiva** en todos los indicadores clave.\`
+                \`Resumen de empleados en proyectos Harvard:
+
+Engineering:
+- Roberto Fernández (Senior Software Developer)
+- María López (Lead Developer)
+- Juan Martín (Junior Developer)
+
+Product:
+- Carmen Ruiz (Product Designer)
+- Pablo González (UX Designer)
+
+Nota: Total de 5 empleados trabajando en proyectos de Harvard fuera del departamento de Consulting.
+
+Los proyectos activos incluyen: Harvard SID, Dataverse, CAFE y CrisisReady.
+
+Proceso ▼\`
             ];
             
             setTimeout(() => {
@@ -1031,6 +1094,17 @@ Los datos muestran una **tendencia positiva** en todos los indicadores clave.\`
 </html>
 EOF
 
-echo "✅ Archivo 'chat-mejorado.html' creado exitosamente!"
-echo "📂 Ubicación: $(pwd)/chat-mejorado.html"
-echo "🌐 Para abrir: open chat-mejorado.html (Mac) o xdg-open chat-mejorado.html (Linux)"
+echo "✅ Archivo 'chat-mejorado-final.html' creado exitosamente!"
+echo "📂 Ubicación: $(pwd)/chat-mejorado-final.html"
+echo ""
+echo "🚀 Para abrir el archivo:"
+echo "   Mac: open chat-mejorado-final.html"
+echo "   Linux: xdg-open chat-mejorado-final.html"
+echo "   Windows: start chat-mejorado-final.html"
+echo ""
+echo "✨ Características incluidas:"
+echo "   • Formato inteligente automático"
+echo "   • Detección de nombres, proyectos y métricas"
+echo "   • Tablas HTML elegantes"
+echo "   • Markdown completo"
+echo "   • Estilo consistente y compacto"
