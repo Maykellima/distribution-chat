@@ -7,60 +7,30 @@
   <title>Distribution Chat</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    :root{
-      --black-90: rgba(0,0,0,.9);
-      --black-80: rgba(0,0,0,.8);
-      --border: rgba(0,0,0,.2);
-      --bg: #ffffff;
-    }
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-      background:var(--bg);
-      min-height:100vh;
-      display:flex;justify-content:center;align-items:center;
-      color:#222;
-    }
+    :root{ --black-90:rgba(0,0,0,.9); --black-80:rgba(0,0,0,.8); --border:rgba(0,0,0,.2); --bg:#fff; }
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
     .container{width:640px;padding:40px 0}
-    .messages{
-      min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;
-      scrollbar-width:none;-ms-overflow-style:none;
-    }
+    .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
     .messages::-webkit-scrollbar{display:none}
     .message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
-    .user-message{
-      font-size:18px;color:#222;font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px;
-    }
-    .user-message::before{
-      content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%;
-    }
+    .user-message{font-size:18px;color:#222;font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px}
+    .user-message::before{content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%}
     .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px}
     .assistant-message strong{font-weight:700;color:#000}
     .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
     .assistant-message li{margin:4px 0}
     .proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
-
     .process-section{margin-top:10px}
-    .process-header{
-      font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer
-    }
+    .process-header{font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
     .process-arrow{font-size:13px;display:inline-block;min-width:14px}
     .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
     .process-content.visible{display:block}
-
     .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
-
     .input-container{position:relative}
-    .input-field{
-      width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;
-      transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)
-    }
+    .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
     .input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
     .input-field::placeholder{color:#999;font-weight:400}
-    .send-button{
-      position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;
-      background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
-      transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)
-    }
+    .send-button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)}
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
     .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
     .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
@@ -73,9 +43,7 @@
     <div class="input-container">
       <input type="text" class="input-field" id="input" placeholder="Pregunta lo que necesitas, encuentra lo que buscas." autocomplete="off"/>
       <button class="send-button" id="sendBtn" aria-label="Enviar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12l14 0M12 5l7 7-7 7"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
       </button>
     </div>
   </div>
@@ -126,71 +94,65 @@ function formatBasicContent(content){
   return f;
 }
 
-/* ===== Post-formateo rico para [RESULTADO] ===== */
+/* ===== Post-formateo robusto para [RESULTADO] ===== */
 function formatResultRich(text){
-  const original = text.trim();
-
-  // 1) separar Nota:
+  // normalizar NBSP
+  let body = text.trim().replace(/\u00A0/g,' ');
   let note = '';
-  let body = original;
-  const noteMatch = body.match(/\bNota:\s*([\s\S]*)$/i);
-  if (noteMatch){
-    note = noteMatch[1].trim();
-    body = body.slice(0, noteMatch.index).trim();
+
+  // separar Nota:
+  const nIdx = body.search(/\bNota:/i);
+  if (nIdx >= 0){
+    note = body.slice(nIdx).replace(/^.*?\bNota:\s*/i,'').trim();
+    body = body.slice(0, nIdx).trim();
   }
 
-  // 2) intentar detectar listado "1. ... 2. ...".
-  const itemRe = /(\d+)\.\s+([\s\S]+?)(?=(?:\s+\d+\.\s+)|$)/g;
+  // intentar listado numerado (en línea o con saltos)
   const items = [];
-  let m;
-  while ((m = itemRe.exec(body)) !== null){
-    items.push(m[2].trim());
+  const itemRe = /(?:^|\s)(\d+)\.\s+([^]+?)(?=(?:\s+\d+\.\s+)|$)/g;
+  let m; while((m=itemRe.exec(body))!==null){ items.push(m[2].trim()); }
+
+  // fallback: inyectar saltos y dividir
+  if(items.length===0){
+    const injected = body.replace(/(\d+)\.\s+/g, '\n$1. ');
+    const parts = injected.split(/\n(?=\d+\.\s)/).map(s=>s.trim());
+    if(parts.length>1){
+      parts.forEach(p=> items.push(p.replace(/^\d+\.\s+/,'').trim()));
+      body = body.replace(/^[\s\S]*?(?=\d+\.\s)/,'').trim(); // quitar intro si la hay
+    }
   }
 
-  // Intro (si existe antes de "1.")
-  let intro = body;
-  if (items.length){
+  // intro antes del primer "1."
+  let intro = '';
+  if(items.length){
     const firstIdx = body.search(/\d+\.\s+/);
-    intro = firstIdx > 0 ? body.slice(0, firstIdx).trim().replace(/[;:,–—-]\s*$/,'') : '';
+    if(firstIdx > 0) intro = body.slice(0, firstIdx).trim().replace(/[;:,–—-]\s*$/,'');
   }
 
-  // 3) enriquecer cada ítem: nombre, proyecto y departamento en negrita
-  const enhanceItem = (s) => {
+  const enhanceItem = (s)=>{
     let t = s;
-
-    // Nombre al inicio (hasta ' (' o ' – ' o ' - ')
+    // Nombre al comienzo
     t = t.replace(
-      /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)(?=\s*(?:\(|–|—|-|$))/,
+      /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)/,
       '<strong>$1</strong>'
     );
-
-    // Proyecto / Departamento → negrita etiqueta y valor
-    t = t.replace(/(Proyecto|Project):\s*([^–—\-\n]+)/gi, '<strong>$1:</strong> <strong>$2</strong>');
-    t = t.replace(/(Departamento|Department):\s*([^–—\-\n]+)/gi, '<strong>$1:</strong> <strong>$2</strong>');
-
-    // limpiar dobles espacios
-    t = t.replace(/\s{2,}/g,' ').trim();
-    return t;
+    // Etiquetas y valores
+    t = t.replace(/\b(Proyecto|Project):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
+    t = t.replace(/\b(Departamento|Department):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
+    return t.trim();
   };
 
-  // 4) construir HTML
+  // construir HTML
   let html = '';
-  if (intro) html += `<p>${formatBasicContent(intro)}</p>`;
-  if (items.length){
+  if(intro) html += `<p>${formatBasicContent(intro)}</p>`;
+  if(items.length){
     html += '<ol>';
-    for (const it of items){
-      html += `<li>${formatBasicContent(enhanceItem(it))}</li>`;
-    }
+    items.forEach(it => html += `<li>${formatBasicContent(enhanceItem(it))}</li>`);
     html += '</ol>';
   }else{
-    // si no hay numeración, al menos formatear básico
     html += formatBasicContent(body);
   }
-
-  if (note){
-    html += `<br><strong>Nota:</strong> ${formatBasicContent(note)}`;
-  }
-
+  if(note){ html += `<br><strong>Nota:</strong> ${formatBasicContent(note)}`; }
   return html;
 }
 
@@ -210,8 +172,6 @@ function buildStructuredMessage(resultText, processText){
     </div>`;
   return {id, html};
 }
-
-/* ===== Toggle Proceso ===== */
 function toggleProcess(id){
   const proc=document.getElementById('process-'+id);
   const arrow=document.getElementById('arrow-'+id);
@@ -223,13 +183,12 @@ function toggleProcess(id){
 /* ===== Auto-scroll ===== */
 function scrollToBottom(){ messagesDiv.scrollTop = messagesDiv.scrollHeight; }
 
-/* ===== Typewriter por CHUNKS (3–5 palabras, ~120ms) ===== */
+/* ===== Typewriter por chunks (3–5 palabras) ===== */
 function typeChunks(text, el, onDone){
   const words = text.split(/\s+/).filter(Boolean);
   const chunks = [];
-  let i=0;
-  while(i<words.length){
-    const size = Math.min(5, Math.max(3, Math.floor(Math.random()*3)+3));
+  for(let i=0;i<words.length;){
+    const size = Math.min(5, Math.max(3, 3+Math.floor(Math.random()*3)-0)); // 3..5
     chunks.push(words.slice(i, i+size).join(' '));
     i+=size;
   }
@@ -245,10 +204,8 @@ function typeChunks(text, el, onDone){
 async function sendMessage(){
   const original = input.value.trim();
   if(!original || isLoading) return;
-
   const enhanced = memory.enhance(original);
 
-  // Usuario
   const u = document.createElement('div');
   u.className='message user-message';
   u.textContent=original.toUpperCase();
@@ -257,7 +214,6 @@ async function sendMessage(){
   input.value=''; input.focus();
   isLoading=true; sendBtn.disabled=true;
 
-  // typing
   const typing=document.createElement('div');
   typing.className='typing-indicator';
   typing.textContent='escribiendo…';
@@ -267,11 +223,7 @@ async function sendMessage(){
   try{
     const r = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'apikey':SUPABASE_ANON_KEY,
-        'Authorization':`Bearer ${SUPABASE_ANON_KEY}`
-      },
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${SUPABASE_ANON_KEY}`},
       body:JSON.stringify({question:enhanced})
     });
     const data = await r.json();
@@ -293,11 +245,11 @@ async function sendMessage(){
 
       const {id, html} = buildStructuredMessage(resultText, processText);
       a.innerHTML = html;
-
-      // 1) animar el texto sencillo primero
       const resultEl = document.getElementById('result-'+id);
+
+      // 1) animar crudo
       typeChunks(resultText, resultEl, ()=>{
-        // 2) al terminar, re-render rico (listas, negritas, notas)
+        // 2) re-render rico (listas, negritas, Nota)
         resultEl.innerHTML = formatResultRich(resultText);
         scrollToBottom();
       });
@@ -309,7 +261,6 @@ async function sendMessage(){
       a.appendChild(resEl);
       typeChunks(full, resEl, ()=>{});
     }
-
     scrollToBottom();
   }catch(err){
     typing.remove();
