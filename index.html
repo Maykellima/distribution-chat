@@ -310,15 +310,15 @@ function extractLogicalLines(element) {
   return lines;
 }
 
-function typeLineContent(content, targetElement, cursor, onComplete) {
+function typeLineContent(content, targetElement, onComplete) {
   if (!content) {
     onComplete();
     return;
   }
   
-  // Si el contenido tiene HTML, lo procesamos caracter por caracter
+  // Velocidad 4x más rápida
   let currentIndex = 0;
-  const speed = 80; // ms por caracter
+  const speed = 20; // 80ms / 4 = 20ms por caracter
   
   function typeNext() {
     if (currentIndex >= content.length) {
@@ -329,10 +329,8 @@ function typeLineContent(content, targetElement, cursor, onComplete) {
     // Extraer hasta el siguiente caracter
     const currentContent = content.substring(0, currentIndex + 1);
     
-    // Actualizar contenido manteniendo el cursor al final
-    cursor.remove();
+    // Actualizar contenido
     targetElement.innerHTML = currentContent;
-    targetElement.appendChild(cursor);
     
     currentIndex++;
     scrollToBottom();
