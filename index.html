@@ -34,8 +34,6 @@
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
     .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
     .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
-    .typewriter-cursor{display:inline-block;width:2px;height:1em;background:#000;margin-left:2px;animation:blink 1s infinite}
-    @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
@@ -182,160 +180,47 @@ function parseStructuredResponse(text) {
   };
 }
 
-/* ===== NUEVO: Efecto typewriter línea por línea ===== */
+/* ===== NUEVO: Efecto typewriter fluido y limpio ===== */
 function typewriterByLines(text, element, onComplete) {
   // 1. Aplicar formato completo al texto
   const formattedText = formatResultRich(text);
   
-  // 2. Crear elemento temporal para parsear HTML
-  const temp = document.createElement('div');
-  temp.innerHTML = formattedText;
-  
-  // 3. Extraer líneas lógicas preservando HTML
-  const lines = extractLogicalLines(temp);
-  
-  // 4. Limpiar elemento de destino
+  // 2. Limpiar elemento de destino
   element.innerHTML = '';
   
-  let currentLineIndex = 0;
+  // 3. Escribir directamente sin procesar por líneas para evitar saltos
+  typeContentDirectly(formattedText, element, onComplete);
+}
+
+function typeContentDirectly(htmlContent, targetElement, onComplete) {
+  // Crear div temporal para obtener el texto renderizado
+  const temp = document.createElement('div');
+  temp.innerHTML = htmlContent;
   
-  function typeNextLine() {
-    if (currentLineIndex >= lines.length) {
-      // Remover cursor y ejecutar callback
-      const cursor = element.querySelector('.typewriter-cursor');
-      if (cursor) cursor.remove();
+  // Obtener el HTML limpio sin caracteres extraños
+  const cleanHTML = temp.innerHTML.replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, '');
+  
+  let currentIndex = 0;
+  const speed = 10; // 10ms por caracter para velocidad máxima
+  
+  function typeNext() {
+    if (currentIndex >= cleanHTML.length) {
       if (onComplete) onComplete();
       return;
     }
     
-    const line = lines[currentLineIndex];
+    // Extraer contenido hasta el índice actual
+    const currentContent = cleanHTML.substring(0, currentIndex + 1);
     
-    // Crear contenedor para la línea
-    const lineElement = document.createElement('div');
-    lineElement.style.display = 'inline';
-    
-    // Si es el primer elemento de una lista, crear la estructura
-    if (line.isListItem && !element.querySelector('ol')) {
-      const ol = document.createElement('ol');
-      element.appendChild(ol);
-    }
-    
-    // Determinar dónde añadir la línea
-    let targetElement = element;
-    if (line.isListItem) {
-      const ol = element.querySelector('ol');
-      const li = document.createElement('li');
-      ol.appendChild(li);
-      targetElement = li;
-    } else if (line.isParagraph) {
-      const p = document.createElement('p');
-      element.appendChild(p);
-      targetElement = p;
-    }
-    
-    // Añadir cursor
-    const cursor = document.createElement('span');
-    cursor.className = 'typewriter-cursor';
-    targetElement.appendChild(cursor);
-    
-    // Animar la línea
-    typeLineContent(line.content, targetElement, cursor, () => {
-      currentLineIndex++;
-      setTimeout(typeNextLine, 150); // Pausa entre líneas
-    });
-  }
-  
-  typeNextLine();
-}
-
-function extractLogicalLines(element) {
-  const lines = [];
-  
-  function traverse(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent.trim();
-      if (text) {
-        lines.push({
-          content: text,
-          isText: true,
-          isParagraph: false,
-          isListItem: false
-        });
-      }
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      const tagName = node.tagName.toLowerCase();
-      
-      if (tagName === 'li') {
-        lines.push({
-          content: node.innerHTML,
-          isText: false,
-          isParagraph: false,
-          isListItem: true
-        });
-      } else if (tagName === 'p') {
-        lines.push({
-          content: node.innerHTML,
-          isText: false,
-          isParagraph: true,
-          isListItem: false
-        });
-      } else if (tagName === 'br') {
-        // Salto de línea - crear línea vacía
-        lines.push({
-          content: '',
-          isText: true,
-          isParagraph: false,
-          isListItem: false
-        });
-      } else if (tagName === 'ol' || tagName === 'ul') {
-        // Procesar elementos de lista
-        for (const child of node.children) {
-          traverse(child);
-        }
-      } else {
-        // Otros elementos - procesar contenido
-        if (node.textContent.trim()) {
-          lines.push({
-            content: node.outerHTML,
-            isText: false,
-            isParagraph: false,
-            isListItem: false
-          });
-        }
-      }
-    }
-  }
-  
-  traverse(element);
-  return lines;
-}
-
-function typeLineContent(content, targetElement, onComplete) {
-  if (!content) {
-    onComplete();
-    return;
-  }
-  
-  // Velocidad 4x más rápida
-  let currentIndex = 0;
-  const speed = 20; // 80ms / 4 = 20ms por caracter
-  
-  function typeNext() {
-    if (currentIndex >= content.length) {
-      onComplete();
-      return;
-    }
-    
-    // Extraer hasta el siguiente caracter
-    const currentContent = content.substring(0, currentIndex + 1);
-    
-    // Actualizar contenido
+    // Actualizar contenido directamente
     targetElement.innerHTML = currentContent;
     
     currentIndex++;
     scrollToBottom();
     
-    setTimeout(typeNext, speed);
+    requestAnimationFrame(() => {
+      setTimeout(typeNext, speed);
+    });
   }
   
   typeNext();
