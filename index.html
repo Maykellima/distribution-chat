@@ -156,6 +156,43 @@ function formatResultRich(text){
   return html;
 }
 
+/* ===== NUEVO: Parser más robusto ===== */
+function parseStructuredResponse(text) {
+  // Normalizar texto
+  const normalized = text.trim().replace(/\u00A0/g, ' ');
+  
+  // Intentar extraer RESULTADO
+  let resultMatch = normalized.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
+  let processMatch = normalized.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
+  
+  // Si no encuentra las etiquetas exactas, intentar variaciones
+  if (!resultMatch) {
+    resultMatch = normalized.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i) ||
+                  normalized.match(/RESULTADO:([\s\S]*?)(?=\[PROCESO\]|\[PROCESS\]|$)/i);
+  }
+  
+  if (!processMatch) {
+    processMatch = normalized.match(/\[PROCESS\]([\s\S]*?)\[\/PROCESS\]/i) ||
+                   normalized.match(/PROCESO:([\s\S]*?)(?=\[RESULTADO\]|\[RESULT\]|$)/i);
+  }
+  
+  // Verificar si tenemos al menos la sección RESULTADO
+  if (resultMatch) {
+    return {
+      hasStructure: true,
+      result: resultMatch[1].trim(),
+      process: processMatch ? processMatch[1].trim() : 'No se proporcionó información del proceso.'
+    };
+  }
+  
+  // Si no hay estructura, devolver todo como resultado simple
+  return {
+    hasStructure: false,
+    result: normalized,
+    process: ''
+  };
+}
+
 /* ===== Bloque Resultado/Proceso ===== */
 function buildStructuredMessage(resultText, processText){
   const id='m'+Date.now()+Math.floor(Math.random()*1e4);
@@ -172,6 +209,7 @@ function buildStructuredMessage(resultText, processText){
     </div>`;
   return {id, html};
 }
+
 function toggleProcess(id){
   const proc=document.getElementById('process-'+id);
   const arrow=document.getElementById('arrow-'+id);
@@ -200,7 +238,7 @@ function typeChunks(text, el, onDone){
   })();
 }
 
-/* ===== Envío ===== */
+/* ===== Envío MEJORADO ===== */
 async function sendMessage(){
   const original = input.value.trim();
   if(!original || isLoading) return;
@@ -236,32 +274,30 @@ async function sendMessage(){
     const full = data.answer || '—';
     memory.update(original, full);
 
-    const procMatch = full.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/);
-    const resMatch  = full.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/);
-
-    if(resMatch){
-      const resultText = resMatch[1].trim();
-      const processText = (procMatch ? procMatch[1] : '').trim();
-
-      const {id, html} = buildStructuredMessage(resultText, processText);
+    // PARSER MEJORADO Y MÁS ROBUSTO
+    const parsedResponse = parseStructuredResponse(full);
+    
+    if(parsedResponse.hasStructure){
+      const {id, html} = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
       a.innerHTML = html;
       const resultEl = document.getElementById('result-'+id);
 
-      // 1) animar crudo
-      typeChunks(resultText, resultEl, ()=>{
-        // 2) re-render rico (listas, negritas, Nota)
-        resultEl.innerHTML = formatResultRich(resultText);
+      // Animar resultado
+      typeChunks(parsedResponse.result, resultEl, ()=>{
+        resultEl.innerHTML = formatResultRich(parsedResponse.result);
         scrollToBottom();
       });
 
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
       header.addEventListener('click', ()=>toggleProcess(id));
     }else{
+      // Fallback: mostrar respuesta completa sin estructura
       const resEl = document.createElement('div');
       a.appendChild(resEl);
       typeChunks(full, resEl, ()=>{});
     }
     scrollToBottom();
+
   }catch(err){
     typing.remove();
     const e = document.createElement('div');
