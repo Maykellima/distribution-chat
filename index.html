@@ -34,6 +34,8 @@
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
     .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
     .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
+    .typewriter-cursor{display:inline-block;width:2px;height:1em;background:#000;margin-left:2px;animation:blink 1s infinite}
+    @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
@@ -96,33 +98,28 @@ function formatBasicContent(content){
 
 /* ===== Post-formateo robusto para [RESULTADO] ===== */
 function formatResultRich(text){
-  // normalizar NBSP
   let body = text.trim().replace(/\u00A0/g,' ');
   let note = '';
 
-  // separar Nota:
   const nIdx = body.search(/\bNota:/i);
   if (nIdx >= 0){
     note = body.slice(nIdx).replace(/^.*?\bNota:\s*/i,'').trim();
     body = body.slice(0, nIdx).trim();
   }
 
-  // intentar listado numerado (en línea o con saltos)
   const items = [];
   const itemRe = /(?:^|\s)(\d+)\.\s+([^]+?)(?=(?:\s+\d+\.\s+)|$)/g;
   let m; while((m=itemRe.exec(body))!==null){ items.push(m[2].trim()); }
 
-  // fallback: inyectar saltos y dividir
   if(items.length===0){
     const injected = body.replace(/(\d+)\.\s+/g, '\n$1. ');
     const parts = injected.split(/\n(?=\d+\.\s)/).map(s=>s.trim());
     if(parts.length>1){
       parts.forEach(p=> items.push(p.replace(/^\d+\.\s+/,'').trim()));
-      body = body.replace(/^[\s\S]*?(?=\d+\.\s)/,'').trim(); // quitar intro si la hay
+      body = body.replace(/^[\s\S]*?(?=\d+\.\s)/,'').trim();
     }
   }
 
-  // intro antes del primer "1."
   let intro = '';
   if(items.length){
     const firstIdx = body.search(/\d+\.\s+/);
@@ -131,18 +128,15 @@ function formatResultRich(text){
 
   const enhanceItem = (s)=>{
     let t = s;
-    // Nombre al comienzo
     t = t.replace(
       /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)/,
       '<strong>$1</strong>'
     );
-    // Etiquetas y valores
     t = t.replace(/\b(Proyecto|Project):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
     t = t.replace(/\b(Departamento|Department):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
     return t.trim();
   };
 
-  // construir HTML
   let html = '';
   if(intro) html += `<p>${formatBasicContent(intro)}</p>`;
   if(items.length){
@@ -156,16 +150,13 @@ function formatResultRich(text){
   return html;
 }
 
-/* ===== NUEVO: Parser más robusto ===== */
+/* ===== Parser robusto ===== */
 function parseStructuredResponse(text) {
-  // Normalizar texto
   const normalized = text.trim().replace(/\u00A0/g, ' ');
   
-  // Intentar extraer RESULTADO
   let resultMatch = normalized.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
   let processMatch = normalized.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
   
-  // Si no encuentra las etiquetas exactas, intentar variaciones
   if (!resultMatch) {
     resultMatch = normalized.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i) ||
                   normalized.match(/RESULTADO:([\s\S]*?)(?=\[PROCESO\]|\[PROCESS\]|$)/i);
@@ -176,7 +167,6 @@ function parseStructuredResponse(text) {
                    normalized.match(/PROCESO:([\s\S]*?)(?=\[RESULTADO\]|\[RESULT\]|$)/i);
   }
   
-  // Verificar si tenemos al menos la sección RESULTADO
   if (resultMatch) {
     return {
       hasStructure: true,
@@ -185,12 +175,172 @@ function parseStructuredResponse(text) {
     };
   }
   
-  // Si no hay estructura, devolver todo como resultado simple
   return {
     hasStructure: false,
     result: normalized,
     process: ''
   };
+}
+
+/* ===== NUEVO: Efecto typewriter línea por línea ===== */
+function typewriterByLines(text, element, onComplete) {
+  // 1. Aplicar formato completo al texto
+  const formattedText = formatResultRich(text);
+  
+  // 2. Crear elemento temporal para parsear HTML
+  const temp = document.createElement('div');
+  temp.innerHTML = formattedText;
+  
+  // 3. Extraer líneas lógicas preservando HTML
+  const lines = extractLogicalLines(temp);
+  
+  // 4. Limpiar elemento de destino
+  element.innerHTML = '';
+  
+  let currentLineIndex = 0;
+  
+  function typeNextLine() {
+    if (currentLineIndex >= lines.length) {
+      // Remover cursor y ejecutar callback
+      const cursor = element.querySelector('.typewriter-cursor');
+      if (cursor) cursor.remove();
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    const line = lines[currentLineIndex];
+    
+    // Crear contenedor para la línea
+    const lineElement = document.createElement('div');
+    lineElement.style.display = 'inline';
+    
+    // Si es el primer elemento de una lista, crear la estructura
+    if (line.isListItem && !element.querySelector('ol')) {
+      const ol = document.createElement('ol');
+      element.appendChild(ol);
+    }
+    
+    // Determinar dónde añadir la línea
+    let targetElement = element;
+    if (line.isListItem) {
+      const ol = element.querySelector('ol');
+      const li = document.createElement('li');
+      ol.appendChild(li);
+      targetElement = li;
+    } else if (line.isParagraph) {
+      const p = document.createElement('p');
+      element.appendChild(p);
+      targetElement = p;
+    }
+    
+    // Añadir cursor
+    const cursor = document.createElement('span');
+    cursor.className = 'typewriter-cursor';
+    targetElement.appendChild(cursor);
+    
+    // Animar la línea
+    typeLineContent(line.content, targetElement, cursor, () => {
+      currentLineIndex++;
+      setTimeout(typeNextLine, 150); // Pausa entre líneas
+    });
+  }
+  
+  typeNextLine();
+}
+
+function extractLogicalLines(element) {
+  const lines = [];
+  
+  function traverse(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent.trim();
+      if (text) {
+        lines.push({
+          content: text,
+          isText: true,
+          isParagraph: false,
+          isListItem: false
+        });
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const tagName = node.tagName.toLowerCase();
+      
+      if (tagName === 'li') {
+        lines.push({
+          content: node.innerHTML,
+          isText: false,
+          isParagraph: false,
+          isListItem: true
+        });
+      } else if (tagName === 'p') {
+        lines.push({
+          content: node.innerHTML,
+          isText: false,
+          isParagraph: true,
+          isListItem: false
+        });
+      } else if (tagName === 'br') {
+        // Salto de línea - crear línea vacía
+        lines.push({
+          content: '',
+          isText: true,
+          isParagraph: false,
+          isListItem: false
+        });
+      } else if (tagName === 'ol' || tagName === 'ul') {
+        // Procesar elementos de lista
+        for (const child of node.children) {
+          traverse(child);
+        }
+      } else {
+        // Otros elementos - procesar contenido
+        if (node.textContent.trim()) {
+          lines.push({
+            content: node.outerHTML,
+            isText: false,
+            isParagraph: false,
+            isListItem: false
+          });
+        }
+      }
+    }
+  }
+  
+  traverse(element);
+  return lines;
+}
+
+function typeLineContent(content, targetElement, cursor, onComplete) {
+  if (!content) {
+    onComplete();
+    return;
+  }
+  
+  // Si el contenido tiene HTML, lo procesamos caracter por caracter
+  let currentIndex = 0;
+  const speed = 80; // ms por caracter
+  
+  function typeNext() {
+    if (currentIndex >= content.length) {
+      onComplete();
+      return;
+    }
+    
+    // Extraer hasta el siguiente caracter
+    const currentContent = content.substring(0, currentIndex + 1);
+    
+    // Actualizar contenido manteniendo el cursor al final
+    cursor.remove();
+    targetElement.innerHTML = currentContent;
+    targetElement.appendChild(cursor);
+    
+    currentIndex++;
+    scrollToBottom();
+    
+    setTimeout(typeNext, speed);
+  }
+  
+  typeNext();
 }
 
 /* ===== Bloque Resultado/Proceso ===== */
@@ -219,26 +369,11 @@ function toggleProcess(id){
 }
 
 /* ===== Auto-scroll ===== */
-function scrollToBottom(){ messagesDiv.scrollTop = messagesDiv.scrollHeight; }
-
-/* ===== Typewriter por chunks (3–5 palabras) ===== */
-function typeChunks(text, el, onDone){
-  const words = text.split(/\s+/).filter(Boolean);
-  const chunks = [];
-  for(let i=0;i<words.length;){
-    const size = Math.min(5, Math.max(3, 3+Math.floor(Math.random()*3)-0)); // 3..5
-    chunks.push(words.slice(i, i+size).join(' '));
-    i+=size;
-  }
-  let idx=0;
-  (function step(){
-    if(idx >= chunks.length){ onDone && onDone(); return; }
-    el.innerHTML = formatBasicContent(chunks.slice(0, idx+1).join(' '));
-    idx++; scrollToBottom(); setTimeout(step, 120);
-  })();
+function scrollToBottom(){ 
+  messagesDiv.scrollTop = messagesDiv.scrollHeight; 
 }
 
-/* ===== Envío MEJORADO ===== */
+/* ===== Envío con typewriter ===== */
 async function sendMessage(){
   const original = input.value.trim();
   if(!original || isLoading) return;
@@ -274,7 +409,6 @@ async function sendMessage(){
     const full = data.answer || '—';
     memory.update(original, full);
 
-    // PARSER MEJORADO Y MÁS ROBUSTO
     const parsedResponse = parseStructuredResponse(full);
     
     if(parsedResponse.hasStructure){
@@ -282,19 +416,16 @@ async function sendMessage(){
       a.innerHTML = html;
       const resultEl = document.getElementById('result-'+id);
 
-      // Animar resultado
-      typeChunks(parsedResponse.result, resultEl, ()=>{
-        resultEl.innerHTML = formatResultRich(parsedResponse.result);
+      // Usar nuevo efecto typewriter línea por línea
+      typewriterByLines(parsedResponse.result, resultEl, () => {
         scrollToBottom();
       });
 
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
       header.addEventListener('click', ()=>toggleProcess(id));
     }else{
-      // Fallback: mostrar respuesta completa sin estructura
-      const resEl = document.createElement('div');
-      a.appendChild(resEl);
-      typeChunks(full, resEl, ()=>{});
+      // Fallback para respuestas sin estructura
+      typewriterByLines(full, a, () => {});
     }
     scrollToBottom();
 
