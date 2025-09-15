@@ -49,9 +49,37 @@
   </div>
 
 <script>
-/* ===== Config ===== */
-const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+/* ===== Config desde variables de entorno ===== */
+let SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co'; // fallback
+let SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY'; // fallback
+
+// Cargar variables de entorno si están disponibles
+async function loadEnvConfig() {
+  try {
+    const response = await fetch('.env');
+    if (response.ok) {
+      const envText = await response.text();
+      const envVars = {};
+      
+      envText.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const [key, ...valueParts] = trimmed.split('=');
+          if (key && valueParts.length) {
+            envVars[key.trim()] = valueParts.join('=').trim();
+          }
+        }
+      });
+      
+      if (envVars.SUPABASE_URL) SUPABASE_URL = envVars.SUPABASE_URL;
+      if (envVars.SUPABASE_ANON_KEY) SUPABASE_ANON_KEY = envVars.SUPABASE_ANON_KEY;
+      
+      console.log('✅ Variables de entorno cargadas');
+    }
+  } catch (e) {
+    console.log('📋 Usando configuración por defecto');
+  }
+}
 
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
@@ -180,47 +208,73 @@ function parseStructuredResponse(text) {
   };
 }
 
-/* ===== NUEVO: Efecto typewriter fluido y limpio ===== */
+/* ===== Efecto typewriter con formato HTML directo ===== */
 function typewriterByLines(text, element, onComplete) {
-  // 1. Aplicar formato completo al texto
-  const formattedText = formatResultRich(text);
-  
-  // 2. Limpiar elemento de destino
+  const formattedHTML = formatResultRich(text);
   element.innerHTML = '';
   
-  // 3. Escribir directamente sin procesar por líneas para evitar saltos
-  typeContentDirectly(formattedText, element, onComplete);
-}
-
-function typeContentDirectly(htmlContent, targetElement, onComplete) {
-  // Crear div temporal para obtener el texto renderizado
-  const temp = document.createElement('div');
-  temp.innerHTML = htmlContent;
+  // Crear contenedor temporal para parsear el HTML
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(formattedHTML, 'text/html');
+  const walker = document.createTreeWalker(
+    doc.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
   
-  // Obtener el HTML limpio sin caracteres extraños
-  const cleanHTML = temp.innerHTML.replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, '');
+  // Recopilar todos los nodos de texto
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push({
+      node: node,
+      text: node.textContent,
+      parent: node.parentNode
+    });
+  }
   
-  let currentIndex = 0;
-  const speed = 10; // 10ms por caracter para velocidad máxima
+  // Clonar estructura vacía
+  element.innerHTML = formattedHTML;
+  
+  // Limpiar todo el texto
+  const targetWalker = document.createTreeWalker(
+    element,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  const targetNodes = [];
+  while (node = targetWalker.nextNode()) {
+    targetNodes.push(node);
+    node.textContent = '';
+  }
+  
+  // Escribir progresivamente
+  let nodeIndex = 0;
+  let charIndex = 0;
+  const speed = 8;
   
   function typeNext() {
-    if (currentIndex >= cleanHTML.length) {
+    if (nodeIndex >= textNodes.length) {
       if (onComplete) onComplete();
       return;
     }
     
-    // Extraer contenido hasta el índice actual
-    const currentContent = cleanHTML.substring(0, currentIndex + 1);
+    const currentTextNode = textNodes[nodeIndex];
+    const targetNode = targetNodes[nodeIndex];
     
-    // Actualizar contenido directamente
-    targetElement.innerHTML = currentContent;
-    
-    currentIndex++;
-    scrollToBottom();
-    
-    requestAnimationFrame(() => {
+    if (charIndex < currentTextNode.text.length) {
+      targetNode.textContent = currentTextNode.text.substring(0, charIndex + 1);
+      charIndex++;
+      scrollToBottom();
       setTimeout(typeNext, speed);
-    });
+    } else {
+      nodeIndex++;
+      charIndex = 0;
+      setTimeout(typeNext, speed);
+    }
   }
   
   typeNext();
@@ -323,10 +377,18 @@ async function sendMessage(){
   }
 }
 
+/* ===== Inicialización ===== */
+async function initApp() {
+  await loadEnvConfig();
+  input.focus();
+}
+
 /* ===== Eventos ===== */
 sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
-input.focus();
+
+// Inicializar aplicación
+document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
