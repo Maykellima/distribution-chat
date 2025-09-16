@@ -228,7 +228,7 @@ function buildStructuredMessage(resultText, processText){
     <hr class="proc-sep">
     <div class="process-section">
       <div class="process-header" data-target="${id}">
-        <span>Proceso</span><span class="process-arrow" id="arrow-${id}">▼</span>
+        <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
       </div>
       <div class="process-content" id="process-${id}">
         ${formatBasicContent(processText)}
@@ -266,7 +266,7 @@ async function sendMessage(){
 
   const typing=document.createElement('div');
   typing.className='typing-indicator';
-  typing.textContent='escribiendo…';
+  typing.textContent='thinking…';
   messagesDiv.appendChild(typing);
   scrollToBottom();
 
