@@ -49,37 +49,9 @@
   </div>
 
 <script>
-/* ===== Config desde variables de entorno ===== */
-let SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co'; // fallback
-let SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY'; // fallback
-
-// Cargar variables de entorno si están disponibles
-async function loadEnvConfig() {
-  try {
-    const response = await fetch('.env');
-    if (response.ok) {
-      const envText = await response.text();
-      const envVars = {};
-      
-      envText.split('\n').forEach(line => {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#')) {
-          const [key, ...valueParts] = trimmed.split('=');
-          if (key && valueParts.length) {
-            envVars[key.trim()] = valueParts.join('=').trim();
-          }
-        }
-      });
-      
-      if (envVars.SUPABASE_URL) SUPABASE_URL = envVars.SUPABASE_URL;
-      if (envVars.SUPABASE_ANON_KEY) SUPABASE_ANON_KEY = envVars.SUPABASE_ANON_KEY;
-      
-      console.log('✅ Variables de entorno cargadas');
-    }
-  } catch (e) {
-    console.log('📋 Usando configuración por defecto');
-  }
-}
+/* ===== Config ===== */
+const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
 
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
@@ -208,76 +180,112 @@ function parseStructuredResponse(text) {
   };
 }
 
-/* ===== Efecto typewriter con formato HTML directo ===== */
+/* ===== NUEVO: Typewriter con tokens HTML completos ===== */
 function typewriterByLines(text, element, onComplete) {
-  const formattedHTML = formatResultRich(text);
+  const formattedText = formatResultRich(text);
   element.innerHTML = '';
+  typeContentByTokens(formattedText, element, onComplete);
+}
+
+function typeContentByTokens(htmlContent, targetElement, onComplete) {
+  const temp = document.createElement('div');
+  temp.innerHTML = htmlContent;
   
-  // Crear contenedor temporal para parsear el HTML
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(formattedHTML, 'text/html');
-  const walker = document.createTreeWalker(
-    doc.body,
-    NodeFilter.SHOW_TEXT,
-    null,
-    false
-  );
+  // Limpiar caracteres extraños
+  const cleanHTML = temp.innerHTML.replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, '');
   
-  // Recopilar todos los nodos de texto
-  const textNodes = [];
-  let node;
-  while (node = walker.nextNode()) {
-    textNodes.push({
-      node: node,
-      text: node.textContent,
-      parent: node.parentNode
-    });
-  }
+  // Dividir en tokens HTML completos
+  const tokens = parseHTMLTokens(cleanHTML);
   
-  // Clonar estructura vacía
-  element.innerHTML = formattedHTML;
-  
-  // Limpiar todo el texto
-  const targetWalker = document.createTreeWalker(
-    element,
-    NodeFilter.SHOW_TEXT,
-    null,
-    false
-  );
-  
-  const targetNodes = [];
-  while (node = targetWalker.nextNode()) {
-    targetNodes.push(node);
-    node.textContent = '';
-  }
-  
-  // Escribir progresivamente
-  let nodeIndex = 0;
-  let charIndex = 0;
-  const speed = 8;
+  let currentIndex = 0;
+  const speed = 50; // ms por token (no por caracter)
   
   function typeNext() {
-    if (nodeIndex >= textNodes.length) {
+    if (currentIndex >= tokens.length) {
       if (onComplete) onComplete();
       return;
     }
     
-    const currentTextNode = textNodes[nodeIndex];
-    const targetNode = targetNodes[nodeIndex];
+    // Construir contenido hasta el token actual
+    const currentContent = tokens.slice(0, currentIndex + 1).join('');
+    targetElement.innerHTML = currentContent;
     
-    if (charIndex < currentTextNode.text.length) {
-      targetNode.textContent = currentTextNode.text.substring(0, charIndex + 1);
-      charIndex++;
-      scrollToBottom();
+    currentIndex++;
+    scrollToBottom();
+    
+    requestAnimationFrame(() => {
       setTimeout(typeNext, speed);
-    } else {
-      nodeIndex++;
-      charIndex = 0;
-      setTimeout(typeNext, speed);
-    }
+    });
   }
   
   typeNext();
+}
+
+function parseHTMLTokens(html) {
+  const tokens = [];
+  let current = '';
+  let inTag = false;
+  let tagDepth = 0;
+  
+  for (let i = 0; i < html.length; i++) {
+    const char = html[i];
+    const nextChar = html[i + 1];
+    
+    if (char === '<') {
+      // Terminar token anterior si existe
+      if (current.trim() && !inTag) {
+        tokens.push(current);
+        current = '';
+      }
+      
+      current += char;
+      inTag = true;
+      
+      // Detectar si es tag de cierre
+      if (nextChar === '/') {
+        tagDepth--;
+      } else if (nextChar && nextChar !== ' ') {
+        tagDepth++;
+      }
+      
+    } else if (char === '>' && inTag) {
+      current += char;
+      
+      // Si es self-closing tag
+      if (html[i-1] === '/') {
+        tagDepth--;
+      }
+      
+      tokens.push(current);
+      current = '';
+      inTag = false;
+      
+    } else if (!inTag && char === ' ') {
+      // Separar palabras solo fuera de tags
+      if (current.trim()) {
+        tokens.push(current);
+        current = '';
+      }
+      tokens.push(' ');
+      
+    } else if (!inTag && /[.!?:;,]/.test(char)) {
+      // Separar puntuación
+      current += char;
+      tokens.push(current);
+      current = '';
+      
+    } else {
+      current += char;
+    }
+  }
+  
+  // Añadir último token si existe
+  if (current.trim()) {
+    tokens.push(current);
+  }
+  
+  // Filtrar tokens vacíos
+  return tokens.filter(token => token.length > 0);
 }
 
 /* ===== Bloque Resultado/Proceso ===== */
@@ -310,7 +318,7 @@ function scrollToBottom(){
   messagesDiv.scrollTop = messagesDiv.scrollHeight; 
 }
 
-/* ===== Envío con typewriter ===== */
+/* ===== Envío con typewriter mejorado ===== */
 async function sendMessage(){
   const original = input.value.trim();
   if(!original || isLoading) return;
@@ -353,7 +361,7 @@ async function sendMessage(){
       a.innerHTML = html;
       const resultEl = document.getElementById('result-'+id);
 
-      // Usar nuevo efecto typewriter línea por línea
+      // Usar typewriter mejorado con tokens HTML
       typewriterByLines(parsedResponse.result, resultEl, () => {
         scrollToBottom();
       });
@@ -361,7 +369,6 @@ async function sendMessage(){
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
       header.addEventListener('click', ()=>toggleProcess(id));
     }else{
-      // Fallback para respuestas sin estructura
       typewriterByLines(full, a, () => {});
     }
     scrollToBottom();
@@ -377,18 +384,10 @@ async function sendMessage(){
   }
 }
 
-/* ===== Inicialización ===== */
-async function initApp() {
-  await loadEnvConfig();
-  input.focus();
-}
-
 /* ===== Eventos ===== */
 sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
-
-// Inicializar aplicación
-document.addEventListener('DOMContentLoaded', initApp);
+input.focus();
 </script>
 </body>
 </html>
