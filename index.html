@@ -15,7 +15,8 @@
     .message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
     .user-message{font-size:18px;color:#222;font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px}
     .user-message::before{content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%}
-    .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px}
+    .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all 0.4s ease-out}
+    .assistant-message.visible{opacity:1;transform:translateY(0)}
     .assistant-message strong{font-weight:700;color:#000}
     .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
     .assistant-message li{margin:4px 0}
@@ -49,9 +50,37 @@
   </div>
 
 <script>
-/* ===== Config ===== */
-const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+/* ===== Config desde variables de entorno ===== */
+let SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co'; // fallback
+let SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY'; // fallback
+
+// Cargar variables de entorno si están disponibles
+async function loadEnvConfig() {
+  try {
+    const response = await fetch('.env');
+    if (response.ok) {
+      const envText = await response.text();
+      const envVars = {};
+      
+      envText.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const [key, ...valueParts] = trimmed.split('=');
+          if (key && valueParts.length) {
+            envVars[key.trim()] = valueParts.join('=').trim();
+          }
+        }
+      });
+      
+      if (envVars.SUPABASE_URL) SUPABASE_URL = envVars.SUPABASE_URL;
+      if (envVars.SUPABASE_ANON_KEY) SUPABASE_ANON_KEY = envVars.SUPABASE_ANON_KEY;
+      
+      console.log('✅ Variables de entorno cargadas');
+    }
+  } catch (e) {
+    console.log('📋 Usando configuración por defecto');
+  }
+}
 
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
@@ -180,112 +209,15 @@ function parseStructuredResponse(text) {
   };
 }
 
-/* ===== NUEVO: Typewriter con tokens HTML completos ===== */
-function typewriterByLines(text, element, onComplete) {
-  const formattedText = formatResultRich(text);
-  element.innerHTML = '';
-  typeContentByTokens(formattedText, element, onComplete);
-}
-
-function typeContentByTokens(htmlContent, targetElement, onComplete) {
-  const temp = document.createElement('div');
-  temp.innerHTML = htmlContent;
+/* ===== Mostrar contenido con animación fade-in y slide-up ===== */
+function showContentWithAnimation(text, element, onComplete) {
+  const formattedHTML = formatResultRich(text);
+  element.innerHTML = formattedHTML;
   
-  // Limpiar caracteres extraños
-  const cleanHTML = temp.innerHTML.replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, '');
-  
-  // Dividir en tokens HTML completos
-  const tokens = parseHTMLTokens(cleanHTML);
-  
-  let currentIndex = 0;
-  const speed = 50; // ms por token (no por caracter)
-  
-  function typeNext() {
-    if (currentIndex >= tokens.length) {
-      if (onComplete) onComplete();
-      return;
-    }
-    
-    // Construir contenido hasta el token actual
-    const currentContent = tokens.slice(0, currentIndex + 1).join('');
-    targetElement.innerHTML = currentContent;
-    
-    currentIndex++;
-    scrollToBottom();
-    
-    requestAnimationFrame(() => {
-      setTimeout(typeNext, speed);
-    });
+  // Ejecutar callback después de actualizar el contenido
+  if (onComplete) {
+    setTimeout(onComplete, 50);
   }
-  
-  typeNext();
-}
-
-function parseHTMLTokens(html) {
-  const tokens = [];
-  let current = '';
-  let inTag = false;
-  let tagDepth = 0;
-  
-  for (let i = 0; i < html.length; i++) {
-    const char = html[i];
-    const nextChar = html[i + 1];
-    
-    if (char === '<') {
-      // Terminar token anterior si existe
-      if (current.trim() && !inTag) {
-        tokens.push(current);
-        current = '';
-      }
-      
-      current += char;
-      inTag = true;
-      
-      // Detectar si es tag de cierre
-      if (nextChar === '/') {
-        tagDepth--;
-      } else if (nextChar && nextChar !== ' ') {
-        tagDepth++;
-      }
-      
-    } else if (char === '>' && inTag) {
-      current += char;
-      
-      // Si es self-closing tag
-      if (html[i-1] === '/') {
-        tagDepth--;
-      }
-      
-      tokens.push(current);
-      current = '';
-      inTag = false;
-      
-    } else if (!inTag && char === ' ') {
-      // Separar palabras solo fuera de tags
-      if (current.trim()) {
-        tokens.push(current);
-        current = '';
-      }
-      tokens.push(' ');
-      
-    } else if (!inTag && /[.!?:;,]/.test(char)) {
-      // Separar puntuación
-      current += char;
-      tokens.push(current);
-      current = '';
-      
-    } else {
-      current += char;
-    }
-  }
-  
-  // Añadir último token si existe
-  if (current.trim()) {
-    tokens.push(current);
-  }
-  
-  // Filtrar tokens vacíos
-  return tokens.filter(token => token.length > 0);
 }
 
 /* ===== Bloque Resultado/Proceso ===== */
@@ -318,7 +250,7 @@ function scrollToBottom(){
   messagesDiv.scrollTop = messagesDiv.scrollHeight; 
 }
 
-/* ===== Envío con typewriter mejorado ===== */
+/* ===== Envío con typewriter ===== */
 async function sendMessage(){
   const original = input.value.trim();
   if(!original || isLoading) return;
@@ -361,15 +293,26 @@ async function sendMessage(){
       a.innerHTML = html;
       const resultEl = document.getElementById('result-'+id);
 
-      // Usar typewriter mejorado con tokens HTML
-      typewriterByLines(parsedResponse.result, resultEl, () => {
+      // Mostrar resultado con animación
+      showContentWithAnimation(parsedResponse.result, resultEl, () => {
         scrollToBottom();
       });
 
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
       header.addEventListener('click', ()=>toggleProcess(id));
+      
+      // Aplicar animación inmediatamente
+      requestAnimationFrame(() => {
+        a.classList.add('visible');
+      });
     }else{
-      typewriterByLines(full, a, () => {});
+      // Fallback para respuestas sin estructura
+      a.innerHTML = formatResultRich(full);
+      
+      // Aplicar animación inmediatamente
+      requestAnimationFrame(() => {
+        a.classList.add('visible');
+      });
     }
     scrollToBottom();
 
@@ -384,10 +327,18 @@ async function sendMessage(){
   }
 }
 
+/* ===== Inicialización ===== */
+async function initApp() {
+  await loadEnvConfig();
+  input.focus();
+}
+
 /* ===== Eventos ===== */
 sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
-input.focus();
+
+// Inicializar aplicación
+document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
