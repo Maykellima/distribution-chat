@@ -108,99 +108,93 @@
 const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
 
-// Verificar que Supabase esté disponible
-if (!window.supabase) {
-  console.error('Supabase no se cargó correctamente');
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('error').style.display = 'block';
-} else {
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ELEMENTOS DEL DOM
-  const loadingEl = document.getElementById('loading');
-  const errorEl = document.getElementById('error');
-  const loginEl = document.getElementById('login');
-  const chatEl = document.getElementById('chat');
-  const loginBtn = document.getElementById('loginBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const userInfoEl = document.getElementById('userInfo');
-  const userEmailEl = document.getElementById('userEmail');
-  const messagesDiv = document.getElementById('messages');
-  const input = document.getElementById('input');
-  const sendBtn = document.getElementById('sendBtn');
+// ELEMENTOS DEL DOM
+const loadingEl = document.getElementById('loading');
+const errorEl = document.getElementById('error');
+const loginEl = document.getElementById('login');
+const chatEl = document.getElementById('chat');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const userInfoEl = document.getElementById('userInfo');
+const userEmailEl = document.getElementById('userEmail');
+const messagesDiv = document.getElementById('messages');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
 
-  let currentUser = null;
-  let isLoading = false;
+let currentUser = null;
+let isLoading = false;
 
-  // GESTIÓN DE ESTADOS
-  function showLoading() {
-    loadingEl.style.display = 'block';
-    errorEl.style.display = 'none';
-    loginEl.style.display = 'none';
-    chatEl.classList.remove('visible');
-  }
+// GESTIÓN DE ESTADOS
+function showLoading() {
+  loadingEl.style.display = 'block';
+  errorEl.style.display = 'none';
+  loginEl.style.display = 'none';
+  chatEl.classList.remove('visible');
+}
 
-  function showError(message) {
-    loadingEl.style.display = 'none';
-    errorEl.style.display = 'block';
-    loginEl.style.display = 'none';
-    chatEl.classList.remove('visible');
-    errorEl.querySelector('p').textContent = message || 'Error desconocido';
-  }
+function showError(message) {
+  loadingEl.style.display = 'none';
+  errorEl.style.display = 'block';
+  loginEl.style.display = 'none';
+  chatEl.classList.remove('visible');
+  errorEl.querySelector('p').textContent = message || 'Error desconocido';
+}
 
-  function showLogin() {
-    loadingEl.style.display = 'none';
-    errorEl.style.display = 'none';
-    loginEl.style.display = 'block';
-    chatEl.classList.remove('visible');
-  }
+function showLogin() {
+  loadingEl.style.display = 'none';
+  errorEl.style.display = 'none';
+  loginEl.style.display = 'block';
+  chatEl.classList.remove('visible');
+}
 
-  function showChat(user) {
-    loadingEl.style.display = 'none';
-    errorEl.style.display = 'none';
-    loginEl.style.display = 'none';
-    chatEl.classList.add('visible');
+function showChat(user) {
+  loadingEl.style.display = 'none';
+  errorEl.style.display = 'none';
+  loginEl.style.display = 'none';
+  chatEl.classList.add('visible');
+  
+  userInfoEl.style.display = 'flex';
+  userEmailEl.textContent = user.email;
+  input.focus();
+}
+
+// AUTENTICACIÓN
+async function checkAuthState() {
+  try {
+    console.log('Verificando estado de autenticación...');
+    const { data: { session }, error } = await supabase.auth.getSession();
     
-    userInfoEl.style.display = 'flex';
-    userEmailEl.textContent = user.email;
-    input.focus();
-  }
-
-  // AUTENTICACIÓN
-  async function checkAuthState() {
-    try {
-      console.log('Verificando estado de autenticación...');
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error verificando sesión:', error);
-        showLogin();
-        return;
-      }
-      
-      if (session?.user) {
-        console.log('Usuario ya autenticado:', session.user.email);
-        
-        // Verificar si tiene acceso autorizado
-        const hasAccess = await checkUserAccess(session.user);
-        if (hasAccess) {
-          currentUser = session.user;
-          showChat(session.user);
-        } else {
-          await supabase.auth.signOut();
-          showError('No tienes autorización para acceder a este sistema. Contacta al administrador.');
-        }
-      } else {
-        console.log('No hay sesión activa');
-        showLogin();
-      }
-    } catch (err) {
-      console.error('Error en verificación de autenticación:', err);
-      showError('Error al verificar autenticación');
+    if (error) {
+      console.error('Error verificando sesión:', error);
+      showLogin();
+      return;
     }
+    
+    if (session?.user) {
+      console.log('Usuario ya autenticado:', session.user.email);
+      
+      // Verificar si tiene acceso autorizado
+      const hasAccess = await checkUserAccess(session.user);
+      if (hasAccess) {
+        currentUser = session.user;
+        showChat(session.user);
+      } else {
+        await supabase.auth.signOut();
+        showError('No tienes autorización para acceder a este sistema. Contacta al administrador.');
+      }
+    } else {
+      console.log('No hay sesión activa');
+      showLogin();
+    }
+  } catch (err) {
+    console.error('Error en verificación de autenticación:', err);
+    showError('Error al verificar autenticación');
   }
+}
 
-  async function checkUserAccess(user) {
+async function checkUserAccess(user) {
   try {
     // Permitir solo emails de theagilemonkeys.com y theam.io
     const allowedDomains = ['@theagilemonkeys.com', '@theam.io'];
@@ -214,360 +208,350 @@ if (!window.supabase) {
     return false;
   }
 }
-      
-      console.log('Usuario autorizado:', data.name, '(' + data.role + ')');
-      return true;
-    } catch (err) {
-      console.error('Error verificando acceso:', err);
-      return false;
-    }
-  }
 
-  async function signInWithGoogle() {
-    try {
-      loginBtn.textContent = 'Conectando...';
-      loginBtn.disabled = true;
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-      
-      if (error) {
-        console.error('Error en login:', error);
-        showError('Error al iniciar sesión: ' + error.message);
-        loginBtn.textContent = 'Continuar con Google';
-        loginBtn.disabled = false;
+async function signInWithGoogle() {
+  try {
+    loginBtn.textContent = 'Conectando...';
+    loginBtn.disabled = true;
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
       }
-    } catch (err) {
-      console.error('Error en signInWithGoogle:', err);
-      showError('Error al conectar con Google');
+    });
+    
+    if (error) {
+      console.error('Error en login:', error);
+      showError('Error al iniciar sesión: ' + error.message);
       loginBtn.textContent = 'Continuar con Google';
       loginBtn.disabled = false;
     }
+  } catch (err) {
+    console.error('Error en signInWithGoogle:', err);
+    showError('Error al conectar con Google');
+    loginBtn.textContent = 'Continuar con Google';
+    loginBtn.disabled = false;
+  }
+}
+
+async function signOut() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error en logout:', error);
+    }
+    currentUser = null;
+    messagesDiv.innerHTML = '';
+    showLogin();
+  } catch (err) {
+    console.error('Error en signOut:', err);
+  }
+}
+
+// MANEJO DE CAMBIOS DE AUTENTICACIÓN
+supabase.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth state changed:', event, session?.user?.email);
+  
+  if (event === 'SIGNED_IN' && session?.user) {
+    const hasAccess = await checkUserAccess(session.user);
+    if (hasAccess) {
+      currentUser = session.user;
+      showChat(session.user);
+    } else {
+      await supabase.auth.signOut();
+      showError('No tienes autorización para acceder a este sistema.');
+    }
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    messagesDiv.innerHTML = '';
+    showLogin();
+  }
+});
+
+/* ===== CHAT FUNCTIONALITY ===== */
+class ConversationMemory{
+  constructor(){this.context=null;this.DUR=10*60*1000}
+  update(q,a){this.context={lastQuery:q,lastAnswer:a,entities:this.extract(q,a),ts:Date.now()}}
+  extract(q,a){const c=(q+' '+a).toLowerCase();return {projects:this.extractProjects(c),people:this.extractPeople(a)}}
+  extractProjects(txt){const known=['dataverse','delta','sid','hornblower','data','al findr','solutran','control plane','infrastructure team','zeta'];return known.filter(p=>txt.includes(p))}
+  extractPeople(t){const re=/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+/g;return t.match(re)||[]}
+  enhance(q){
+    if(!this.context || Date.now()-this.context.ts>this.DUR) return q
+    const lq=q.toLowerCase()
+    if((lq.includes('ellos')||lq.includes('estos')) && this.context.entities.people.length) return q+` (contexto: ${this.context.entities.people.join(', ')})`
+    if((lq.includes('ese proyecto')||lq.includes('el proyecto')) && this.context.entities.projects.length) return q+` (contexto: proyecto ${this.context.entities.projects[0]})`
+    return q
+  }
+}
+const memory=new ConversationMemory();
+
+function formatBasicContent(content){
+  let f = content
+    .replace(/^### (.*?)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.*?)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.*?)$/gm,'<h1>$1</h1>')
+    .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code class="language-$1">$2</code></pre>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>')
+    .replace(/`(.*?)`/g,'<code>$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>')
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^[\*\-\+] (.+)$/gm,'<li>$1</li>')
+    .replace(/\n/g,'<br>');
+  f = f.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, m => '<ul>' + m.replace(/<br>/g,'') + '</ul>');
+  f = f.replace(/(<br>){2,}/g,'<br><br>');
+  return f;
+}
+
+function formatResultRich(text){
+  let body = text.trim().replace(/\u00A0/g,' ');
+  let note = '';
+
+  const nIdx = body.search(/\bNota:/i);
+  if (nIdx >= 0){
+    note = body.slice(nIdx).replace(/^.*?\bNota:\s*/i,'').trim();
+    body = body.slice(0, nIdx).trim();
   }
 
-  async function signOut() {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error en logout:', error);
-      }
-      currentUser = null;
-      messagesDiv.innerHTML = '';
-      showLogin();
-    } catch (err) {
-      console.error('Error en signOut:', err);
+  const items = [];
+  const itemRe = /(?:^|\s)(\d+)\.\s+([^]+?)(?=(?:\s+\d+\.\s+)|$)/g;
+  let m; while((m=itemRe.exec(body))!==null){ items.push(m[2].trim()); }
+
+  if(items.length===0){
+    const injected = body.replace(/(\d+)\.\s+/g, '\n$1. ');
+    const parts = injected.split(/\n(?=\d+\.\s)/).map(s=>s.trim());
+    if(parts.length>1){
+      parts.forEach(p=> items.push(p.replace(/^\d+\.\s+/,'').trim()));
+      body = body.replace(/^[\s\S]*?(?=\d+\.\s)/,'').trim();
     }
   }
 
-  // MANEJO DE CAMBIOS DE AUTENTICACIÓN
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state changed:', event, session?.user?.email);
-    
-    if (event === 'SIGNED_IN' && session?.user) {
-      const hasAccess = await checkUserAccess(session.user);
-      if (hasAccess) {
-        currentUser = session.user;
-        showChat(session.user);
-      } else {
-        await supabase.auth.signOut();
-        showError('No tienes autorización para acceder a este sistema.');
-      }
-    } else if (event === 'SIGNED_OUT') {
-      currentUser = null;
-      messagesDiv.innerHTML = '';
-      showLogin();
-    }
-  });
-
-  /* ===== CHAT FUNCTIONALITY ===== */
-  class ConversationMemory{
-    constructor(){this.context=null;this.DUR=10*60*1000}
-    update(q,a){this.context={lastQuery:q,lastAnswer:a,entities:this.extract(q,a),ts:Date.now()}}
-    extract(q,a){const c=(q+' '+a).toLowerCase();return {projects:this.extractProjects(c),people:this.extractPeople(a)}}
-    extractProjects(txt){const known=['dataverse','delta','sid','hornblower','data','al findr','solutran','control plane','infrastructure team','zeta'];return known.filter(p=>txt.includes(p))}
-    extractPeople(t){const re=/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+/g;return t.match(re)||[]}
-    enhance(q){
-      if(!this.context || Date.now()-this.context.ts>this.DUR) return q
-      const lq=q.toLowerCase()
-      if((lq.includes('ellos')||lq.includes('estos')) && this.context.entities.people.length) return q+` (contexto: ${this.context.entities.people.join(', ')})`
-      if((lq.includes('ese proyecto')||lq.includes('el proyecto')) && this.context.entities.projects.length) return q+` (contexto: proyecto ${this.context.entities.projects[0]})`
-      return q
-    }
-  }
-  const memory=new ConversationMemory();
-
-  function formatBasicContent(content){
-    let f = content
-      .replace(/^### (.*?)$/gm,'<h3>$1</h3>')
-      .replace(/^## (.*?)$/gm,'<h2>$1</h2>')
-      .replace(/^# (.*?)$/gm,'<h1>$1</h1>')
-      .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code class="language-$1">$2</code></pre>')
-      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-      .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>')
-      .replace(/`(.*?)`/g,'<code>$1</code>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>')
-      .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
-      .replace(/^[\*\-\+] (.+)$/gm,'<li>$1</li>')
-      .replace(/\n/g,'<br>');
-    f = f.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, m => '<ul>' + m.replace(/<br>/g,'') + '</ul>');
-    f = f.replace(/(<br>){2,}/g,'<br><br>');
-    return f;
+  let intro = '';
+  if(items.length){
+    const firstIdx = body.search(/\d+\.\s+/);
+    if(firstIdx > 0) intro = body.slice(0, firstIdx).trim().replace(/[;:,–—-]\s*$/,'');
   }
 
-  function formatResultRich(text){
-    let body = text.trim().replace(/\u00A0/g,' ');
-    let note = '';
+  const enhanceItem = (s)=>{
+    let t = s;
+    t = t.replace(
+      /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)/,
+      '<strong>$1</strong>'
+    );
+    t = t.replace(/\b(Proyecto|Project):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
+    t = t.replace(/\b(Departamento|Department):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
+    return t.trim();
+  };
 
-    const nIdx = body.search(/\bNota:/i);
-    if (nIdx >= 0){
-      note = body.slice(nIdx).replace(/^.*?\bNota:\s*/i,'').trim();
-      body = body.slice(0, nIdx).trim();
-    }
-
-    const items = [];
-    const itemRe = /(?:^|\s)(\d+)\.\s+([^]+?)(?=(?:\s+\d+\.\s+)|$)/g;
-    let m; while((m=itemRe.exec(body))!==null){ items.push(m[2].trim()); }
-
-    if(items.length===0){
-      const injected = body.replace(/(\d+)\.\s+/g, '\n$1. ');
-      const parts = injected.split(/\n(?=\d+\.\s)/).map(s=>s.trim());
-      if(parts.length>1){
-        parts.forEach(p=> items.push(p.replace(/^\d+\.\s+/,'').trim()));
-        body = body.replace(/^[\s\S]*?(?=\d+\.\s)/,'').trim();
-      }
-    }
-
-    let intro = '';
-    if(items.length){
-      const firstIdx = body.search(/\d+\.\s+/);
-      if(firstIdx > 0) intro = body.slice(0, firstIdx).trim().replace(/[;:,–—-]\s*$/,'');
-    }
-
-    const enhanceItem = (s)=>{
-      let t = s;
-      t = t.replace(
-        /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)/,
-        '<strong>$1</strong>'
-      );
-      t = t.replace(/\b(Proyecto|Project):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
-      t = t.replace(/\b(Departamento|Department):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
-      return t.trim();
-    };
-
-    let html = '';
-    if(intro) html += `<p>${formatBasicContent(intro)}</p>`;
-    if(items.length){
-      html += '<ol>';
-      items.forEach(it => html += `<li>${formatBasicContent(enhanceItem(it))}</li>`);
-      html += '</ol>';
-    }else{
-      html += formatBasicContent(body);
-    }
-    if(note){ html += `<br><strong>Nota:</strong> ${formatBasicContent(note)}`; }
-    return html;
+  let html = '';
+  if(intro) html += `<p>${formatBasicContent(intro)}</p>`;
+  if(items.length){
+    html += '<ol>';
+    items.forEach(it => html += `<li>${formatBasicContent(enhanceItem(it))}</li>`);
+    html += '</ol>';
+  }else{
+    html += formatBasicContent(body);
   }
+  if(note){ html += `<br><strong>Nota:</strong> ${formatBasicContent(note)}`; }
+  return html;
+}
 
-  function parseStructuredResponse(text) {
-    const normalized = text.trim().replace(/\u00A0/g, ' ');
-    
-    let resultMatch = normalized.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
-    let processMatch = normalized.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
-    
-    if (!resultMatch) {
-      resultMatch = normalized.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i) ||
-                    normalized.match(/RESULTADO:([\s\S]*?)(?=\[PROCESO\]|\[PROCESS\]|$)/i);
-    }
-    
-    if (!processMatch) {
-      processMatch = normalized.match(/\[PROCESS\]([\s\S]*?)\[\/PROCESS\]/i) ||
-                     normalized.match(/PROCESO:([\s\S]*?)(?=\[RESULTADO\]|\[RESULT\]|$)/i);
-    }
-    
-    if (resultMatch) {
-      return {
-        hasStructure: true,
-        result: resultMatch[1].trim(),
-        process: processMatch ? processMatch[1].trim() : 'No se proporcionó información del proceso.'
-      };
-    }
-    
+function parseStructuredResponse(text) {
+  const normalized = text.trim().replace(/\u00A0/g, ' ');
+  
+  let resultMatch = normalized.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
+  let processMatch = normalized.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
+  
+  if (!resultMatch) {
+    resultMatch = normalized.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i) ||
+                  normalized.match(/RESULTADO:([\s\S]*?)(?=\[PROCESO\]|\[PROCESS\]|$)/i);
+  }
+  
+  if (!processMatch) {
+    processMatch = normalized.match(/\[PROCESS\]([\s\S]*?)\[\/PROCESS\]/i) ||
+                   normalized.match(/PROCESO:([\s\S]*?)(?=\[RESULTADO\]|\[RESULT\]|$)/i);
+  }
+  
+  if (resultMatch) {
     return {
-      hasStructure: false,
-      result: normalized,
-      process: ''
+      hasStructure: true,
+      result: resultMatch[1].trim(),
+      process: processMatch ? processMatch[1].trim() : 'No se proporcionó información del proceso.'
     };
   }
+  
+  return {
+    hasStructure: false,
+    result: normalized,
+    process: ''
+  };
+}
 
-  function showContentWithAnimation(text, element, onComplete) {
-    const formattedHTML = formatResultRich(text);
-    element.innerHTML = formattedHTML;
+function showContentWithAnimation(text, element, onComplete) {
+  const formattedHTML = formatResultRich(text);
+  element.innerHTML = formattedHTML;
+  
+  if (onComplete) {
+    setTimeout(onComplete, 50);
+  }
+}
+
+function buildStructuredMessage(resultText, processText){
+  const id='m'+Date.now()+Math.floor(Math.random()*1e4);
+  const html = `
+    <div class="result-section" id="result-${id}"></div>
+    <hr class="proc-sep">
+    <div class="process-section">
+      <div class="process-header" data-target="${id}">
+        <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
+      </div>
+      <div class="process-content" id="process-${id}">
+        ${formatBasicContent(processText)}
+      </div>
+    </div>`;
+  return {id, html};
+}
+
+function toggleProcess(id){
+  const proc=document.getElementById('process-'+id);
+  const arrow=document.getElementById('arrow-'+id);
+  if(!proc) return;
+  const vis=proc.classList.toggle('visible');
+  arrow.textContent=vis?'▲':'▼';
+}
+
+function scrollToBottom(){ 
+  messagesDiv.scrollTop = messagesDiv.scrollHeight; 
+}
+
+async function sendMessage(){
+  if (!currentUser) {
+    showLogin();
+    return;
+  }
+
+  const original = input.value.trim();
+  if(!original || isLoading) return;
+  const enhanced = memory.enhance(original);
+
+  const u = document.createElement('div');
+  u.className='message user-message';
+  u.textContent=original.toUpperCase();
+  messagesDiv.appendChild(u);
+
+  input.value=''; input.focus();
+  isLoading=true; sendBtn.disabled=true;
+
+  const typing=document.createElement('div');
+  typing.className='typing-indicator';
+  typing.textContent='thinking…';
+  messagesDiv.appendChild(typing);
+  scrollToBottom();
+
+  try{
+    // Obtener token de sesión actual
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (onComplete) {
-      setTimeout(onComplete, 50);
+    if (sessionError || !session) {
+      throw new Error('Sesión expirada');
     }
-  }
 
-  function buildStructuredMessage(resultText, processText){
-    const id='m'+Date.now()+Math.floor(Math.random()*1e4);
-    const html = `
-      <div class="result-section" id="result-${id}"></div>
-      <hr class="proc-sep">
-      <div class="process-section">
-        <div class="process-header" data-target="${id}">
-          <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
-        </div>
-        <div class="process-content" id="process-${id}">
-          ${formatBasicContent(processText)}
-        </div>
-      </div>`;
-    return {id, html};
-  }
-
-  function toggleProcess(id){
-    const proc=document.getElementById('process-'+id);
-    const arrow=document.getElementById('arrow-'+id);
-    if(!proc) return;
-    const vis=proc.classList.toggle('visible');
-    arrow.textContent=vis?'▲':'▼';
-  }
-
-  function scrollToBottom(){ 
-    messagesDiv.scrollTop = messagesDiv.scrollHeight; 
-  }
-
-  async function sendMessage(){
-    if (!currentUser) {
-      showLogin();
+    console.log('📤 Enviando consulta con autenticación:', enhanced);
+    
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_ANON_KEY,
+        'Authorization':`Bearer ${session.access_token}`
+      },
+      body:JSON.stringify({question:enhanced})
+    });
+    
+    console.log('📡 Response status:', r.status);
+    
+    const data = await r.json();
+    console.log('📊 Response data:', data);
+    
+    // Manejar errores de autenticación
+    if (data.error === 'authentication_failed') {
+      await supabase.auth.signOut();
+      showError('Sesión expirada. Por favor, inicia sesión nuevamente.');
       return;
     }
+    
+    typing.remove();
 
-    const original = input.value.trim();
-    if(!original || isLoading) return;
-    const enhanced = memory.enhance(original);
+    const a = document.createElement('div');
+    a.className='message assistant-message';
+    messagesDiv.appendChild(a);
 
-    const u = document.createElement('div');
-    u.className='message user-message';
-    u.textContent=original.toUpperCase();
-    messagesDiv.appendChild(u);
+    const full = data.answer || '—';
+    memory.update(original, full);
 
-    input.value=''; input.focus();
-    isLoading=true; sendBtn.disabled=true;
+    const parsedResponse = parseStructuredResponse(full);
+    
+    if(parsedResponse.hasStructure){
+      const {id, html} = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
+      a.innerHTML = html;
+      const resultEl = document.getElementById('result-'+id);
 
-    const typing=document.createElement('div');
-    typing.className='typing-indicator';
-    typing.textContent='thinking…';
-    messagesDiv.appendChild(typing);
+      showContentWithAnimation(parsedResponse.result, resultEl, () => {
+        scrollToBottom();
+      });
+
+      const header = a.querySelector(`.process-header[data-target="${id}"]`);
+      header.addEventListener('click', ()=>toggleProcess(id));
+      
+      requestAnimationFrame(() => {
+        a.classList.add('visible');
+      });
+    }else{
+      a.innerHTML = formatResultRich(full);
+      
+      requestAnimationFrame(() => {
+        a.classList.add('visible');
+      });
+    }
     scrollToBottom();
 
-    try{
-      // Obtener token de sesión actual
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error('Sesión expirada');
-      }
-
-      console.log('📤 Enviando consulta con autenticación:', enhanced);
-      
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`,{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'apikey':SUPABASE_ANON_KEY,
-          'Authorization':`Bearer ${session.access_token}`
-        },
-        body:JSON.stringify({question:enhanced})
-      });
-      
-      console.log('📡 Response status:', r.status);
-      
-      const data = await r.json();
-      console.log('📊 Response data:', data);
-      
-      // Manejar errores de autenticación
-      if (data.error === 'authentication_failed') {
-        await supabase.auth.signOut();
-        showError('Sesión expirada. Por favor, inicia sesión nuevamente.');
-        return;
-      }
-      
-      typing.remove();
-
-      const a = document.createElement('div');
-      a.className='message assistant-message';
-      messagesDiv.appendChild(a);
-
-      const full = data.answer || '—';
-      memory.update(original, full);
-
-      const parsedResponse = parseStructuredResponse(full);
-      
-      if(parsedResponse.hasStructure){
-        const {id, html} = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
-        a.innerHTML = html;
-        const resultEl = document.getElementById('result-'+id);
-
-        showContentWithAnimation(parsedResponse.result, resultEl, () => {
-          scrollToBottom();
-        });
-
-        const header = a.querySelector(`.process-header[data-target="${id}"]`);
-        header.addEventListener('click', ()=>toggleProcess(id));
-        
-        requestAnimationFrame(() => {
-          a.classList.add('visible');
-        });
-      }else{
-        a.innerHTML = formatResultRich(full);
-        
-        requestAnimationFrame(() => {
-          a.classList.add('visible');
-        });
-      }
-      scrollToBottom();
-
-    }catch(err){
-      console.error('❌ Error:', err);
-      typing.remove();
-      
-      let errorMessage = 'Error al conectar con el servidor.';
-      if (err.message.includes('Sesión expirada')) {
-        errorMessage = 'Sesión expirada. Redirigiendo al login...';
-        setTimeout(() => {
-          supabase.auth.signOut();
-        }, 2000);
-      }
-      
-      const e = document.createElement('div');
-      e.className='message assistant-message';
-      e.textContent = errorMessage + ' Intenta de nuevo.';
-      messagesDiv.appendChild(e);
-    }finally{
-      isLoading=false; sendBtn.disabled=false;
-    }
-  }
-
-  // EVENT LISTENERS
-  loginBtn.addEventListener('click', signInWithGoogle);
-  logoutBtn.addEventListener('click', signOut);
-  sendBtn.addEventListener('click', sendMessage);
-  input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
-
-  // INICIALIZACIÓN
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Distribution Chat con Autenticación iniciado');
-    showLoading();
+  }catch(err){
+    console.error('❌ Error:', err);
+    typing.remove();
     
-    // Verificar autenticación después de un breve delay
-    setTimeout(() => {
-      checkAuthState();
-    }, 500);
-  });
+    let errorMessage = 'Error al conectar con el servidor.';
+    if (err.message.includes('Sesión expirada')) {
+      errorMessage = 'Sesión expirada. Redirigiendo al login...';
+      setTimeout(() => {
+        supabase.auth.signOut();
+      }, 2000);
+    }
+    
+    const e = document.createElement('div');
+    e.className='message assistant-message';
+    e.textContent = errorMessage + ' Intenta de nuevo.';
+    messagesDiv.appendChild(e);
+  }finally{
+    isLoading=false; sendBtn.disabled=false;
+  }
 }
+
+// EVENT LISTENERS
+loginBtn.addEventListener('click', signInWithGoogle);
+logoutBtn.addEventListener('click', signOut);
+sendBtn.addEventListener('click', sendMessage);
+input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
+
+// INICIALIZACIÓN
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 Distribution Chat con Autenticación iniciado');
+  showLoading();
+  
+  setTimeout(() => {
+    checkAuthState();
+  }, 500);
+});
 </script>
 </body>
 </html>
