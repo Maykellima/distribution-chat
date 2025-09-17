@@ -35,6 +35,7 @@
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
     .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
     .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
+    .config-error{background:#fee;border:1px solid #fcc;padding:20px;border-radius:8px;margin:20px;color:#c33;text-align:center}
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
@@ -50,36 +51,80 @@
   </div>
 
 <script>
-/* ===== Config desde variables de entorno ===== */
-let SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co'; // fallback
-let SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY'; // fallback
+/* ===== Configuración Segura ===== */
+let SUPABASE_URL = null;
+let SUPABASE_ANON_KEY = null;
+let configLoaded = false;
 
-// Cargar variables de entorno si están disponibles
-async function loadEnvConfig() {
+// Cargar configuración de forma segura
+async function loadSecureConfig() {
   try {
-    const response = await fetch('.env');
-    if (response.ok) {
-      const envText = await response.text();
-      const envVars = {};
-      
-      envText.split('\n').forEach(line => {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#')) {
-          const [key, ...valueParts] = trimmed.split('=');
-          if (key && valueParts.length) {
-            envVars[key.trim()] = valueParts.join('=').trim();
-          }
-        }
-      });
-      
-      if (envVars.SUPABASE_URL) SUPABASE_URL = envVars.SUPABASE_URL;
-      if (envVars.SUPABASE_ANON_KEY) SUPABASE_ANON_KEY = envVars.SUPABASE_ANON_KEY;
-      
-      console.log('✅ Variables de entorno cargadas');
+    // OPCIÓN 1: Desde archivo .env (requiere servidor web)
+    const envResponse = await fetch('/config.json');
+    if (envResponse.ok) {
+      const config = await envResponse.json();
+      SUPABASE_URL = config.SUPABASE_URL;
+      SUPABASE_ANON_KEY = config.SUPABASE_ANON_KEY;
+      configLoaded = true;
+      console.log('✅ Configuración cargada desde config.json');
+      return;
     }
   } catch (e) {
-    console.log('📋 Usando configuración por defecto');
+    console.log('⚠️ No se pudo cargar config.json');
   }
+
+  try {
+    // OPCIÓN 2: Desde endpoint de configuración
+    const configResponse = await fetch('/api/config');
+    if (configResponse.ok) {
+      const config = await configResponse.json();
+      SUPABASE_URL = config.supabaseUrl;
+      SUPABASE_ANON_KEY = config.supabaseAnonKey;
+      configLoaded = true;
+      console.log('✅ Configuración cargada desde /api/config');
+      return;
+    }
+  } catch (e) {
+    console.log('⚠️ No se pudo cargar desde /api/config');
+  }
+
+  // OPCIÓN 3: Fallback a variables de entorno del navegador (si están disponibles)
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      SUPABASE_URL = process.env.SUPABASE_URL;
+      SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        configLoaded = true;
+        console.log('✅ Configuración cargada desde variables de entorno');
+        return;
+      }
+    }
+  } catch (e) {
+    console.log('⚠️ Variables de entorno no disponibles');
+  }
+
+  // FALLBACK: Valores por defecto SOLO para desarrollo local
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+    SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+    configLoaded = true;
+    console.log('⚠️ Usando configuración de desarrollo - NO usar en producción');
+    return;
+  }
+
+  // Si llegamos aquí, no se pudo cargar la configuración
+  showConfigError();
+}
+
+function showConfigError() {
+  const container = document.querySelector('.container');
+  container.innerHTML = `
+    <div class="config-error">
+      <h3>Error de Configuración</h3>
+      <p>No se pudieron cargar las credenciales de Supabase.</p>
+      <p>Contacta al administrador del sistema.</p>
+    </div>
+  `;
 }
 
 const messagesDiv = document.getElementById('messages');
@@ -214,7 +259,6 @@ function showContentWithAnimation(text, element, onComplete) {
   const formattedHTML = formatResultRich(text);
   element.innerHTML = formattedHTML;
   
-  // Ejecutar callback después de actualizar el contenido
   if (onComplete) {
     setTimeout(onComplete, 50);
   }
@@ -250,8 +294,13 @@ function scrollToBottom(){
   messagesDiv.scrollTop = messagesDiv.scrollHeight; 
 }
 
-/* ===== Envío con typewriter ===== */
+/* ===== Envío seguro ===== */
 async function sendMessage(){
+  if (!configLoaded) {
+    console.error('Configuración no cargada');
+    return;
+  }
+
   const original = input.value.trim();
   if(!original || isLoading) return;
   const enhanced = memory.enhance(original);
@@ -293,7 +342,6 @@ async function sendMessage(){
       a.innerHTML = html;
       const resultEl = document.getElementById('result-'+id);
 
-      // Mostrar resultado con animación
       showContentWithAnimation(parsedResponse.result, resultEl, () => {
         scrollToBottom();
       });
@@ -301,15 +349,12 @@ async function sendMessage(){
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
       header.addEventListener('click', ()=>toggleProcess(id));
       
-      // Aplicar animación inmediatamente
       requestAnimationFrame(() => {
         a.classList.add('visible');
       });
     }else{
-      // Fallback para respuestas sin estructura
       a.innerHTML = formatResultRich(full);
       
-      // Aplicar animación inmediatamente
       requestAnimationFrame(() => {
         a.classList.add('visible');
       });
@@ -327,10 +372,12 @@ async function sendMessage(){
   }
 }
 
-/* ===== Inicialización ===== */
+/* ===== Inicialización segura ===== */
 async function initApp() {
-  await loadEnvConfig();
-  input.focus();
+  await loadSecureConfig();
+  if (configLoaded) {
+    input.focus();
+  }
 }
 
 /* ===== Eventos ===== */
