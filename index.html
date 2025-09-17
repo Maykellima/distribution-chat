@@ -1,10 +1,10 @@
-<!-- index.html -->
+<!-- index.html - VERSIÓN DE PRUEBA -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Distribution Chat</title>
+  <title>Distribution Chat - Test</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{ --black-90:rgba(0,0,0,.9); --black-80:rgba(0,0,0,.8); --border:rgba(0,0,0,.2); --bg:#fff; }
@@ -35,7 +35,6 @@
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
     .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
     .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
-    .config-error{background:#fee;border:1px solid #fcc;padding:20px;border-radius:8px;margin:20px;color:#c33;text-align:center}
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
@@ -51,81 +50,11 @@
   </div>
 
 <script>
-/* ===== Configuración Segura ===== */
-let SUPABASE_URL = null;
-let SUPABASE_ANON_KEY = null;
-let configLoaded = false;
+// CONFIGURACIÓN DIRECTA PARA PRUEBAS
+const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
 
-// Cargar configuración de forma segura
-async function loadSecureConfig() {
-  try {
-    // OPCIÓN 1: Desde archivo .env (requiere servidor web)
-    const envResponse = await fetch('/config.json');
-    if (envResponse.ok) {
-      const config = await envResponse.json();
-      SUPABASE_URL = config.SUPABASE_URL;
-      SUPABASE_ANON_KEY = config.SUPABASE_ANON_KEY;
-      configLoaded = true;
-      console.log('✅ Configuración cargada desde config.json');
-      return;
-    }
-  } catch (e) {
-    console.log('⚠️ No se pudo cargar config.json');
-  }
-
-  try {
-    // OPCIÓN 2: Desde endpoint de configuración
-    const configResponse = await fetch('/api/config');
-    if (configResponse.ok) {
-      const config = await configResponse.json();
-      SUPABASE_URL = config.supabaseUrl;
-      SUPABASE_ANON_KEY = config.supabaseAnonKey;
-      configLoaded = true;
-      console.log('✅ Configuración cargada desde /api/config');
-      return;
-    }
-  } catch (e) {
-    console.log('⚠️ No se pudo cargar desde /api/config');
-  }
-
-  // OPCIÓN 3: Fallback a variables de entorno del navegador (si están disponibles)
-  try {
-    if (typeof process !== 'undefined' && process.env) {
-      SUPABASE_URL = process.env.SUPABASE_URL;
-      SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-        configLoaded = true;
-        console.log('✅ Configuración cargada desde variables de entorno');
-        return;
-      }
-    }
-  } catch (e) {
-    console.log('⚠️ Variables de entorno no disponibles');
-  }
-
-  // FALLBACK: Valores por defecto SOLO para desarrollo local
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-    SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
-    configLoaded = true;
-    console.log('⚠️ Usando configuración de desarrollo - NO usar en producción');
-    return;
-  }
-
-  // Si llegamos aquí, no se pudo cargar la configuración
-  showConfigError();
-}
-
-function showConfigError() {
-  const container = document.querySelector('.container');
-  container.innerHTML = `
-    <div class="config-error">
-      <h3>Error de Configuración</h3>
-      <p>No se pudieron cargar las credenciales de Supabase.</p>
-      <p>Contacta al administrador del sistema.</p>
-    </div>
-  `;
-}
+console.log('🧪 MODO PRUEBA - Credenciales cargadas directamente');
 
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
@@ -294,13 +223,8 @@ function scrollToBottom(){
   messagesDiv.scrollTop = messagesDiv.scrollHeight; 
 }
 
-/* ===== Envío seguro ===== */
+/* ===== Envío ===== */
 async function sendMessage(){
-  if (!configLoaded) {
-    console.error('Configuración no cargada');
-    return;
-  }
-
   const original = input.value.trim();
   if(!original || isLoading) return;
   const enhanced = memory.enhance(original);
@@ -320,12 +244,19 @@ async function sendMessage(){
   scrollToBottom();
 
   try{
+    console.log('📤 Enviando consulta:', enhanced);
+    
     const r = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`,{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${SUPABASE_ANON_KEY}`},
       body:JSON.stringify({question:enhanced})
     });
+    
+    console.log('📡 Response status:', r.status);
+    
     const data = await r.json();
+    console.log('📊 Response data:', data);
+    
     typing.remove();
 
     const a = document.createElement('div');
@@ -362,21 +293,14 @@ async function sendMessage(){
     scrollToBottom();
 
   }catch(err){
+    console.error('❌ Error:', err);
     typing.remove();
     const e = document.createElement('div');
     e.className='message assistant-message';
-    e.textContent='Error al conectar con el servidor. Intenta de nuevo.';
+    e.textContent='Error al conectar con el servidor: ' + err.message;
     messagesDiv.appendChild(e);
   }finally{
     isLoading=false; sendBtn.disabled=false;
-  }
-}
-
-/* ===== Inicialización segura ===== */
-async function initApp() {
-  await loadSecureConfig();
-  if (configLoaded) {
-    input.focus();
   }
 }
 
@@ -384,8 +308,9 @@ async function initApp() {
 sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
 
-// Inicializar aplicación
-document.addEventListener('DOMContentLoaded', initApp);
+// Inicialización
+input.focus();
+console.log('🚀 Distribution Chat Test - Listo para probar');
 </script>
 </body>
 </html>
