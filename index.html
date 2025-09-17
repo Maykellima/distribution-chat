@@ -201,18 +201,14 @@ if (!window.supabase) {
   }
 
   async function checkUserAccess(user) {
-    try {
-      const { data, error } = await supabase
-        .from('allowed_users')
-        .select('*')
-        .eq('email', user.email)
-        .eq('is_active', true)
-        .single();
-      
-      if (error || !data) {
-        console.log('Usuario no autorizado:', user.email);
-        return false;
-      }
+  // Permitir solo emails de theagilemonkeys.com y theam.io
+  const allowedDomains = ['@theagilemonkeys.com', '@theam.io'];
+  const isAllowed = allowedDomains.some(domain => user.email.endsWith(domain));
+  
+  console.log(`Verificando acceso para ${user.email}: ${isAllowed ? 'PERMITIDO' : 'DENEGADO'}`);
+  
+  return isAllowed;
+}
       
       console.log('Usuario autorizado:', data.name, '(' + data.role + ')');
       return true;
