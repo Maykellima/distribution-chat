@@ -1,12 +1,3 @@
-# Variables de entorno
+config.json
 .env
-
-# Logs
-*.log
-
-# Node modules (si se usa npm en el futuro)
-node_modules/
-
-# Sistema
-.DS_Store
-Thumbs.db
+.env.local
