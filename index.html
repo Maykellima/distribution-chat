@@ -1,15 +1,38 @@
-<!-- index.html - VERSIÓN DE PRUEBA -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Distribution Chat - Test</title>
+  <title>Distribution Chat</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{ --black-90:rgba(0,0,0,.9); --black-80:rgba(0,0,0,.8); --border:rgba(0,0,0,.2); --bg:#fff; }
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
     .container{width:640px;padding:40px 0}
+    
+    /* LOGIN */
+    .login-container{text-align:center;padding:60px 40px}
+    .login-title{font-size:32px;font-weight:700;margin-bottom:12px;color:#111}
+    .login-subtitle{font-size:18px;color:#666;margin-bottom:40px}
+    .login-button{background:#4285f4;color:#fff;border:none;border-radius:8px;padding:16px 32px;font-size:16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:12px;transition:all 0.2s ease}
+    .login-button:hover{background:#3367d6;transform:translateY(-1px);box-shadow:0 4px 12px rgba(66,133,244,0.3)}
+    .login-button:disabled{opacity:0.5;cursor:not-allowed}
+    .login-button svg{width:20px;height:20px}
+    
+    /* USER INFO */
+    .user-info{position:absolute;top:20px;right:20px;display:flex;align-items:center;gap:12px;background:#f8f9fa;padding:8px 16px;border-radius:24px;font-size:14px}
+    .user-email{color:#666;font-weight:500}
+    .logout-btn{background:none;border:none;color:#666;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:4px;transition:background 0.2s}
+    .logout-btn:hover{background:#e8eaed}
+    
+    /* STATES */
+    .loading{text-align:center;padding:40px;color:#666}
+    .error{text-align:center;padding:40px;color:#d93025;background:#fce8e6;border-radius:8px;margin:20px}
+    .rate-limit-warning{background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:12px;border-radius:8px;margin-bottom:20px;display:none}
+    
+    /* CHAT */
+    .chat-container{display:none}
+    .chat-container.visible{display:block}
     .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
     .messages::-webkit-scrollbar{display:none}
     .message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
@@ -17,301 +40,547 @@
     .user-message::before{content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%}
     .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all 0.4s ease-out}
     .assistant-message.visible{opacity:1;transform:translateY(0)}
+    .assistant-message.error{color:#d93025;background:#fce8e6;padding:12px;border-radius:8px}
     .assistant-message strong{font-weight:700;color:#000}
     .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
     .assistant-message li{margin:4px 0}
+    .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
+    
+    /* PROCESS SECTION */
     .proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
     .process-section{margin-top:10px}
     .process-header{font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
     .process-arrow{font-size:13px;display:inline-block;min-width:14px}
     .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
     .process-content.visible{display:block}
-    .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
+    
+    /* INPUT */
     .input-container{position:relative}
     .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
     .input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+    .input-field:disabled{background:#f5f5f5;cursor:not-allowed}
     .input-field::placeholder{color:#999;font-weight:400}
+    .char-count{position:absolute;right:70px;top:50%;transform:translateY(-50%);font-size:12px;color:#999}
+    .char-count.warning{color:#ea8600}
+    .char-count.danger{color:#d93025}
     .send-button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)}
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
     .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
     .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
+    
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="messages" id="messages"></div>
-    <div class="input-container">
-      <input type="text" class="input-field" id="input" placeholder="Hello, how can I help you?." autocomplete="off"/>
-      <button class="send-button" id="sendBtn" aria-label="Enviar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
+    <!-- Loading -->
+    <div id="loading" class="loading">
+      Cargando...
+    </div>
+    
+    <!-- Error -->
+    <div id="error" class="error" style="display:none">
+      <h3>Error de Configuración</h3>
+      <p>No se pudo inicializar el sistema.</p>
+    </div>
+    
+    <!-- Login -->
+    <div id="login" class="login-container" style="display:none">
+      <h1 class="login-title">Distribution Chat</h1>
+      <p class="login-subtitle">Sistema de análisis empresarial</p>
+      <button id="loginBtn" class="login-button">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continuar con Google
       </button>
+    </div>
+    
+    <!-- Chat -->
+    <div id="chat" class="chat-container">
+      <div class="user-info" id="userInfo">
+        <span class="user-email" id="userEmail"></span>
+        <button class="logout-btn" id="logoutBtn">Salir</button>
+      </div>
+      
+      <div id="rateLimitWarning" class="rate-limit-warning">
+        ⚠️ Límite de consultas: máximo 10 por minuto
+      </div>
+      
+      <div class="messages" id="messages"></div>
+      
+      <div class="input-container">
+        <input type="text" class="input-field" id="input" 
+               placeholder="Escribe tu pregunta..." 
+               autocomplete="off" maxlength="500"/>
+        <span class="char-count" id="charCount">0/500</span>
+        <button class="send-button" id="sendBtn" aria-label="Enviar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l14 0M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// CONFIGURACIÓN DIRECTA PARA PRUEBAS
+// CONFIGURACIÓN
 const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
 
-console.log('🧪 MODO PRUEBA - Credenciales cargadas directamente');
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ELEMENTOS DOM
+const loadingEl = document.getElementById('loading');
+const errorEl = document.getElementById('error');
+const loginEl = document.getElementById('login');
+const chatEl = document.getElementById('chat');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const userInfoEl = document.getElementById('userInfo');
+const userEmailEl = document.getElementById('userEmail');
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
+const charCount = document.getElementById('charCount');
+const rateLimitWarning = document.getElementById('rateLimitWarning');
+
+let currentUser = null;
 let isLoading = false;
+let queryCount = 0;
+let queryTimer = null;
 
-/* ===== Memoria breve ===== */
-class ConversationMemory{
-  constructor(){this.context=null;this.DUR=10*60*1000}
-  update(q,a){this.context={lastQuery:q,lastAnswer:a,entities:this.extract(q,a),ts:Date.now()}}
-  extract(q,a){const c=(q+' '+a).toLowerCase();return {projects:this.extractProjects(c),people:this.extractPeople(a)}}
-  extractProjects(txt){const known=['dataverse','delta','sid','hornblower','data','al findr','solutran','control plane','infrastructure team','zeta'];return known.filter(p=>txt.includes(p))}
-  extractPeople(t){const re=/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+/g;return t.match(re)||[]}
-  enhance(q){
-    if(!this.context || Date.now()-this.context.ts>this.DUR) return q
-    const lq=q.toLowerCase()
-    if((lq.includes('ellos')||lq.includes('estos')) && this.context.entities.people.length) return q+` (contexto: ${this.context.entities.people.join(', ')})`
-    if((lq.includes('ese proyecto')||lq.includes('el proyecto')) && this.context.entities.projects.length) return q+` (contexto: proyecto ${this.context.entities.projects[0]})`
-    return q
-  }
-}
-const memory=new ConversationMemory();
-
-/* ===== Markdown básico → HTML ===== */
-function formatBasicContent(content){
-  let f = content
-    .replace(/^### (.*?)$/gm,'<h3>$1</h3>')
-    .replace(/^## (.*?)$/gm,'<h2>$1</h2>')
-    .replace(/^# (.*?)$/gm,'<h1>$1</h1>')
-    .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code class="language-$1">$2</code></pre>')
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>')
-    .replace(/`(.*?)`/g,'<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>')
-    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
-    .replace(/^[\*\-\+] (.+)$/gm,'<li>$1</li>')
-    .replace(/\n/g,'<br>');
-  f = f.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, m => '<ul>' + m.replace(/<br>/g,'') + '</ul>');
-  f = f.replace(/(<br>){2,}/g,'<br><br>');
-  return f;
+// GESTIÓN DE ESTADOS
+function showLoading() {
+  loadingEl.style.display = 'block';
+  errorEl.style.display = 'none';
+  loginEl.style.display = 'none';
+  chatEl.classList.remove('visible');
 }
 
-/* ===== Post-formateo robusto para [RESULTADO] ===== */
-function formatResultRich(text){
-  let body = text.trim().replace(/\u00A0/g,' ');
-  let note = '';
+function showError(message) {
+  loadingEl.style.display = 'none';
+  errorEl.style.display = 'block';
+  loginEl.style.display = 'none';
+  chatEl.classList.remove('visible');
+  errorEl.querySelector('p').textContent = message || 'Error desconocido';
+}
 
-  const nIdx = body.search(/\bNota:/i);
-  if (nIdx >= 0){
-    note = body.slice(nIdx).replace(/^.*?\bNota:\s*/i,'').trim();
-    body = body.slice(0, nIdx).trim();
-  }
+function showLogin() {
+  loadingEl.style.display = 'none';
+  errorEl.style.display = 'none';
+  loginEl.style.display = 'block';
+  chatEl.classList.remove('visible');
+}
 
-  const items = [];
-  const itemRe = /(?:^|\s)(\d+)\.\s+([^]+?)(?=(?:\s+\d+\.\s+)|$)/g;
-  let m; while((m=itemRe.exec(body))!==null){ items.push(m[2].trim()); }
+function showChat(user) {
+  loadingEl.style.display = 'none';
+  errorEl.style.display = 'none';
+  loginEl.style.display = 'none';
+  chatEl.classList.add('visible');
+  
+  userEmailEl.textContent = user.email;
+  input.focus();
+}
 
-  if(items.length===0){
-    const injected = body.replace(/(\d+)\.\s+/g, '\n$1. ');
-    const parts = injected.split(/\n(?=\d+\.\s)/).map(s=>s.trim());
-    if(parts.length>1){
-      parts.forEach(p=> items.push(p.replace(/^\d+\.\s+/,'').trim()));
-      body = body.replace(/^[\s\S]*?(?=\d+\.\s)/,'').trim();
+// AUTENTICACIÓN
+async function checkAuthState() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Error verificando sesión:', error);
+      showLogin();
+      return;
     }
+    
+    if (session?.user) {
+      console.log('Usuario autenticado:', session.user.email);
+      
+      const hasAccess = await checkUserAccess(session.user);
+      if (hasAccess) {
+        currentUser = session.user;
+        showChat(session.user);
+      } else {
+        await supabase.auth.signOut();
+        showError('No tienes autorización para acceder a este sistema. Contacta al administrador.');
+      }
+    } else {
+      showLogin();
+    }
+  } catch (err) {
+    console.error('Error en autenticación:', err);
+    showError('Error al verificar autenticación');
   }
-
-  let intro = '';
-  if(items.length){
-    const firstIdx = body.search(/\d+\.\s+/);
-    if(firstIdx > 0) intro = body.slice(0, firstIdx).trim().replace(/[;:,–—-]\s*$/,'');
-  }
-
-  const enhanceItem = (s)=>{
-    let t = s;
-    t = t.replace(
-      /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)/,
-      '<strong>$1</strong>'
-    );
-    t = t.replace(/\b(Proyecto|Project):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
-    t = t.replace(/\b(Departamento|Department):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
-    return t.trim();
-  };
-
-  let html = '';
-  if(intro) html += `<p>${formatBasicContent(intro)}</p>`;
-  if(items.length){
-    html += '<ol>';
-    items.forEach(it => html += `<li>${formatBasicContent(enhanceItem(it))}</li>`);
-    html += '</ol>';
-  }else{
-    html += formatBasicContent(body);
-  }
-  if(note){ html += `<br><strong>Nota:</strong> ${formatBasicContent(note)}`; }
-  return html;
 }
 
-/* ===== Parser robusto ===== */
-function parseStructuredResponse(text) {
-  const normalized = text.trim().replace(/\u00A0/g, ' ');
+async function checkUserAccess(user) {
+  try {
+    const { data, error } = await supabase
+      .from('allowed_users')
+      .select('*')
+      .eq('email', user.email)
+      .eq('is_active', true)
+      .single();
+    
+    if (error || !data) {
+      console.log('Usuario no autorizado:', user.email);
+      return false;
+    }
+    
+    console.log('Usuario autorizado:', data.name || user.email);
+    return true;
+  } catch (err) {
+    console.error('Error verificando acceso:', err);
+    return false;
+  }
+}
+
+async function signInWithGoogle() {
+  try {
+    loginBtn.textContent = 'Conectando...';
+    loginBtn.disabled = true;
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    
+    if (error) {
+      showError('Error al iniciar sesión: ' + error.message);
+      loginBtn.textContent = 'Continuar con Google';
+      loginBtn.disabled = false;
+    }
+  } catch (err) {
+    showError('Error al conectar con Google');
+    loginBtn.textContent = 'Continuar con Google';
+    loginBtn.disabled = false;
+  }
+}
+
+async function signOut() {
+  try {
+    await supabase.auth.signOut();
+    currentUser = null;
+    messagesDiv.innerHTML = '';
+    queryCount = 0;
+    showLogin();
+  } catch (err) {
+    console.error('Error en logout:', err);
+  }
+}
+
+// MANEJO DE AUTH STATE
+supabase.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth state changed:', event);
   
-  let resultMatch = normalized.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
-  let processMatch = normalized.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
+  if (event === 'SIGNED_IN' && session?.user) {
+    const hasAccess = await checkUserAccess(session.user);
+    if (hasAccess) {
+      currentUser = session.user;
+      showChat(session.user);
+    } else {
+      await supabase.auth.signOut();
+      showError('No tienes autorización para acceder a este sistema.');
+    }
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    messagesDiv.innerHTML = '';
+    showLogin();
+  }
+});
+
+// FORMATEO DE CONTENIDO
+function formatContent(text) {
+  let formatted = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+    
+  // Detectar y formatear listas numeradas
+  const lines = formatted.split('<br>');
+  let inList = false;
+  let listHtml = '';
   
-  if (!resultMatch) {
-    resultMatch = normalized.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i) ||
-                  normalized.match(/RESULTADO:([\s\S]*?)(?=\[PROCESO\]|\[PROCESS\]|$)/i);
+  const result = lines.map(line => {
+    const listMatch = line.match(/^(\d+)\.\s+(.*)$/);
+    if (listMatch) {
+      if (!inList) {
+        inList = true;
+        listHtml = '<ol>';
+      }
+      listHtml += '<li>' + listMatch[2] + '</li>';
+      return null;
+    } else {
+      if (inList) {
+        inList = false;
+        const completeList = listHtml + '</ol>';
+        listHtml = '';
+        return completeList + (line ? '<br>' + line : '');
+      }
+      return line;
+    }
+  }).filter(line => line !== null);
+  
+  if (inList) {
+    result.push(listHtml + '</ol>');
   }
   
-  if (!processMatch) {
-    processMatch = normalized.match(/\[PROCESS\]([\s\S]*?)\[\/PROCESS\]/i) ||
-                   normalized.match(/PROCESO:([\s\S]*?)(?=\[RESULTADO\]|\[RESULT\]|$)/i);
-  }
+  return result.join('<br>');
+}
+
+// CONSTRUIR MENSAJE CON PROCESO
+function buildStructuredMessage(resultText, processText) {
+  const id = 'm' + Date.now() + Math.floor(Math.random() * 10000);
   
-  if (resultMatch) {
+  const hasProcess = processText && processText.trim().length > 0;
+  
+  if (!hasProcess) {
     return {
-      hasStructure: true,
-      result: resultMatch[1].trim(),
-      process: processMatch ? processMatch[1].trim() : 'No se proporcionó información del proceso.'
+      id,
+      html: '<div class="result-section">' + formatContent(resultText) + '</div>'
     };
   }
   
-  return {
-    hasStructure: false,
-    result: normalized,
-    process: ''
-  };
-}
-
-/* ===== Mostrar contenido con animación fade-in y slide-up ===== */
-function showContentWithAnimation(text, element, onComplete) {
-  const formattedHTML = formatResultRich(text);
-  element.innerHTML = formattedHTML;
-  
-  if (onComplete) {
-    setTimeout(onComplete, 50);
-  }
-}
-
-/* ===== Bloque Resultado/Proceso ===== */
-function buildStructuredMessage(resultText, processText){
-  const id='m'+Date.now()+Math.floor(Math.random()*1e4);
   const html = `
-    <div class="result-section" id="result-${id}"></div>
+    <div class="result-section">${formatContent(resultText)}</div>
     <hr class="proc-sep">
     <div class="process-section">
       <div class="process-header" data-target="${id}">
-        <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
+        <span>Proceso</span>
+        <span class="process-arrow" id="arrow-${id}">▼</span>
       </div>
       <div class="process-content" id="process-${id}">
-        ${formatBasicContent(processText)}
+        ${formatContent(processText)}
       </div>
     </div>`;
-  return {id, html};
+  
+  return { id, html };
 }
 
-function toggleProcess(id){
-  const proc=document.getElementById('process-'+id);
-  const arrow=document.getElementById('arrow-'+id);
-  if(!proc) return;
-  const vis=proc.classList.toggle('visible');
-  arrow.textContent=vis?'▲':'▼';
+function toggleProcess(id) {
+  const proc = document.getElementById('process-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  if (!proc || !arrow) return;
+  
+  const isVisible = proc.classList.toggle('visible');
+  arrow.textContent = isVisible ? '▲' : '▼';
 }
 
-/* ===== Auto-scroll ===== */
-function scrollToBottom(){ 
-  messagesDiv.scrollTop = messagesDiv.scrollHeight; 
+// RATE LIMITING LOCAL
+function checkLocalRateLimit() {
+  queryCount++;
+  
+  if (queryCount >= 10) {
+    rateLimitWarning.style.display = 'block';
+    input.disabled = true;
+    sendBtn.disabled = true;
+    
+    setTimeout(() => {
+      queryCount = 0;
+      rateLimitWarning.style.display = 'none';
+      input.disabled = false;
+      sendBtn.disabled = false;
+    }, 60000);
+    
+    return false;
+  }
+  
+  if (queryTimer) clearTimeout(queryTimer);
+  queryTimer = setTimeout(() => {
+    queryCount = 0;
+  }, 60000);
+  
+  return true;
 }
 
-/* ===== Envío ===== */
-async function sendMessage(){
-  const original = input.value.trim();
-  if(!original || isLoading) return;
-  const enhanced = memory.enhance(original);
+// ENVIAR MENSAJE
+async function sendMessage() {
+  if (!currentUser) {
+    showLogin();
+    return;
+  }
 
-  const u = document.createElement('div');
-  u.className='message user-message';
-  u.textContent=original.toUpperCase();
-  messagesDiv.appendChild(u);
+  const question = input.value.trim();
+  if (!question || isLoading) return;
+  
+  if (question.length > 500) {
+    alert('Pregunta muy larga (máximo 500 caracteres)');
+    return;
+  }
+  
+  if (!checkLocalRateLimit()) {
+    return;
+  }
 
-  input.value=''; input.focus();
-  isLoading=true; sendBtn.disabled=true;
+  // Mostrar mensaje del usuario
+  const userMsg = document.createElement('div');
+  userMsg.className = 'message user-message';
+  userMsg.textContent = question.toUpperCase();
+  messagesDiv.appendChild(userMsg);
 
-  const typing=document.createElement('div');
-  typing.className='typing-indicator';
-  typing.textContent='thinking…';
+  input.value = '';
+  charCount.textContent = '0/500';
+  charCount.className = 'char-count';
+  input.focus();
+  
+  isLoading = true;
+  sendBtn.disabled = true;
+
+  // Indicador de escritura
+  const typing = document.createElement('div');
+  typing.className = 'typing-indicator';
+  typing.textContent = 'Procesando...';
   messagesDiv.appendChild(typing);
   scrollToBottom();
 
-  try{
-    console.log('📤 Enviando consulta:', enhanced);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
     
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${SUPABASE_ANON_KEY}`},
-      body:JSON.stringify({question:enhanced})
+    if (!session) {
+      throw new Error('Sesión expirada');
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ question })
     });
     
-    console.log('📡 Response status:', r.status);
-    
-    const data = await r.json();
-    console.log('📊 Response data:', data);
-    
+    const data = await response.json();
     typing.remove();
 
-    const a = document.createElement('div');
-    a.className='message assistant-message';
-    messagesDiv.appendChild(a);
-
-    const full = data.answer || '—';
-    memory.update(original, full);
-
-    const parsedResponse = parseStructuredResponse(full);
+    const assistantMsg = document.createElement('div');
+    assistantMsg.className = 'message assistant-message';
     
-    if(parsedResponse.hasStructure){
-      const {id, html} = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
-      a.innerHTML = html;
-      const resultEl = document.getElementById('result-'+id);
-
-      showContentWithAnimation(parsedResponse.result, resultEl, () => {
-        scrollToBottom();
-      });
-
-      const header = a.querySelector(`.process-header[data-target="${id}"]`);
-      header.addEventListener('click', ()=>toggleProcess(id));
+    if (data.success) {
+      // Manejar respuesta estructurada
+      if (data.answer && data.answer.format === 'structured') {
+        const { id, html } = buildStructuredMessage(
+          data.answer.result || 'Sin respuesta',
+          data.answer.process || ''
+        );
+        assistantMsg.innerHTML = html;
+        
+        // Agregar event listener para toggle si hay proceso
+        if (data.answer.process) {
+          setTimeout(() => {
+            const header = assistantMsg.querySelector(`.process-header[data-target="${id}"]`);
+            if (header) {
+              header.addEventListener('click', () => toggleProcess(id));
+            }
+          }, 100);
+        }
+      } else {
+        // Respuesta simple (retrocompatibilidad)
+        const content = data.answer?.result || data.answer || 'Sin respuesta';
+        assistantMsg.innerHTML = formatContent(content);
+      }
       
-      requestAnimationFrame(() => {
-        a.classList.add('visible');
-      });
-    }else{
-      a.innerHTML = formatResultRich(full);
+      // Log metadata si existe
+      if (data.metadata) {
+        console.log('Metadata:', data.metadata);
+      }
+    } else {
+      // Error
+      assistantMsg.classList.add('error');
+      assistantMsg.textContent = data.message || 'Error al procesar la consulta';
       
-      requestAnimationFrame(() => {
-        a.classList.add('visible');
-      });
+      if (data.error === 'rate_limit') {
+        rateLimitWarning.style.display = 'block';
+        queryCount = 10;
+      } else if (data.error === 'unauthorized' || data.error === 'missing_auth') {
+        setTimeout(() => {
+          supabase.auth.signOut();
+        }, 2000);
+      }
     }
-    scrollToBottom();
+    
+    messagesDiv.appendChild(assistantMsg);
+    
+    requestAnimationFrame(() => {
+      assistantMsg.classList.add('visible');
+      scrollToBottom();
+    });
 
-  }catch(err){
-    console.error('❌ Error:', err);
+  } catch (err) {
+    console.error('Error:', err);
     typing.remove();
-    const e = document.createElement('div');
-    e.className='message assistant-message';
-    e.textContent='Error al conectar con el servidor: ' + err.message;
-    messagesDiv.appendChild(e);
-  }finally{
-    isLoading=false; sendBtn.disabled=false;
+    
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'message assistant-message error';
+    
+    if (err.message.includes('Sesión')) {
+      errorMsg.textContent = 'Sesión expirada. Recargando...';
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      errorMsg.textContent = 'Error de conexión. Intenta de nuevo.';
+    }
+    
+    messagesDiv.appendChild(errorMsg);
+    scrollToBottom();
+  } finally {
+    isLoading = false;
+    sendBtn.disabled = false;
   }
 }
 
-/* ===== Eventos ===== */
-sendBtn.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
+function scrollToBottom() {
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
 
-// Inicialización
-input.focus();
-console.log('🚀 Distribution Chat Test - Listo para probar');
+// CONTADOR DE CARACTERES
+input.addEventListener('input', (e) => {
+  const length = e.target.value.length;
+  charCount.textContent = `${length}/500`;
+  
+  charCount.className = 'char-count';
+  if (length > 400) {
+    charCount.classList.add('danger');
+  } else if (length > 300) {
+    charCount.classList.add('warning');
+  }
+});
+
+// EVENT LISTENERS
+loginBtn.addEventListener('click', signInWithGoogle);
+logoutBtn.addEventListener('click', signOut);
+sendBtn.addEventListener('click', sendMessage);
+input.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// INICIALIZACIÓN
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Distribution Chat v2.0 - Iniciando...');
+  showLoading();
+  
+  setTimeout(() => {
+    checkAuthState();
+  }, 500);
+});
+
+// Prevenir cierre accidental
+window.addEventListener('beforeunload', (e) => {
+  if (messagesDiv.children.length > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 </script>
 </body>
 </html>
-
