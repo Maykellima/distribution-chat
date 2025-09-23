@@ -8,7 +8,7 @@
     *{margin:0;padding:0;box-sizing:border-box}
     :root{ --black-90:rgba(0,0,0,.9); --black-80:rgba(0,0,0,.8); --border:rgba(0,0,0,.2); --bg:#fff; }
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
-    .container{width:640px;padding:40px 0}
+    .container{width:640px;padding:40px 20px}
     
     .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
     .messages::-webkit-scrollbar{display:none}
@@ -51,15 +51,14 @@
   </div>
 
 <script>
+// Configuración simple
 const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
-
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
-
 let isLoading = false;
 
+// Función para enviar mensaje
 async function sendMessage() {
   const question = input.value.trim();
   if (!question || isLoading) return;
@@ -70,13 +69,13 @@ async function sendMessage() {
   userMsg.textContent = question.toUpperCase();
   messagesDiv.appendChild(userMsg);
 
+  // Limpiar input
   input.value = '';
   input.focus();
-  
   isLoading = true;
   sendBtn.disabled = true;
 
-  // Indicador
+  // Indicador de carga
   const typing = document.createElement('div');
   typing.className = 'typing-indicator';
   typing.textContent = 'Procesando...';
@@ -84,30 +83,24 @@ async function sendMessage() {
   scrollToBottom();
 
   try {
-    console.log('Enviando pregunta:', question);
-    
-    // IMPORTANTE: NO enviar Authorization header
+    // Llamada al backend SIN AUTENTICACIÓN
     const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ question })
     });
     
-    console.log('Response status:', response.status);
     const data = await response.json();
-    console.log('Response data:', data);
-    
     typing.remove();
 
+    // Crear respuesta
     const assistantMsg = document.createElement('div');
     assistantMsg.className = 'message assistant-message';
     
     if (data.success) {
-      const content = data.answer?.result || data.answer || 'Sin respuesta';
-      assistantMsg.textContent = content;
+      assistantMsg.textContent = data.answer?.result || data.answer || 'Sin respuesta';
     } else {
       assistantMsg.classList.add('error');
       assistantMsg.textContent = data.message || 'Error al procesar';
@@ -115,6 +108,7 @@ async function sendMessage() {
     
     messagesDiv.appendChild(assistantMsg);
     
+    // Animación
     requestAnimationFrame(() => {
       assistantMsg.classList.add('visible');
       scrollToBottom();
@@ -126,8 +120,7 @@ async function sendMessage() {
     
     const errorMsg = document.createElement('div');
     errorMsg.className = 'message assistant-message error';
-    errorMsg.textContent = 'Error de conexión';
-    
+    errorMsg.textContent = 'Error de conexión: ' + err.message;
     messagesDiv.appendChild(errorMsg);
     scrollToBottom();
   } finally {
@@ -136,10 +129,12 @@ async function sendMessage() {
   }
 }
 
+// Función para scroll
 function scrollToBottom() {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+// Event listeners
 sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
@@ -149,10 +144,8 @@ input.addEventListener('keypress', (e) => {
 });
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('Chat listo');
-  input.focus();
-});
+console.log('Chat iniciado - Sin autenticación');
+input.focus();
 </script>
 </body>
 </html>
