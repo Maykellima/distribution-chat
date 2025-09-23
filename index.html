@@ -1,296 +1,61 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Distribution Chat</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{ --black-90:rgba(0,0,0,.9); --black-80:rgba(0,0,0,.8); --border:rgba(0,0,0,.2); --bg:#fff; }
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
-    .container{width:640px;padding:40px 0}
-    
-    /* STATES */
-    .loading{text-align:center;padding:40px;color:#666}
-    .error{text-align:center;padding:40px;color:#d93025;background:#fce8e6;border-radius:8px;margin:20px}
-    
-    /* CHAT */
-    .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
-    .messages::-webkit-scrollbar{display:none}
-    .message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
-    .user-message{font-size:18px;color:#222;font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px}
-    .user-message::before{content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%}
-    .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all 0.4s ease-out}
-    .assistant-message.visible{opacity:1;transform:translateY(0)}
-    .assistant-message.error{color:#d93025;background:#fce8e6;padding:12px;border-radius:8px}
-    .assistant-message strong{font-weight:700;color:#000}
-    .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
-    .assistant-message li{margin:4px 0}
-    .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
-    
-    /* PROCESS SECTION */
-    .proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
-    .process-section{margin-top:10px}
-    .process-header{font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
-    .process-arrow{font-size:13px;display:inline-block;min-width:14px}
-    .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
-    .process-content.visible{display:block}
-    
-    /* INPUT */
-    .input-container{position:relative}
-    .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
-    .input-field:disabled{background:#f5f5f5;cursor:not-allowed}
-    .input-field::placeholder{color:#999;font-weight:400}
-    .char-count{position:absolute;right:70px;top:50%;transform:translateY(-50%);font-size:12px;color:#999}
-    .char-count.warning{color:#ea8600}
-    .char-count.danger{color:#d93025}
-    .send-button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-    .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
-    .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
-    .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
-    
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="messages" id="messages"></div>
-    
-    <div class="input-container">
-      <input type="text" class="input-field" id="input" 
-             placeholder="Escribe tu pregunta..." 
-             autocomplete="off" maxlength="500"/>
-      <span class="char-count" id="charCount">0/500</span>
-      <button class="send-button" id="sendBtn" aria-label="Enviar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12l14 0M12 5l7 7-7 7"/>
-        </svg>
-      </button>
-    </div>
-  </div>
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-<script>
-// CONFIGURACIÓN
-const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
-
-// ELEMENTOS DOM
-const messagesDiv = document.getElementById('messages');
-const input = document.getElementById('input');
-const sendBtn = document.getElementById('sendBtn');
-const charCount = document.getElementById('charCount');
-
-let isLoading = false;
-
-// FORMATEO DE CONTENIDO
-function formatContent(text) {
-  if (!text) return '';
-  
-  let formatted = text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>');
-    
-  // Detectar listas numeradas
-  const lines = formatted.split('<br>');
-  let inList = false;
-  let listHtml = '';
-  
-  const result = lines.map(line => {
-    const listMatch = line.match(/^(\d+)\.\s+(.*)$/);
-    if (listMatch) {
-      if (!inList) {
-        inList = true;
-        listHtml = '<ol>';
-      }
-      listHtml += '<li>' + listMatch[2] + '</li>';
-      return null;
-    } else {
-      if (inList) {
-        inList = false;
-        const completeList = listHtml + '</ol>';
-        listHtml = '';
-        return completeList + (line ? '<br>' + line : '');
-      }
-      return line;
-    }
-  }).filter(line => line !== null);
-  
-  if (inList) {
-    result.push(listHtml + '</ol>');
-  }
-  
-  return result.join('<br>');
-}
-
-// CONSTRUIR MENSAJE
-function buildStructuredMessage(resultText, processText) {
-  const id = 'm' + Date.now() + Math.floor(Math.random() * 10000);
-  
-  if (!processText || processText.trim().length === 0) {
-    return {
-      id,
-      html: '<div class="result-section">' + formatContent(resultText) + '</div>'
-    };
-  }
-  
-  const html = `
-    <div class="result-section">${formatContent(resultText)}</div>
-    <hr class="proc-sep">
-    <div class="process-section">
-      <div class="process-header" data-target="${id}">
-        <span>Proceso</span>
-        <span class="process-arrow" id="arrow-${id}">▼</span>
-      </div>
-      <div class="process-content" id="process-${id}">
-        ${formatContent(processText)}
-      </div>
-    </div>`;
-  
-  return { id, html };
-}
-
-function toggleProcess(id) {
-  const proc = document.getElementById('process-' + id);
-  const arrow = document.getElementById('arrow-' + id);
-  if (!proc || !arrow) return;
-  
-  const isVisible = proc.classList.toggle('visible');
-  arrow.textContent = isVisible ? '▲' : '▼';
-}
-
-// ENVIAR MENSAJE
-async function sendMessage() {
-  const question = input.value.trim();
-  if (!question || isLoading) return;
-  
-  if (question.length > 500) {
-    alert('Pregunta muy larga (máximo 500 caracteres)');
-    return;
+serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'content-type'
   }
 
-  // Mostrar mensaje del usuario
-  const userMsg = document.createElement('div');
-  userMsg.className = 'message user-message';
-  userMsg.textContent = question.toUpperCase();
-  messagesDiv.appendChild(userMsg);
-
-  input.value = '';
-  charCount.textContent = '0/500';
-  charCount.className = 'char-count';
-  input.focus();
-  
-  isLoading = true;
-  sendBtn.disabled = true;
-
-  // Indicador
-  const typing = document.createElement('div');
-  typing.className = 'typing-indicator';
-  typing.textContent = 'Procesando...';
-  messagesDiv.appendChild(typing);
-  scrollToBottom();
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
 
   try {
-    console.log('Enviando pregunta:', question);
+    const { question } = await req.json()
     
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY
-      },
-      body: JSON.stringify({ question })
-    });
-    
-    console.log('Response status:', response.status);
-    const data = await response.json();
-    console.log('Response data:', data);
-    
-    typing.remove();
-
-    const assistantMsg = document.createElement('div');
-    assistantMsg.className = 'message assistant-message';
-    
-    if (data.success) {
-      if (data.answer && data.answer.format === 'structured') {
-        const { id, html } = buildStructuredMessage(
-          data.answer.result || 'Sin respuesta',
-          data.answer.process || ''
-        );
-        assistantMsg.innerHTML = html;
-        
-        if (data.answer.process) {
-          setTimeout(() => {
-            const header = assistantMsg.querySelector(`.process-header[data-target="${id}"]`);
-            if (header) {
-              header.addEventListener('click', () => toggleProcess(id));
-            }
-          }, 100);
-        }
-      } else {
-        const content = data.answer?.result || data.answer || 'Sin respuesta';
-        assistantMsg.innerHTML = formatContent(content);
-      }
-    } else {
-      assistantMsg.classList.add('error');
-      assistantMsg.textContent = data.message || 'Error al procesar la consulta';
+    if (!question) {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'No se proporcionó pregunta'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
+      })
     }
-    
-    messagesDiv.appendChild(assistantMsg);
-    
-    requestAnimationFrame(() => {
-      assistantMsg.classList.add('visible');
-      scrollToBottom();
-    });
 
-  } catch (err) {
-    console.error('Error:', err);
-    typing.remove();
+    // Crear cliente Supabase
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
     
-    const errorMsg = document.createElement('div');
-    errorMsg.className = 'message assistant-message error';
-    errorMsg.textContent = 'Error de conexión. Intenta de nuevo.';
+    // Cargar algunos datos de ejemplo
+    const { data: people } = await supabase
+      .from('people')
+      .select('*')
+      .limit(10)
     
-    messagesDiv.appendChild(errorMsg);
-    scrollToBottom();
-  } finally {
-    isLoading = false;
-    sendBtn.disabled = false;
+    // Respuesta simple de prueba
+    const answer = `Recibí tu pregunta: "${question}". Encontré ${people?.length || 0} personas en la base de datos.`
+    
+    return new Response(JSON.stringify({
+      success: true,
+      answer: {
+        result: answer,
+        format: 'simple'
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+
+  } catch (error: any) {
+    return new Response(JSON.stringify({
+      success: false,
+      message: error.message
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500
+    })
   }
-}
-
-function scrollToBottom() {
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-// CONTADOR
-input.addEventListener('input', (e) => {
-  const length = e.target.value.length;
-  charCount.textContent = `${length}/500`;
-  
-  charCount.className = 'char-count';
-  if (length > 400) {
-    charCount.classList.add('danger');
-  } else if (length > 300) {
-    charCount.classList.add('warning');
-  }
-});
-
-// EVENT LISTENERS
-sendBtn.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-// INICIALIZACIÓN
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('Distribution Chat - Listo');
-  input.focus();
-});
-</script>
-</body>
-</html>
+})
