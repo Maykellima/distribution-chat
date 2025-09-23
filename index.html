@@ -131,6 +131,7 @@
 // CONFIGURACIÓN
 const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+const REDIRECT_URL = 'https://distribution-chat.vercel.app/'; // URL FIJA
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -245,19 +246,23 @@ async function signInWithGoogle() {
     loginBtn.textContent = 'Conectando...';
     loginBtn.disabled = true;
     
+    console.log('Iniciando login con redirección a:', REDIRECT_URL);
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: REDIRECT_URL // URL FIJA EN LUGAR DE window.location.origin
       }
     });
     
     if (error) {
+      console.error('Error OAuth:', error);
       showError('Error al iniciar sesión: ' + error.message);
       loginBtn.textContent = 'Continuar con Google';
       loginBtn.disabled = false;
     }
   } catch (err) {
+    console.error('Error en login:', err);
     showError('Error al conectar con Google');
     loginBtn.textContent = 'Continuar con Google';
     loginBtn.disabled = false;
@@ -566,7 +571,8 @@ input.addEventListener('keypress', (e) => {
 
 // INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Distribution Chat v2.0 - Iniciando...');
+  console.log('Distribution Chat v2.0');
+  console.log('URL de redirección configurada:', REDIRECT_URL);
   showLoading();
   
   setTimeout(() => {
