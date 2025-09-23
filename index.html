@@ -10,29 +10,11 @@
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
     .container{width:640px;padding:40px 0}
     
-    /* LOGIN */
-    .login-container{text-align:center;padding:60px 40px}
-    .login-title{font-size:32px;font-weight:700;margin-bottom:12px;color:#111}
-    .login-subtitle{font-size:18px;color:#666;margin-bottom:40px}
-    .login-button{background:#4285f4;color:#fff;border:none;border-radius:8px;padding:16px 32px;font-size:16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:12px;transition:all 0.2s ease}
-    .login-button:hover{background:#3367d6;transform:translateY(-1px);box-shadow:0 4px 12px rgba(66,133,244,0.3)}
-    .login-button:disabled{opacity:0.5;cursor:not-allowed}
-    .login-button svg{width:20px;height:20px}
-    
-    /* USER INFO */
-    .user-info{position:absolute;top:20px;right:20px;display:flex;align-items:center;gap:12px;background:#f8f9fa;padding:8px 16px;border-radius:24px;font-size:14px}
-    .user-email{color:#666;font-weight:500}
-    .logout-btn{background:none;border:none;color:#666;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:4px;transition:background 0.2s}
-    .logout-btn:hover{background:#e8eaed}
-    
     /* STATES */
     .loading{text-align:center;padding:40px;color:#666}
     .error{text-align:center;padding:40px;color:#d93025;background:#fce8e6;border-radius:8px;margin:20px}
-    .rate-limit-warning{background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:12px;border-radius:8px;margin-bottom:20px;display:none}
     
     /* CHAT */
-    .chat-container{display:none}
-    .chat-container.visible{display:block}
     .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
     .messages::-webkit-scrollbar{display:none}
     .message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
@@ -73,242 +55,44 @@
 </head>
 <body>
   <div class="container">
-    <!-- Loading -->
-    <div id="loading" class="loading">
-      Cargando...
-    </div>
+    <div class="messages" id="messages"></div>
     
-    <!-- Error -->
-    <div id="error" class="error" style="display:none">
-      <h3>Error de Configuración</h3>
-      <p>No se pudo inicializar el sistema.</p>
-    </div>
-    
-    <!-- Login -->
-    <div id="login" class="login-container" style="display:none">
-      <h1 class="login-title">Distribution Chat</h1>
-      <p class="login-subtitle">Sistema de análisis empresarial</p>
-      <button id="loginBtn" class="login-button">
-        <svg viewBox="0 0 24 24" width="20" height="20">
-          <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    <div class="input-container">
+      <input type="text" class="input-field" id="input" 
+             placeholder="Escribe tu pregunta..." 
+             autocomplete="off" maxlength="500"/>
+      <span class="char-count" id="charCount">0/500</span>
+      <button class="send-button" id="sendBtn" aria-label="Enviar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12l14 0M12 5l7 7-7 7"/>
         </svg>
-        Continuar con Google
       </button>
-    </div>
-    
-    <!-- Chat -->
-    <div id="chat" class="chat-container">
-      <div class="user-info" id="userInfo">
-        <span class="user-email" id="userEmail"></span>
-        <button class="logout-btn" id="logoutBtn">Salir</button>
-      </div>
-      
-      <div id="rateLimitWarning" class="rate-limit-warning">
-        ⚠️ Límite de consultas: máximo 10 por minuto
-      </div>
-      
-      <div class="messages" id="messages"></div>
-      
-      <div class="input-container">
-        <input type="text" class="input-field" id="input" 
-               placeholder="Escribe tu pregunta..." 
-               autocomplete="off" maxlength="500"/>
-        <span class="char-count" id="charCount">0/500</span>
-        <button class="send-button" id="sendBtn" aria-label="Enviar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12l14 0M12 5l7 7-7 7"/>
-          </svg>
-        </button>
-      </div>
     </div>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // CONFIGURACIÓN
 const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
-const REDIRECT_URL = 'https://distribution-chat.vercel.app/'; // URL FIJA
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ELEMENTOS DOM
-const loadingEl = document.getElementById('loading');
-const errorEl = document.getElementById('error');
-const loginEl = document.getElementById('login');
-const chatEl = document.getElementById('chat');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const userInfoEl = document.getElementById('userInfo');
-const userEmailEl = document.getElementById('userEmail');
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
 const charCount = document.getElementById('charCount');
-const rateLimitWarning = document.getElementById('rateLimitWarning');
 
-let currentUser = null;
 let isLoading = false;
-let queryCount = 0;
-let queryTimer = null;
-
-// GESTIÓN DE ESTADOS
-function showLoading() {
-  loadingEl.style.display = 'block';
-  errorEl.style.display = 'none';
-  loginEl.style.display = 'none';
-  chatEl.classList.remove('visible');
-}
-
-function showError(message) {
-  loadingEl.style.display = 'none';
-  errorEl.style.display = 'block';
-  loginEl.style.display = 'none';
-  chatEl.classList.remove('visible');
-  errorEl.querySelector('p').textContent = message || 'Error desconocido';
-}
-
-function showLogin() {
-  loadingEl.style.display = 'none';
-  errorEl.style.display = 'none';
-  loginEl.style.display = 'block';
-  chatEl.classList.remove('visible');
-}
-
-function showChat(user) {
-  loadingEl.style.display = 'none';
-  errorEl.style.display = 'none';
-  loginEl.style.display = 'none';
-  chatEl.classList.add('visible');
-  
-  userEmailEl.textContent = user.email;
-  input.focus();
-}
-
-// AUTENTICACIÓN
-async function checkAuthState() {
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('Error verificando sesión:', error);
-      showLogin();
-      return;
-    }
-    
-    if (session?.user) {
-      console.log('Usuario autenticado:', session.user.email);
-      
-      const hasAccess = await checkUserAccess(session.user);
-      if (hasAccess) {
-        currentUser = session.user;
-        showChat(session.user);
-      } else {
-        await supabase.auth.signOut();
-        showError('No tienes autorización para acceder a este sistema. Contacta al administrador.');
-      }
-    } else {
-      showLogin();
-    }
-  } catch (err) {
-    console.error('Error en autenticación:', err);
-    showError('Error al verificar autenticación');
-  }
-}
-
-async function checkUserAccess(user) {
-  try {
-    const { data, error } = await supabase
-      .from('allowed_users')
-      .select('*')
-      .eq('email', user.email)
-      .eq('is_active', true)
-      .single();
-    
-    if (error || !data) {
-      console.log('Usuario no autorizado:', user.email);
-      return false;
-    }
-    
-    console.log('Usuario autorizado:', data.name || user.email);
-    return true;
-  } catch (err) {
-    console.error('Error verificando acceso:', err);
-    return false;
-  }
-}
-
-async function signInWithGoogle() {
-  try {
-    loginBtn.textContent = 'Conectando...';
-    loginBtn.disabled = true;
-    
-    console.log('Iniciando login con redirección a:', REDIRECT_URL);
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: REDIRECT_URL // URL FIJA EN LUGAR DE window.location.origin
-      }
-    });
-    
-    if (error) {
-      console.error('Error OAuth:', error);
-      showError('Error al iniciar sesión: ' + error.message);
-      loginBtn.textContent = 'Continuar con Google';
-      loginBtn.disabled = false;
-    }
-  } catch (err) {
-    console.error('Error en login:', err);
-    showError('Error al conectar con Google');
-    loginBtn.textContent = 'Continuar con Google';
-    loginBtn.disabled = false;
-  }
-}
-
-async function signOut() {
-  try {
-    await supabase.auth.signOut();
-    currentUser = null;
-    messagesDiv.innerHTML = '';
-    queryCount = 0;
-    showLogin();
-  } catch (err) {
-    console.error('Error en logout:', err);
-  }
-}
-
-// MANEJO DE AUTH STATE
-supabase.auth.onAuthStateChange(async (event, session) => {
-  console.log('Auth state changed:', event);
-  
-  if (event === 'SIGNED_IN' && session?.user) {
-    const hasAccess = await checkUserAccess(session.user);
-    if (hasAccess) {
-      currentUser = session.user;
-      showChat(session.user);
-    } else {
-      await supabase.auth.signOut();
-      showError('No tienes autorización para acceder a este sistema.');
-    }
-  } else if (event === 'SIGNED_OUT') {
-    currentUser = null;
-    messagesDiv.innerHTML = '';
-    showLogin();
-  }
-});
 
 // FORMATEO DE CONTENIDO
 function formatContent(text) {
+  if (!text) return '';
+  
   let formatted = text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>');
     
-  // Detectar y formatear listas numeradas
+  // Detectar listas numeradas
   const lines = formatted.split('<br>');
   let inList = false;
   let listHtml = '';
@@ -340,13 +124,11 @@ function formatContent(text) {
   return result.join('<br>');
 }
 
-// CONSTRUIR MENSAJE CON PROCESO
+// CONSTRUIR MENSAJE
 function buildStructuredMessage(resultText, processText) {
   const id = 'm' + Date.now() + Math.floor(Math.random() * 10000);
   
-  const hasProcess = processText && processText.trim().length > 0;
-  
-  if (!hasProcess) {
+  if (!processText || processText.trim().length === 0) {
     return {
       id,
       html: '<div class="result-section">' + formatContent(resultText) + '</div>'
@@ -378,49 +160,13 @@ function toggleProcess(id) {
   arrow.textContent = isVisible ? '▲' : '▼';
 }
 
-// RATE LIMITING LOCAL
-function checkLocalRateLimit() {
-  queryCount++;
-  
-  if (queryCount >= 10) {
-    rateLimitWarning.style.display = 'block';
-    input.disabled = true;
-    sendBtn.disabled = true;
-    
-    setTimeout(() => {
-      queryCount = 0;
-      rateLimitWarning.style.display = 'none';
-      input.disabled = false;
-      sendBtn.disabled = false;
-    }, 60000);
-    
-    return false;
-  }
-  
-  if (queryTimer) clearTimeout(queryTimer);
-  queryTimer = setTimeout(() => {
-    queryCount = 0;
-  }, 60000);
-  
-  return true;
-}
-
 // ENVIAR MENSAJE
 async function sendMessage() {
-  if (!currentUser) {
-    showLogin();
-    return;
-  }
-
   const question = input.value.trim();
   if (!question || isLoading) return;
   
   if (question.length > 500) {
     alert('Pregunta muy larga (máximo 500 caracteres)');
-    return;
-  }
-  
-  if (!checkLocalRateLimit()) {
     return;
   }
 
@@ -438,7 +184,7 @@ async function sendMessage() {
   isLoading = true;
   sendBtn.disabled = true;
 
-  // Indicador de escritura
+  // Indicador
   const typing = document.createElement('div');
   typing.className = 'typing-indicator';
   typing.textContent = 'Procesando...';
@@ -446,29 +192,27 @@ async function sendMessage() {
   scrollToBottom();
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    console.log('Enviando pregunta:', question);
     
-    if (!session) {
-      throw new Error('Sesión expirada');
-    }
-
     const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
+        'apikey': SUPABASE_ANON_KEY
       },
       body: JSON.stringify({ question })
     });
     
+    console.log('Response status:', response.status);
     const data = await response.json();
+    console.log('Response data:', data);
+    
     typing.remove();
 
     const assistantMsg = document.createElement('div');
     assistantMsg.className = 'message assistant-message';
     
     if (data.success) {
-      // Manejar respuesta estructurada
       if (data.answer && data.answer.format === 'structured') {
         const { id, html } = buildStructuredMessage(
           data.answer.result || 'Sin respuesta',
@@ -476,7 +220,6 @@ async function sendMessage() {
         );
         assistantMsg.innerHTML = html;
         
-        // Agregar event listener para toggle si hay proceso
         if (data.answer.process) {
           setTimeout(() => {
             const header = assistantMsg.querySelector(`.process-header[data-target="${id}"]`);
@@ -486,28 +229,12 @@ async function sendMessage() {
           }, 100);
         }
       } else {
-        // Respuesta simple (retrocompatibilidad)
         const content = data.answer?.result || data.answer || 'Sin respuesta';
         assistantMsg.innerHTML = formatContent(content);
       }
-      
-      // Log metadata si existe
-      if (data.metadata) {
-        console.log('Metadata:', data.metadata);
-      }
     } else {
-      // Error
       assistantMsg.classList.add('error');
       assistantMsg.textContent = data.message || 'Error al procesar la consulta';
-      
-      if (data.error === 'rate_limit') {
-        rateLimitWarning.style.display = 'block';
-        queryCount = 10;
-      } else if (data.error === 'unauthorized' || data.error === 'missing_auth') {
-        setTimeout(() => {
-          supabase.auth.signOut();
-        }, 2000);
-      }
     }
     
     messagesDiv.appendChild(assistantMsg);
@@ -523,15 +250,7 @@ async function sendMessage() {
     
     const errorMsg = document.createElement('div');
     errorMsg.className = 'message assistant-message error';
-    
-    if (err.message.includes('Sesión')) {
-      errorMsg.textContent = 'Sesión expirada. Recargando...';
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } else {
-      errorMsg.textContent = 'Error de conexión. Intenta de nuevo.';
-    }
+    errorMsg.textContent = 'Error de conexión. Intenta de nuevo.';
     
     messagesDiv.appendChild(errorMsg);
     scrollToBottom();
@@ -545,7 +264,7 @@ function scrollToBottom() {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// CONTADOR DE CARACTERES
+// CONTADOR
 input.addEventListener('input', (e) => {
   const length = e.target.value.length;
   charCount.textContent = `${length}/500`;
@@ -559,8 +278,6 @@ input.addEventListener('input', (e) => {
 });
 
 // EVENT LISTENERS
-loginBtn.addEventListener('click', signInWithGoogle);
-logoutBtn.addEventListener('click', signOut);
 sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keypress', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
@@ -571,21 +288,8 @@ input.addEventListener('keypress', (e) => {
 
 // INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Distribution Chat v2.0');
-  console.log('URL de redirección configurada:', REDIRECT_URL);
-  showLoading();
-  
-  setTimeout(() => {
-    checkAuthState();
-  }, 500);
-});
-
-// Prevenir cierre accidental
-window.addEventListener('beforeunload', (e) => {
-  if (messagesDiv.children.length > 0) {
-    e.preventDefault();
-    e.returnValue = '';
-  }
+  console.log('Distribution Chat - Listo');
+  input.focus();
 });
 </script>
 </body>
