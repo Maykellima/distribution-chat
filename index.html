@@ -6,7 +6,7 @@
   <title>Distribution Chat</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    :root{--black-90:rgba(0,0,0,.9);--black-80:rgba(0,0,0,.8);--border:rgba(0,0,0,.2);--bg:#fff}
+    :root{--black-90:rgba(0,0,0,.9);--black-80:rgba(0,0,0,.8);--bg:#fff}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
     .container{width:640px;padding:40px 0}
     .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
@@ -29,13 +29,11 @@
     .input-container{position:relative}
     .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
     .input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
-    .input-field::placeholder{color:#999;font-weight:400}
     .send-button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)}
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
     .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
     .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+    .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
     .st-1{background:#2ecc71}.st-0{background:#bdc3c7}.st--1{background:#e74c3c}
     .error{color:#b00020}
   </style>
@@ -51,20 +49,29 @@
     </div>
   </div>
 
-  <!-- Carga config segura (no la subas al repo público) -->
+  <!-- config.js con SUPABASE_URL y SUPABASE_ANON_KEY -->
   <script src="config.js"></script>
   <script>
-  const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
+  const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+  const hasCfg = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
   const messagesDiv = document.getElementById('messages');
   const input = document.getElementById('input');
   const sendBtn = document.getElementById('sendBtn');
   let isLoading = false;
 
+  if (!hasCfg) {
+    const warn = document.createElement('div');
+    warn.className='message assistant-message error';
+    warn.textContent='config.js no cargado: define SUPABASE_URL y SUPABASE_ANON_KEY';
+    messagesDiv.appendChild(warn);
+    sendBtn.disabled = true; input.disabled = true;
+  }
+
   function scrollToBottom(){ messagesDiv.scrollTop = messagesDiv.scrollHeight; }
   function basicFormat(s){ return (s||'').replace(/\n{2,}/g, '\n\n').replace(/\n/g,'<br>'); }
 
-  function buildStructuredBlock(resultHTML, processHTML){
+  function buildBlock(resultHTML, processHTML){
     const id='m'+Date.now()+Math.floor(Math.random()*1e4);
     const html = `
       <div class="result-section" id="result-${id}">${resultHTML}</div>
@@ -80,40 +87,45 @@
   function toggleProcess(id){
     const proc=document.getElementById('process-'+id);
     const arrow=document.getElementById('arrow-'+id);
-    if(!proc)return;
-    const vis=proc.classList.toggle('visible');
+    if(!proc)return; const vis=proc.classList.toggle('visible');
     arrow.textContent=vis?'▲':'▼';
   }
 
-  // Render ficha persona si viene del backend
-  function renderFromStructured(structured, fallbackResultText){
+  // Render ficha si viene
+  function renderFromStructured(structured, fallback){
     if (structured && structured.profile){
       const p = structured.profile;
       const sv = typeof p.bandwidth === 'number' ? p.bandwidth : null;
       const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
       const assoc = p.associate ? 'Sí' : 'No';
+      const deps = [p.team, ...(p.departments||[])].filter(Boolean).join(' · ') || '—';
       const skills = p.skills?.length ? p.skills.join(', ') : '—';
       const projs = p.projects?.length ? p.projects.join(', ') : '—';
       const notes = p.notes?.length ? p.notes.map(n=>n.text).join(' · ') : '—';
+      const updates = p.updates?.length ? p.updates.map(u=> (u.project?`${u.project}: `:'') + u.text).join(' · ') : '—';
 
       return `
         <h3>${p.name}</h3>
         <p><span class="status-dot ${dotClass}"></span><strong>${p.bandwidth_label}</strong></p>
         <ul>
           <li><strong>Rol:</strong> ${p.role || '—'}</li>
-          <li><strong>Equipo:</strong> ${p.team || '—'}</li>
+          <li><strong>Seniority:</strong> ${p.seniority || '—'}</li>
+          <li><strong>Equipo / Deps:</strong> ${deps}</li>
           <li><strong>Ubicación:</strong> ${p.location || '—'}</li>
           <li><strong>Associate:</strong> ${assoc}</li>
+          ${p.email ? `<li><strong>Email:</strong> ${p.email}</li>` : ''}
+          ${p.manager ? `<li><strong>Manager:</strong> ${p.manager}</li>` : ''}
+          ${p.startDate ? `<li><strong>Inicio:</strong> ${new Date(p.startDate).toISOString().slice(0,10)}</li>` : ''}
           <li><strong>Skills:</strong> ${skills}</li>
           <li><strong>Proyectos:</strong> ${projs}</li>
-          <li><strong>Notas recientes:</strong> ${notes}</li>
+          <li><strong>Notas:</strong> ${notes}</li>
+          <li><strong>Updates:</strong> ${updates}</li>
         </ul>
       `;
     }
-
-    if(structured && Array.isArray(structured.items) && structured.items.length){
+    if (structured && Array.isArray(structured.items) && structured.items.length){
       const title = `<p><strong>Resultados (${structured.items.length})</strong></p>`;
-      const list = structured.items.map((it)=>{
+      const list = structured.items.map(it=>{
         const sv = typeof it.status_value === 'number' ? it.status_value : null;
         const label = it.status_label || '';
         const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
@@ -124,19 +136,18 @@
       const note = structured.note ? `<br><strong>Nota:</strong> ${basicFormat(structured.note)}` : '';
       return `${title}<ol>${list}</ol>${note}`;
     }
-    return basicFormat(fallbackResultText || '—');
+    return basicFormat(fallback || '—');
   }
 
   function getConversationId(){
     const k='chat_conversation_id';
     let id = localStorage.getItem(k);
-    if(!id){ id = crypto.randomUUID(); localStorage.setItem(k,id); }
+    if(!id){ id = self.crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()); localStorage.setItem(k,id); }
     return id;
   }
-
   function apiFetch(path, options={}){
     const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), 20000); // 20s timeout
+    const t = setTimeout(()=>ctrl.abort(), 20000);
     return fetch(`${SUPABASE_URL}${path}`, {
       ...options,
       headers:{
@@ -150,6 +161,7 @@
   }
 
   async function sendMessage(){
+    if(!hasCfg) return;
     const question = input.value.trim();
     if(!question || isLoading) return;
 
@@ -165,7 +177,7 @@
     typing.className='typing-indicator';
     typing.textContent='thinking…';
     messagesDiv.appendChild(typing);
-    scrollToBottom();
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     try{
       const r = await apiFetch('/functions/v1/chat-query', {
@@ -177,14 +189,11 @@
         const a = document.createElement('div');
         a.className='message assistant-message error';
         a.textContent = `No pudimos procesar la consulta (HTTP ${r.status}).`;
-        messagesDiv.appendChild(a);
-        typing.remove();
-        return;
+        messagesDiv.appendChild(a); typing.remove(); return;
       }
 
       const data = await r.json();
       console.log("Respuesta backend:", data);
-
       typing.remove();
 
       const a = document.createElement('div');
@@ -193,29 +202,29 @@
 
       if(data && data.ok === false){
         a.innerHTML = `<p class="error">Error: ${data.error || 'desconocido'}</p>`;
-        requestAnimationFrame(()=>a.classList.add('visible'));
-        scrollToBottom();
-        return;
+        requestAnimationFrame(()=>a.classList.add('visible')); messagesDiv.scrollTop = messagesDiv.scrollHeight; return;
       }
 
       const resultHTML = renderFromStructured(data.structured, data.result_text);
       const processHTML = basicFormat(data.process_text || '');
-
-      const { id, html } = buildStructuredBlock(resultHTML, processHTML);
+      const { id, html } = buildBlock(resultHTML, processHTML);
       a.innerHTML = html;
 
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
-      header.addEventListener('click', ()=>toggleProcess(id));
+      header.addEventListener('click', ()=> {
+        const proc=document.getElementById('process-'+id);
+        const arrow=document.getElementById('arrow-'+id);
+        const vis=proc.classList.toggle('visible'); arrow.textContent=vis?'▲':'▼';
+      });
 
       requestAnimationFrame(()=>a.classList.add('visible'));
-      scrollToBottom();
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     }catch(err){
       typing.remove();
       const e = document.createElement('div');
       e.className='message assistant-message error';
-      e.textContent = 'No pudimos procesar la consulta. ' +
-        (err.name === 'AbortError' ? 'Tiempo de espera agotado.' : (err.message || 'Error desconocido'));
+      e.textContent = 'No pudimos procesar la consulta. ' + (err.name==='AbortError'?'Tiempo de espera agotado.':(err.message||'Error'));
       messagesDiv.appendChild(e);
     }finally{
       isLoading=false; sendBtn.disabled=false;
