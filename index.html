@@ -21,17 +21,17 @@
     .assistant-message{font-size:15px;color:var(--main-text-color);line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all .4s ease-out}
     .assistant-message.visible{opacity:1;transform:translateY(0)}
     
-    /* Estilos para Markdown renderizado - AJUSTADOS */
+    /* Estilos para Markdown renderizado */
     .assistant-message h1, .assistant-message h2, .assistant-message h3 {
       font-weight:600;
       color:var(--main-text-color);
       margin:12px 0 8px;
-      font-size:15px; /* Tamaño uniforme como solicitaste */
+      font-size:15px;
     }
     .assistant-message h1 {font-size:15px}
     .assistant-message h2 {font-size:15px}
     .assistant-message h3 {font-size:15px}
-    .assistant-message strong{font-weight:600;color:var(--main-text-color)} /* Mismo color que la pregunta */
+    .assistant-message strong{font-weight:600;color:var(--main-text-color)}
     .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
     .assistant-message li{margin:4px 0;color:var(--main-text-color)}
     .assistant-message p{margin:8px 0;color:var(--main-text-color)}
@@ -88,7 +88,7 @@
     .process-content.visible{display:block}
     .process-content h4 {
       color: var(--main-text-color);
-      font-size: 15px; /* Ajustado a 15px */
+      font-size: 15px;
       margin: 8px 0 4px;
       font-weight: 600;
     }
@@ -165,55 +165,40 @@
 
   const scrollToBottom = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
   
-  // NUEVA: Función para detectar idioma
-  function detectLanguage(text) {
-    // Palabras comunes en inglés
-    const englishWords = ['the', 'is', 'at', 'which', 'on', 'are', 'as', 'able', 'about', 'above', 'who', 'what', 'where', 'when', 'why', 'how', 'good', 'best', 'can', 'could', 'would', 'should'];
-    // Palabras comunes en español
-    const spanishWords = ['el', 'la', 'de', 'que', 'y', 'a', 'en', 'un', 'es', 'se', 'no', 'te', 'lo', 'le', 'da', 'su', 'por', 'son', 'con', 'para', 'una', 'del', 'los', 'las', 'como', 'más', 'quién', 'qué', 'dónde', 'cuándo', 'por qué', 'cómo', 'bueno', 'mejor', 'puede', 'podría'];
-    
-    const words = text.toLowerCase().split(/\s+/);
-    let englishScore = 0;
-    let spanishScore = 0;
-    
-    words.forEach(word => {
-      if (englishWords.includes(word)) englishScore++;
-      if (spanishWords.includes(word)) spanishScore++;
-    });
-    
-    // Si no hay palabras identificativas, detectar por patrones
-    if (englishScore === 0 && spanishScore === 0) {
-      // Patrones típicos en inglés
-      if (/\b(who|what|where|when|why|how|is|are|can|good|at)\b/i.test(text)) {
-        return 'en';
-      }
-      // Patrones típicos en español
-      if (/\b(quién|qué|dónde|cuándo|por qué|cómo|es|está|puede|bueno|en)\b/i.test(text)) {
-        return 'es';
-      }
-    }
-    
-    return englishScore > spanishScore ? 'en' : 'es';
-  }
-  
-  // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN CON LIMPIEZA DE TAGS
+  // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN CON LIMPIEZA AGRESIVA
   const renderMarkdown = (text) => {
     if (!text) return '';
     
-    // Limpiar tags de estructura que no deben ser visibles
+    console.log("Raw text before cleaning:", text);
+    
+    // LIMPIEZA AGRESIVA de todos los tags y contenido problemático
     let cleanedText = text
-      .replace(/\[\/RESULTADO\]/gi, '') // Eliminar [/RESULTADO] visible
-      .replace(/\[RESULTADO\]/gi, '')  // Eliminar [RESULTADO] si aparece solo
-      .replace(/\[\/PROCESO\]/gi, '')  // Limpiar [/PROCESO] también
-      .replace(/\[PROCESO\]/gi, '');   // Limpiar [PROCESO] también
+      // Eliminar bloques completos de "Análisis de Búsqueda"
+      .replace(/Análisis de [Bb]úsqueda:[\s\S]*?(?=\n\n|\n###|\n##|$)/gi, '')
+      .replace(/Search Analysis:[\s\S]*?(?=\n\n|\n###|\n##|$)/gi, '')
+      // Eliminar tags de estructura
+      .replace(/\[\/RESULTADO\]/gi, '')
+      .replace(/\[\/RESULT\]/gi, '')
+      .replace(/\[\/PROCESO\]/gi, '')  
+      .replace(/\[\/PROCESS\]/gi, '')
+      .replace(/\[RESULTADO\]/gi, '')
+      .replace(/\[RESULT\]/gi, '')
+      .replace(/\[PROCESO\]/gi, '')
+      .replace(/\[PROCESS\]/gi, '')
+      // Eliminar cualquier variación
+      .replace(/\[\/?(?:RESULTADO|RESULT|PROCESO|PROCESS)\]/gi, '')
+      // Limpiar líneas vacías extra
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    
+    console.log("Cleaned text:", cleanedText);
     
     // Usar marked.js para convertir Markdown a HTML
     if (typeof marked !== 'undefined') {
-      // Configurar marked para ser seguro
       marked.setOptions({
-        breaks: true, // Convierte saltos de línea en <br>
-        gfm: true, // GitHub Flavored Markdown
-        sanitize: false // No sanitizar (ya confiamos en nuestro backend)
+        breaks: true,
+        gfm: true,
+        sanitize: false
       });
       
       return marked.parse(cleanedText);
@@ -221,12 +206,12 @@
     
     // Fallback si marked no está disponible
     return cleanedText
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Negritas
-      .replace(/\*(.+?)\*/g, '<em>$1</em>') // Cursivas
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>') // H3
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>') // H2
-      .replace(/^# (.+)$/gm, '<h1>$1</h1>') // H1
-      .replace(/\n/g, '<br>'); // Saltos de línea
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\n/g, '<br>');
   };
 
   // Función mejorada para post-procesar respuestas
@@ -235,7 +220,7 @@
     html = html.replace(/(\d+)\s*(miembros?|equipos?|registros?|members?|teams?|records?)/g, 
       '<span class="metric-highlight">$1</span> $2');
     
-    // Mejorar formato de estados de bandwidth (inglés y español)
+    // Mejorar formato de estados de bandwidth
     html = html.replace(/(🟢\s*(Disponible|Available))/g, 
       '<span class="bandwidth-status bandwidth-available">$1</span>');
     
@@ -248,22 +233,19 @@
     return html;
   }
 
-  function buildBlock(resultHTML, processHTML, language = 'es'){
+  function buildBlock(resultHTML, processHTML){
     const id='m'+Date.now()+Math.floor(Math.random()*1e4);
     
     // Aplicar mejoras de visualización
     const enhancedResult = enhanceResponseDisplay(resultHTML || '—');
     const enhancedProcess = renderMarkdown(processHTML) || '';
     
-    // CAMBIO: Siempre usar "Process" independientemente del idioma
-    const processLabel = 'Process';
-    
     const html = `
       <div class="result-section" id="result-${id}">${enhancedResult}</div>
       <hr class="proc-sep">
       <div class="process-section">
         <div class="process-header" data-target="${id}">
-          <span>${processLabel}</span><span class="process-arrow" id="arrow-${id}">▼</span>
+          <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
         </div>
         <div class="process-content" id="process-${id}">${enhancedProcess}</div>
       </div>`;
@@ -323,7 +305,6 @@
       return `${title}<ol>${list}</ol>${note}`;
     }
     
-    // USAR MARKDOWN PARA EL FALLBACK (aplicando limpieza)
     return renderMarkdown(fallback || '—');
   }
 
@@ -368,10 +349,6 @@
     isLoading=true; 
     sendBtn.disabled=true;
 
-    // Detectar idioma de la pregunta
-    const detectedLanguage = detectLanguage(question);
-    console.log('Detected language:', detectedLanguage);
-
     const typing=document.createElement('div');
     typing.className='typing-indicator';
     
@@ -386,12 +363,13 @@
     scrollToBottom();
 
     try{
+      // REMOVIDO: Ya no enviamos detección de idioma desde frontend
       const r = await apiFetch('/functions/v1/chat-query', {
         method:'POST',
         body: JSON.stringify({ 
           question, 
-          conversation_id: getConversationId(),
-          language: detectedLanguage // Enviar idioma detectado al backend
+          conversation_id: getConversationId()
+          // language: detectedLanguage <-- ELIMINADO
         })
       });
 
@@ -406,7 +384,7 @@
       }
 
       const data = await r.json();
-      console.log("Respuesta backend:", data);
+      console.log("Respuesta backend completa:", data);
       typing.remove();
 
       if(data && data.ok === false && data.retry_after && retryCount < 3){
@@ -438,7 +416,7 @@
       // USAR MARKDOWN PARA RENDERIZAR LA RESPUESTA
       const resultHTML = renderMarkdown(data.result_text);
       const processHTML = renderMarkdown(data.process_text || '');
-      const { id, html } = buildBlock(resultHTML, processHTML, detectedLanguage);
+      const { id, html } = buildBlock(resultHTML, processHTML);
       a.innerHTML = html;
 
       const header = a.querySelector('.process-header');
