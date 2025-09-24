@@ -95,8 +95,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 <div class="connection-status connecting" id="connectionStatus">Conectando...</div>
 
 <script>
-// Configuración segura - Solo endpoint de backend
-const API_BASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1';
+// CONFIGURACIÓN CORREGIDA - Una sola Edge Function
+const API_BASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1/chat-query';
 
 console.log('🔒 Iniciando Distribution Chat V2 - Modo Seguro');
 
@@ -111,7 +111,7 @@ let currentSessionId = null;
 let isLoading = false;
 let requestCount = 0;
 
-// Sistema de gestión de sesiones
+// Sistema de gestión de sesiones SIMPLIFICADO
 class SecureSessionManager {
     constructor() {
         this.sessionId = null;
@@ -126,19 +126,15 @@ class SecureSessionManager {
             const existingSessionId = localStorage.getItem('secure_chat_session');
             
             if (existingSessionId && this.isValidSessionFormat(existingSessionId)) {
-                // Verificar si la sesión sigue siendo válida
-                const isValid = await this.validateExistingSession(existingSessionId);
-                if (isValid) {
-                    this.sessionId = existingSessionId;
-                    console.log('✅ Sesión existente recuperada:', existingSessionId);
-                    updateSessionInfo('Sesión recuperada', 'success');
-                    updateConnectionStatus('connected', 'Conectado');
-                    this.isInitialized = true;
-                    return;
-                }
+                this.sessionId = existingSessionId;
+                console.log('✅ Sesión existente recuperada:', existingSessionId);
+                updateSessionInfo('Sesión recuperada', 'success');
+                updateConnectionStatus('connected', 'Conectado');
+                this.isInitialized = true;
+                return;
             }
 
-            // Crear nueva sesión
+            // Crear nueva sesión usando la misma Edge Function
             await this.createNewSession();
         } catch (error) {
             console.error('❌ Error inicializando sesión:', error);
@@ -148,11 +144,15 @@ class SecureSessionManager {
     }
 
     async createNewSession() {
-        const response = await fetch(`${API_BASE_URL}/new-session`, {
+        // LLAMADA A LA MISMA EDGE FUNCTION con parámetro especial
+        const response = await fetch(API_BASE_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                action: 'new_session' // Parámetro especial para generar sesión
+            })
         });
 
         if (!response.ok) {
@@ -169,26 +169,6 @@ class SecureSessionManager {
         updateSessionInfo('Nueva sesión iniciada', 'success');
         updateConnectionStatus('connected', 'Conectado');
         this.isInitialized = true;
-    }
-
-    async validateExistingSession(sessionId) {
-        try {
-            // Hacer una consulta de prueba para verificar si la sesión es válida
-            const response = await fetch(`${API_BASE_URL}/chat-query`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    question: 'test_session_validation',
-                    sessionId: sessionId
-                })
-            });
-
-            return response.ok;
-        } catch {
-            return false;
-        }
     }
 
     isValidSessionFormat(sessionId) {
@@ -299,7 +279,7 @@ function scrollToBottom() {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Función principal de envío (simplificada y segura)
+// Función principal de envío (CORREGIDA)
 async function sendMessage() {
     const originalQuery = input.value.trim();
     if (!originalQuery || isLoading) return;
@@ -339,7 +319,8 @@ async function sendMessage() {
     try {
         console.log('🔒 Enviando consulta segura:', originalQuery);
         
-        const response = await fetch(`${API_BASE_URL}/chat-query`, {
+        // LLAMADA A LA MISMA EDGE FUNCTION
+        const response = await fetch(API_BASE_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
