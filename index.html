@@ -165,6 +165,37 @@
 
   const scrollToBottom = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
   
+  // NUEVA: Función para detectar idioma
+  function detectLanguage(text) {
+    // Palabras comunes en inglés
+    const englishWords = ['the', 'is', 'at', 'which', 'on', 'are', 'as', 'able', 'about', 'above', 'who', 'what', 'where', 'when', 'why', 'how', 'good', 'best', 'can', 'could', 'would', 'should'];
+    // Palabras comunes en español
+    const spanishWords = ['el', 'la', 'de', 'que', 'y', 'a', 'en', 'un', 'es', 'se', 'no', 'te', 'lo', 'le', 'da', 'su', 'por', 'son', 'con', 'para', 'una', 'del', 'los', 'las', 'como', 'más', 'quién', 'qué', 'dónde', 'cuándo', 'por qué', 'cómo', 'bueno', 'mejor', 'puede', 'podría'];
+    
+    const words = text.toLowerCase().split(/\s+/);
+    let englishScore = 0;
+    let spanishScore = 0;
+    
+    words.forEach(word => {
+      if (englishWords.includes(word)) englishScore++;
+      if (spanishWords.includes(word)) spanishScore++;
+    });
+    
+    // Si no hay palabras identificativas, detectar por patrones
+    if (englishScore === 0 && spanishScore === 0) {
+      // Patrones típicos en inglés
+      if (/\b(who|what|where|when|why|how|is|are|can|good|at)\b/i.test(text)) {
+        return 'en';
+      }
+      // Patrones típicos en español
+      if (/\b(quién|qué|dónde|cuándo|por qué|cómo|es|está|puede|bueno|en)\b/i.test(text)) {
+        return 'es';
+      }
+    }
+    
+    return englishScore > spanishScore ? 'en' : 'es';
+  }
+  
   // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN CON LIMPIEZA DE TAGS
   const renderMarkdown = (text) => {
     if (!text) return '';
@@ -201,35 +232,38 @@
   // Función mejorada para post-procesar respuestas
   function enhanceResponseDisplay(html) {
     // Detectar y destacar métricas
-    html = html.replace(/(\d+)\s*(miembros?|equipos?|registros?)/g, 
+    html = html.replace(/(\d+)\s*(miembros?|equipos?|registros?|members?|teams?|records?)/g, 
       '<span class="metric-highlight">$1</span> $2');
     
-    // Mejorar formato de estados de bandwidth
-    html = html.replace(/🟢\s*Disponible/g, 
-      '<span class="bandwidth-status bandwidth-available">🟢 Disponible</span>');
+    // Mejorar formato de estados de bandwidth (inglés y español)
+    html = html.replace(/(🟢\s*(Disponible|Available))/g, 
+      '<span class="bandwidth-status bandwidth-available">$1</span>');
     
-    html = html.replace(/⚪\s*Estable/g, 
-      '<span class="bandwidth-status bandwidth-stable">⚪ Estable</span>');
+    html = html.replace(/(⚪\s*(Estable|Stable))/g, 
+      '<span class="bandwidth-status bandwidth-stable">$1</span>');
     
-    html = html.replace(/🟠\s*Sobrecargado/g, 
-      '<span class="bandwidth-status bandwidth-overloaded">🟠 Sobrecargado</span>');
+    html = html.replace(/(🟠\s*(Sobrecargado|Overloaded))/g, 
+      '<span class="bandwidth-status bandwidth-overloaded">$1</span>');
     
     return html;
   }
 
-  function buildBlock(resultHTML, processHTML){
+  function buildBlock(resultHTML, processHTML, language = 'es'){
     const id='m'+Date.now()+Math.floor(Math.random()*1e4);
     
     // Aplicar mejoras de visualización
     const enhancedResult = enhanceResponseDisplay(resultHTML || '—');
     const enhancedProcess = renderMarkdown(processHTML) || '';
     
+    // CAMBIO: Siempre usar "Process" independientemente del idioma
+    const processLabel = 'Process';
+    
     const html = `
       <div class="result-section" id="result-${id}">${enhancedResult}</div>
       <hr class="proc-sep">
       <div class="process-section">
         <div class="process-header" data-target="${id}">
-          <span>Proceso Detallado</span><span class="process-arrow" id="arrow-${id}">▼</span>
+          <span>${processLabel}</span><span class="process-arrow" id="arrow-${id}">▼</span>
         </div>
         <div class="process-content" id="process-${id}">${enhancedProcess}</div>
       </div>`;
@@ -334,6 +368,10 @@
     isLoading=true; 
     sendBtn.disabled=true;
 
+    // Detectar idioma de la pregunta
+    const detectedLanguage = detectLanguage(question);
+    console.log('Detected language:', detectedLanguage);
+
     const typing=document.createElement('div');
     typing.className='typing-indicator';
     
@@ -350,7 +388,11 @@
     try{
       const r = await apiFetch('/functions/v1/chat-query', {
         method:'POST',
-        body: JSON.stringify({ question, conversation_id: getConversationId() })
+        body: JSON.stringify({ 
+          question, 
+          conversation_id: getConversationId(),
+          language: detectedLanguage // Enviar idioma detectado al backend
+        })
       });
 
       if(!r.ok){
@@ -396,7 +438,7 @@
       // USAR MARKDOWN PARA RENDERIZAR LA RESPUESTA
       const resultHTML = renderMarkdown(data.result_text);
       const processHTML = renderMarkdown(data.process_text || '');
-      const { id, html } = buildBlock(resultHTML, processHTML);
+      const { id, html } = buildBlock(resultHTML, processHTML, detectedLanguage);
       a.innerHTML = html;
 
       const header = a.querySelector('.process-header');
