@@ -49,7 +49,7 @@
     </div>
   </div>
 
-  <!-- Carga credenciales -->
+  <!-- Credenciales -->
   <script src="config.js"></script>
   <script>
   const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
@@ -60,10 +60,9 @@
   const sendBtn = document.getElementById('sendBtn');
   let isLoading = false;
 
-  // Aviso si no hay config
   if (!hasCfg) {
     const warn = document.createElement('div');
-    warn.className='message assistant-message error';
+    warn.className='message assistant-message error visible';
     warn.textContent='config.js no cargado: define SUPABASE_URL y SUPABASE_ANON_KEY';
     messagesDiv.appendChild(warn);
     sendBtn.disabled = true; input.disabled = true;
@@ -75,19 +74,27 @@
   function buildBlock(resultHTML, processHTML){
     const id='m'+Date.now()+Math.floor(Math.random()*1e4);
     const html = `
-      <div class="result-section" id="result-${id}">${resultHTML}</div>
+      <div class="result-section" id="result-${id}">${resultHTML || '—'}</div>
       <hr class="proc-sep">
       <div class="process-section">
         <div class="process-header" data-target="${id}">
           <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
         </div>
-        <div class="process-content" id="process-${id}">${processHTML}</div>
+        <div class="process-content" id="process-${id}">${processHTML || ''}</div>
       </div>`;
     return { id, html };
   }
 
-  function renderFromStructured(structured, fallbackResultText){
-    // 1) Ficha de persona
+  function toggleProcess(id){
+    const proc=document.getElementById('process-'+id);
+    const arrow=document.getElementById('arrow-'+id);
+    if(!proc)return;
+    const vis=proc.classList.toggle('visible');
+    if(arrow) arrow.textContent=vis?'▲':'▼';
+  }
+
+  function renderFromStructured(structured, fallback){
+    // Ficha
     if (structured && structured.profile){
       const p = structured.profile;
       const sv = typeof p.bandwidth === 'number' ? p.bandwidth : null;
@@ -118,8 +125,7 @@
         </ul>
       `;
     }
-
-    // 2) Lista estructurada
+    // Lista
     if (structured && Array.isArray(structured.items) && structured.items.length){
       const title = `<p><strong>Resultados (${structured.items.length})</strong></p>`;
       const list = structured.items.map((it)=>{
@@ -133,9 +139,8 @@
       const note = structured.note ? `<br><strong>Nota:</strong> ${basicFormat(structured.note)}` : '';
       return `${title}<ol>${list}</ol>${note}`;
     }
-
-    // 3) Fallback SIEMPRE: result_text en HTML básico
-    return basicFormat(fallbackResultText || '—');
+    // Fallback SIEMPRE
+    return basicFormat(fallback || '—');
   }
 
   function getConversationId(){
@@ -186,14 +191,15 @@
       });
 
       if(!r.ok){
+        typing.remove();
         const a = document.createElement('div');
-        a.className='message assistant-message error';
+        a.className='message assistant-message error visible';
         a.textContent = `No pudimos procesar la consulta (HTTP ${r.status}).`;
-        messagesDiv.appendChild(a); typing.remove(); return;
+        messagesDiv.appendChild(a); scrollToBottom(); return;
       }
 
       const data = await r.json();
-      console.log("Respuesta backend:", data); // LOG
+      console.log("Respuesta backend:", data);
       typing.remove();
 
       const a = document.createElement('div');
@@ -202,36 +208,33 @@
 
       if(data && data.ok === false){
         a.innerHTML = `<p class="error">Error: ${data.error || 'desconocido'}</p>`;
-        requestAnimationFrame(()=>a.classList.add('visible')); scrollToBottom(); return;
+        a.classList.add('visible'); scrollToBottom(); return;
       }
 
       const resultHTML = renderFromStructured(data.structured, data.result_text);
-      console.log("Render resultHTML:", resultHTML); // LOG
+      console.log("Render resultHTML:", resultHTML);
       const processHTML = basicFormat(data.process_text || '');
 
-      // Si por algún motivo ambos están vacíos, muestra mensaje
-      const safeResult = (resultHTML && resultHTML.trim()) ? resultHTML : basicFormat(data?.result_text || '—');
-      const safeProcess = (processHTML && processHTML.trim()) ? processHTML : '';
-
-      const { id, html } = buildBlock(safeResult, safeProcess);
+      const { id, html } = buildBlock(resultHTML, processHTML);
       a.innerHTML = html;
 
-      const header = a.querySelector(`.process-header[data-target="${id}"]`);
-      header.addEventListener('click', ()=> {
-        const proc=document.getElementById('process-'+id);
-        const arrow=document.getElementById('arrow-'+id);
-        const vis=proc.classList.toggle('visible'); arrow.textContent=vis?'▲':'▼';
-      });
+      // 👇 PRIMERO hacemos visible SIEMPRE
+      a.classList.add('visible');
 
-      requestAnimationFrame(()=>a.classList.add('visible'));
+      // 👇 Luego, si existe el header, añadimos el evento (null-safe)
+      const header = a.querySelector('.process-header');
+      header?.addEventListener('click', ()=>toggleProcess(id));
+
       scrollToBottom();
 
     }catch(err){
+      console.error(err);
       typing.remove();
       const e = document.createElement('div');
-      e.className='message assistant-message error';
+      e.className='message assistant-message error visible';
       e.textContent = 'No pudimos procesar la consulta. ' + (err.name==='AbortError'?'Tiempo de espera agotado.':(err.message||'Error'));
       messagesDiv.appendChild(e);
+      scrollToBottom();
     }finally{
       isLoading=false; sendBtn.disabled=false;
     }
