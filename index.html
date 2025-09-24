@@ -48,12 +48,67 @@
       color:#666;
     }
     
+    /* Mejoras específicas para estados de bandwidth */
+    .assistant-message .status-emoji {
+      font-size: 14px;
+      margin-right: 4px;
+    }
+    
+    .assistant-message .bandwidth-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .bandwidth-available { 
+      background-color: #e8f5e8; 
+      color: #2d5a2d; 
+    }
+    
+    .bandwidth-stable { 
+      background-color: #f8f9fa; 
+      color: #495057; 
+    }
+    
+    .bandwidth-overloaded { 
+      background-color: #fff3e0; 
+      color: #e65100; 
+    }
+    
     .proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
     .process-section{margin-top:10px}
     .process-header{font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
     .process-arrow{font-size:13px;display:inline-block;min-width:14px}
     .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
     .process-content.visible{display:block}
+    .process-content h4 {
+      color: #333;
+      font-size: 14px;
+      margin: 8px 0 4px;
+      font-weight: 600;
+    }
+    .process-content ul {
+      margin-left: 16px;
+      margin-bottom: 12px;
+    }
+    .process-content li {
+      margin: 2px 0;
+      font-size: 13px;
+    }
+    .process-content strong {
+      color: #111;
+    }
+    .metric-highlight {
+      background-color: #f8f9fa;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+    }
+    
     .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
     .typing-indicator.retry{color:#ff9800}
     .input-container{position:relative}
@@ -102,9 +157,16 @@
 
   const scrollToBottom = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
   
-  // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN
+  // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN CON LIMPIEZA DE TAGS
   const renderMarkdown = (text) => {
     if (!text) return '';
+    
+    // Limpiar tags de estructura que no deben ser visibles
+    let cleanedText = text
+      .replace(/\[\/RESULTADO\]/gi, '') // Eliminar [/RESULTADO] visible
+      .replace(/\[RESULTADO\]/gi, '')  // Eliminar [RESULTADO] si aparece solo
+      .replace(/\[\/PROCESO\]/gi, '')  // Limpiar [/PROCESO] también
+      .replace(/\[PROCESO\]/gi, '');   // Limpiar [PROCESO] también
     
     // Usar marked.js para convertir Markdown a HTML
     if (typeof marked !== 'undefined') {
@@ -115,11 +177,11 @@
         sanitize: false // No sanitizar (ya confiamos en nuestro backend)
       });
       
-      return marked.parse(text);
+      return marked.parse(cleanedText);
     }
     
     // Fallback si marked no está disponible
-    return text
+    return cleanedText
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Negritas
       .replace(/\*(.+?)\*/g, '<em>$1</em>') // Cursivas
       .replace(/^### (.+)$/gm, '<h3>$1</h3>') // H3
@@ -128,16 +190,40 @@
       .replace(/\n/g, '<br>'); // Saltos de línea
   };
 
+  // Función mejorada para post-procesar respuestas
+  function enhanceResponseDisplay(html) {
+    // Detectar y destacar métricas
+    html = html.replace(/(\d+)\s*(miembros?|equipos?|registros?)/g, 
+      '<span class="metric-highlight">$1</span> $2');
+    
+    // Mejorar formato de estados de bandwidth
+    html = html.replace(/🟢\s*Disponible/g, 
+      '<span class="bandwidth-status bandwidth-available">🟢 Disponible</span>');
+    
+    html = html.replace(/⚪\s*Estable/g, 
+      '<span class="bandwidth-status bandwidth-stable">⚪ Estable</span>');
+    
+    html = html.replace(/🟠\s*Sobrecargado/g, 
+      '<span class="bandwidth-status bandwidth-overloaded">🟠 Sobrecargado</span>');
+    
+    return html;
+  }
+
   function buildBlock(resultHTML, processHTML){
     const id='m'+Date.now()+Math.floor(Math.random()*1e4);
+    
+    // Aplicar mejoras de visualización
+    const enhancedResult = enhanceResponseDisplay(resultHTML || '—');
+    const enhancedProcess = renderMarkdown(processHTML) || '';
+    
     const html = `
-      <div class="result-section" id="result-${id}">${resultHTML || '—'}</div>
+      <div class="result-section" id="result-${id}">${enhancedResult}</div>
       <hr class="proc-sep">
       <div class="process-section">
         <div class="process-header" data-target="${id}">
-          <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
+          <span>Proceso Detallado</span><span class="process-arrow" id="arrow-${id}">▼</span>
         </div>
-        <div class="process-content" id="process-${id}">${renderMarkdown(processHTML) || ''}</div>
+        <div class="process-content" id="process-${id}">${enhancedProcess}</div>
       </div>`;
     return { id, html };
   }
@@ -194,7 +280,8 @@
       const note = structured.note ? `<br><strong>Nota:</strong> ${renderMarkdown(structured.note)}` : '';
       return `${title}<ol>${list}</ol>${note}`;
     }
-    // USAR MARKDOWN PARA EL FALLBACK
+    
+    // USAR MARKDOWN PARA EL FALLBACK (aplicando limpieza)
     return renderMarkdown(fallback || '—');
   }
 
