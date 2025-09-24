@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -38,6 +37,7 @@
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
     .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
     .st-1{background:#2ecc71}.st-0{background:#bdc3c7}.st--1{background:#e74c3c}
+    .error{color:#b00020}
   </style>
 </head>
 <body>
@@ -51,137 +51,178 @@
     </div>
   </div>
 
-<script>
-// ===== Config =====
-// En pruebas puedes llamar a la Function vía el dominio de Supabase (mismo que ya usabas)
-const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
+  <!-- Carga config segura (no la subas al repo público) -->
+  <script src="config.js"></script>
+  <script>
+  const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
 
-const messagesDiv = document.getElementById('messages');
-const input = document.getElementById('input');
-const sendBtn = document.getElementById('sendBtn');
+  const messagesDiv = document.getElementById('messages');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+  let isLoading = false;
 
-let isLoading = false;
+  function scrollToBottom(){ messagesDiv.scrollTop = messagesDiv.scrollHeight; }
+  function basicFormat(s){ return (s||'').replace(/\n{2,}/g, '\n\n').replace(/\n/g,'<br>'); }
 
-// ===== Utils de UI =====
-function scrollToBottom(){ messagesDiv.scrollTop = messagesDiv.scrollHeight; }
-function basicFormat(s){ return s.replace(/\n{2,}/g, '\n\n').replace(/\n/g,'<br>'); }
-
-function buildStructuredBlock(resultHTML, processHTML){
-  const id='m'+Date.now()+Math.floor(Math.random()*1e4);
-  const html = `
-    <div class="result-section" id="result-${id}">${resultHTML}</div>
-    <hr class="proc-sep">
-    <div class="process-section">
-      <div class="process-header" data-target="${id}">
-        <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
-      </div>
-      <div class="process-content" id="process-${id}">${processHTML}</div>
-    </div>`;
-  return { id, html };
-}
-function toggleProcess(id){
-  const proc=document.getElementById('process-'+id);
-  const arrow=document.getElementById('arrow-'+id);
-  if(!proc)return;
-  const vis=proc.classList.toggle('visible');
-  arrow.textContent=vis?'▲':'▼';
-}
-
-// ===== Render a partir de "structured" =====
-function renderFromStructured(structured, fallbackResultText){
-  if(structured && Array.isArray(structured.items) && structured.items.length){
-    const title = `<p><strong>Resultados (${structured.items.length})</strong></p>`;
-    const list = structured.items.map((it, i)=>{
-      const sv = typeof it.status_value === 'number' ? it.status_value : null;
-      const label = it.status_label || '';
-      const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
-      const name = it.name ? `<strong>${it.name}</strong>` : '';
-      const role = it.role ? ` – ${it.role}` : '';
-      return `<li><span class="status-dot ${dotClass}"></span>${name}${role}${label ? ` – ${label}` : ''}</li>`;
-    }).join('');
-    const note = structured.note ? `<br><strong>Nota:</strong> ${basicFormat(structured.note)}` : '';
-    return `${title}<ol>${list}</ol>${note}`;
+  function buildStructuredBlock(resultHTML, processHTML){
+    const id='m'+Date.now()+Math.floor(Math.random()*1e4);
+    const html = `
+      <div class="result-section" id="result-${id}">${resultHTML}</div>
+      <hr class="proc-sep">
+      <div class="process-section">
+        <div class="process-header" data-target="${id}">
+          <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
+        </div>
+        <div class="process-content" id="process-${id}">${processHTML}</div>
+      </div>`;
+    return { id, html };
   }
-  // fallback: texto plano
-  return basicFormat(fallbackResultText || '—');
-}
+  function toggleProcess(id){
+    const proc=document.getElementById('process-'+id);
+    const arrow=document.getElementById('arrow-'+id);
+    if(!proc)return;
+    const vis=proc.classList.toggle('visible');
+    arrow.textContent=vis?'▲':'▼';
+  }
 
-// ===== Conversation Id =====
-function getConversationId(){
-  const k='chat_conversation_id';
-  let id = localStorage.getItem(k);
-  if(!id){ id = crypto.randomUUID(); localStorage.setItem(k,id); }
-  return id;
-}
+  // Render ficha persona si viene del backend
+  function renderFromStructured(structured, fallbackResultText){
+    if (structured && structured.profile){
+      const p = structured.profile;
+      const sv = typeof p.bandwidth === 'number' ? p.bandwidth : null;
+      const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
+      const assoc = p.associate ? 'Sí' : 'No';
+      const skills = p.skills?.length ? p.skills.join(', ') : '—';
+      const projs = p.projects?.length ? p.projects.join(', ') : '—';
+      const notes = p.notes?.length ? p.notes.map(n=>n.text).join(' · ') : '—';
 
-// ===== Envío =====
-async function sendMessage(){
-  const question = input.value.trim();
-  if(!question || isLoading) return;
+      return `
+        <h3>${p.name}</h3>
+        <p><span class="status-dot ${dotClass}"></span><strong>${p.bandwidth_label}</strong></p>
+        <ul>
+          <li><strong>Rol:</strong> ${p.role || '—'}</li>
+          <li><strong>Equipo:</strong> ${p.team || '—'}</li>
+          <li><strong>Ubicación:</strong> ${p.location || '—'}</li>
+          <li><strong>Associate:</strong> ${assoc}</li>
+          <li><strong>Skills:</strong> ${skills}</li>
+          <li><strong>Proyectos:</strong> ${projs}</li>
+          <li><strong>Notas recientes:</strong> ${notes}</li>
+        </ul>
+      `;
+    }
 
-  const u = document.createElement('div');
-  u.className='message user-message';
-  u.textContent=question.toUpperCase();
-  messagesDiv.appendChild(u);
+    if(structured && Array.isArray(structured.items) && structured.items.length){
+      const title = `<p><strong>Resultados (${structured.items.length})</strong></p>`;
+      const list = structured.items.map((it)=>{
+        const sv = typeof it.status_value === 'number' ? it.status_value : null;
+        const label = it.status_label || '';
+        const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
+        const name = it.name ? `<strong>${it.name}</strong>` : '';
+        const role = it.role ? ` – ${it.role}` : '';
+        return `<li><span class="status-dot ${dotClass}"></span>${name}${role}${label ? ` – ${label}` : ''}</li>`;
+      }).join('');
+      const note = structured.note ? `<br><strong>Nota:</strong> ${basicFormat(structured.note)}` : '';
+      return `${title}<ol>${list}</ol>${note}`;
+    }
+    return basicFormat(fallbackResultText || '—');
+  }
 
-  input.value=''; input.focus();
-  isLoading=true; sendBtn.disabled=true;
+  function getConversationId(){
+    const k='chat_conversation_id';
+    let id = localStorage.getItem(k);
+    if(!id){ id = crypto.randomUUID(); localStorage.setItem(k,id); }
+    return id;
+  }
 
-  const typing=document.createElement('div');
-  typing.className='typing-indicator';
-  typing.textContent='thinking…';
-  messagesDiv.appendChild(typing);
-  scrollToBottom();
-
-  try{
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
-      method:'POST',
+  function apiFetch(path, options={}){
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 20000); // 20s timeout
+    return fetch(`${SUPABASE_URL}${path}`, {
+      ...options,
       headers:{
         'Content-Type':'application/json',
-        'apikey':SUPABASE_ANON_KEY,
-        'Authorization':`Bearer ${SUPABASE_ANON_KEY}`
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        ...(options.headers||{})
       },
-      body: JSON.stringify({
-        question,
-        conversation_id: getConversationId()
-      })
-    });
+      signal: ctrl.signal
+    }).finally(()=>clearTimeout(t));
+  }
 
-    const data = await r.json();
-    typing.remove();
+  async function sendMessage(){
+    const question = input.value.trim();
+    if(!question || isLoading) return;
 
-    const a = document.createElement('div');
-    a.className='message assistant-message';
-    messagesDiv.appendChild(a);
+    const u = document.createElement('div');
+    u.className='message user-message';
+    u.textContent=question.toUpperCase();
+    messagesDiv.appendChild(u);
 
-    const resultHTML = renderFromStructured(data.structured, data.result_text);
-    const processHTML = basicFormat(data.process_text || '');
+    input.value=''; input.focus();
+    isLoading=true; sendBtn.disabled=true;
 
-    const { id, html } = buildStructuredBlock(resultHTML, processHTML);
-    a.innerHTML = html;
-
-    const header = a.querySelector(`.process-header[data-target="${id}"]`);
-    header.addEventListener('click', ()=>toggleProcess(id));
-
-    requestAnimationFrame(()=>a.classList.add('visible'));
+    const typing=document.createElement('div');
+    typing.className='typing-indicator';
+    typing.textContent='thinking…';
+    messagesDiv.appendChild(typing);
     scrollToBottom();
 
-  }catch(err){
-    typing.remove();
-    const e = document.createElement('div');
-    e.className='message assistant-message';
-    e.textContent='Error al conectar con el servidor: ' + err.message;
-    messagesDiv.appendChild(e);
-  }finally{
-    isLoading=false; sendBtn.disabled=false;
-  }
-}
+    try{
+      const r = await apiFetch('/functions/v1/chat-query', {
+        method:'POST',
+        body: JSON.stringify({ question, conversation_id: getConversationId() })
+      });
 
-// Eventos
-sendBtn.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
-input.focus();
-</script>
+      if(!r.ok){
+        const a = document.createElement('div');
+        a.className='message assistant-message error';
+        a.textContent = `No pudimos procesar la consulta (HTTP ${r.status}).`;
+        messagesDiv.appendChild(a);
+        typing.remove();
+        return;
+      }
+
+      const data = await r.json();
+      typing.remove();
+
+      const a = document.createElement('div');
+      a.className='message assistant-message';
+      messagesDiv.appendChild(a);
+
+      if(data && data.ok === false){
+        a.innerHTML = `<p class="error">Error: ${data.error || 'desconocido'}</p>`;
+        requestAnimationFrame(()=>a.classList.add('visible'));
+        scrollToBottom();
+        return;
+      }
+
+      const resultHTML = renderFromStructured(data.structured, data.result_text);
+      const processHTML = basicFormat(data.process_text || '');
+
+      const { id, html } = buildStructuredBlock(resultHTML, processHTML);
+      a.innerHTML = html;
+
+      const header = a.querySelector(`.process-header[data-target="${id}"]`);
+      header.addEventListener('click', ()=>toggleProcess(id));
+
+      requestAnimationFrame(()=>a.classList.add('visible'));
+      scrollToBottom();
+
+    }catch(err){
+      typing.remove();
+      const e = document.createElement('div');
+      e.className='message assistant-message error';
+      e.textContent = 'No pudimos procesar la consulta. ' +
+        (err.name === 'AbortError' ? 'Tiempo de espera agotado.' : (err.message || 'Error desconocido'));
+      messagesDiv.appendChild(e);
+    }finally{
+      isLoading=false; sendBtn.disabled=false;
+    }
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
+  input.focus();
+  </script>
 </body>
 </html>
