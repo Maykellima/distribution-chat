@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Distribution Chat</title>
   
-  <!-- Agregar librería para renderizar Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   
   <style>
@@ -21,7 +20,6 @@
     .assistant-message{font-size:15px;color:var(--main-text-color);line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all .4s ease-out}
     .assistant-message.visible{opacity:1;transform:translateY(0)}
     
-    /* Estilos para Markdown renderizado */
     .assistant-message h1, .assistant-message h2, .assistant-message h3 {
       font-weight:600;
       color:var(--main-text-color);
@@ -48,12 +46,6 @@
       padding-left:12px;
       margin:8px 0;
       color:var(--main-text-color);
-    }
-    
-    /* Mejoras específicas para estados de bandwidth */
-    .assistant-message .status-emoji {
-      font-size: 14px;
-      margin-right: 4px;
     }
     
     .assistant-message .bandwidth-status {
@@ -108,14 +100,6 @@
     .process-content p {
       color: var(--main-text-color);
     }
-    .metric-highlight {
-      background-color: #f8f9fa;
-      padding: 1px 4px;
-      border-radius: 3px;
-      font-family: 'SF Mono', Monaco, monospace;
-      font-size: 12px;
-      color: var(--main-text-color);
-    }
     
     .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
     .typing-indicator.retry{color:#ff9800}
@@ -137,7 +121,7 @@
   <div class="container">
     <div class="messages" id="messages"></div>
     <div class="input-container">
-      <input type="text" class="input-field" id="input" placeholder="How can I help you?..." autocomplete="off"/>
+      <input type="text" class="input-field" id="input" placeholder="Escribe tu consulta..." autocomplete="off"/>
       <button class="send-button" id="sendBtn" aria-label="Enviar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
       </button>
@@ -165,18 +149,12 @@
 
   const scrollToBottom = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
   
-  // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN CON LIMPIEZA AGRESIVA
+  // Función simple para renderizar Markdown
   const renderMarkdown = (text) => {
     if (!text) return '';
     
-    console.log("Raw text before cleaning:", text);
-    
-    // LIMPIEZA AGRESIVA de todos los tags y contenido problemático
+    // Solo limpiar tags de estructura básicos
     let cleanedText = text
-      // Eliminar bloques completos de "Análisis de Búsqueda"
-      .replace(/Análisis de [Bb]úsqueda:[\s\S]*?(?=\n\n|\n###|\n##|$)/gi, '')
-      .replace(/Search Analysis:[\s\S]*?(?=\n\n|\n###|\n##|$)/gi, '')
-      // Eliminar tags de estructura
       .replace(/\[\/RESULTADO\]/gi, '')
       .replace(/\[\/RESULT\]/gi, '')
       .replace(/\[\/PROCESO\]/gi, '')  
@@ -185,15 +163,9 @@
       .replace(/\[RESULT\]/gi, '')
       .replace(/\[PROCESO\]/gi, '')
       .replace(/\[PROCESS\]/gi, '')
-      // Eliminar cualquier variación
-      .replace(/\[\/?(?:RESULTADO|RESULT|PROCESO|PROCESS)\]/gi, '')
-      // Limpiar líneas vacías extra
       .replace(/\n{3,}/g, '\n\n')
       .trim();
     
-    console.log("Cleaned text:", cleanedText);
-    
-    // Usar marked.js para convertir Markdown a HTML
     if (typeof marked !== 'undefined') {
       marked.setOptions({
         breaks: true,
@@ -204,7 +176,6 @@
       return marked.parse(cleanedText);
     }
     
-    // Fallback si marked no está disponible
     return cleanedText
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
@@ -214,12 +185,7 @@
       .replace(/\n/g, '<br>');
   };
 
-  // Función mejorada para post-procesar respuestas
   function enhanceResponseDisplay(html) {
-    // Detectar y destacar métricas
-    html = html.replace(/(\d+)\s*(miembros?|equipos?|registros?|members?|teams?|records?)/g, 
-      '<span class="metric-highlight">$1</span> $2');
-    
     // Mejorar formato de estados de bandwidth
     html = html.replace(/(🟢\s*(Disponible|Available))/g, 
       '<span class="bandwidth-status bandwidth-available">$1</span>');
@@ -236,7 +202,6 @@
   function buildBlock(resultHTML, processHTML){
     const id='m'+Date.now()+Math.floor(Math.random()*1e4);
     
-    // Aplicar mejoras de visualización
     const enhancedResult = enhanceResponseDisplay(resultHTML || '—');
     const enhancedProcess = renderMarkdown(processHTML) || '';
     
@@ -258,54 +223,6 @@
     if(!proc)return;
     const vis=proc.classList.toggle('visible');
     if(arrow) arrow.textContent=vis?'▲':'▼';
-  }
-
-  function renderFromStructured(structured, fallback){
-    if (structured && structured.profile){
-      const p = structured.profile;
-      const sv = typeof p.bandwidth === 'number' ? p.bandwidth : null;
-      const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
-      const assoc = p.associate ? 'Sí' : 'No';
-      const deps = [p.team, ...(p.departments||[])].filter(Boolean).join(' · ') || '—';
-      const skills = p.skills?.length ? p.skills.join(', ') : '—';
-      const projs = p.projects?.length ? p.projects.join(', ') : '—';
-      const notes = p.notes?.length ? p.notes.map(n=>n.text).join(' · ') : '—';
-      const updates = p.updates?.length ? p.updates.map(u=> (u.project?`${u.project}: `:'') + u.text).join(' · ') : '—';
-
-      return `
-        <h3>${p.name}</h3>
-        <p><span class="status-dot ${dotClass}"></span><strong>${p.bandwidth_label}</strong></p>
-        <ul>
-          <li><strong>Rol:</strong> ${p.role || '—'}</li>
-          <li><strong>Seniority:</strong> ${p.seniority || '—'}</li>
-          <li><strong>Equipo / Deps:</strong> ${deps}</li>
-          <li><strong>Ubicación:</strong> ${p.location || '—'}</li>
-          <li><strong>Associate:</strong> ${assoc}</li>
-          ${p.email ? `<li><strong>Email:</strong> ${p.email}</li>` : ''}
-          ${p.manager ? `<li><strong>Manager:</strong> ${p.manager}</li>` : ''}
-          ${p.startDate ? `<li><strong>Inicio:</strong> ${new Date(p.startDate).toISOString().slice(0,10)}</li>` : ''}
-          <li><strong>Skills:</strong> ${skills}</li>
-          <li><strong>Proyectos:</strong> ${projs}</li>
-          <li><strong>Notas:</strong> ${notes}</li>
-          <li><strong>Updates:</strong> ${updates}</li>
-        </ul>
-      `;
-    }
-    if (structured && Array.isArray(structured.items) && structured.items.length){
-      const title = `<p><strong>Resultados (${structured.items.length})</strong></p>`;
-      const list = structured.items.map((it)=>{
-        const sv = typeof it.status_value === 'number' ? it.status_value : null;
-        const label = it.status_label || '';
-        const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
-        const name = it.name ? `<strong>${it.name}</strong>` : '';
-        const role = it.role ? ` — ${it.role}` : '';
-        return `<li><span class="status-dot ${dotClass}"></span>${name}${role}${label ? ` — ${label}` : ''}</li>`;
-      }).join('');
-      const note = structured.note ? `<br><strong>Nota:</strong> ${renderMarkdown(structured.note)}` : '';
-      return `${title}<ol>${list}</ol>${note}`;
-    }
-    
-    return renderMarkdown(fallback || '—');
   }
 
   function getConversationId(){
@@ -363,13 +280,12 @@
     scrollToBottom();
 
     try{
-      // REMOVIDO: Ya no enviamos detección de idioma desde frontend
+      // Solo enviar question y conversation_id - sin detección de idioma
       const r = await apiFetch('/functions/v1/chat-query', {
         method:'POST',
         body: JSON.stringify({ 
           question, 
           conversation_id: getConversationId()
-          // language: detectedLanguage <-- ELIMINADO
         })
       });
 
@@ -413,7 +329,6 @@
         return;
       }
 
-      // USAR MARKDOWN PARA RENDERIZAR LA RESPUESTA
       const resultHTML = renderMarkdown(data.result_text);
       const processHTML = renderMarkdown(data.process_text || '');
       const { id, html } = buildBlock(resultHTML, processHTML);
