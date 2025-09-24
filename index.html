@@ -49,7 +49,6 @@
     </div>
   </div>
 
-  <!-- Credenciales -->
   <script src="config.js"></script>
   <script>
   const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
@@ -94,7 +93,6 @@
   }
 
   function renderFromStructured(structured, fallback){
-    // Ficha
     if (structured && structured.profile){
       const p = structured.profile;
       const sv = typeof p.bandwidth === 'number' ? p.bandwidth : null;
@@ -125,7 +123,6 @@
         </ul>
       `;
     }
-    // Lista
     if (structured && Array.isArray(structured.items) && structured.items.length){
       const title = `<p><strong>Resultados (${structured.items.length})</strong></p>`;
       const list = structured.items.map((it)=>{
@@ -139,7 +136,6 @@
       const note = structured.note ? `<br><strong>Nota:</strong> ${basicFormat(structured.note)}` : '';
       return `${title}<ol>${list}</ol>${note}`;
     }
-    // Fallback SIEMPRE
     return basicFormat(fallback || '—');
   }
 
@@ -152,7 +148,7 @@
 
   function apiFetch(path, options={}){
     const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), 20000);
+    const t = setTimeout(()=>ctrl.abort(), 45000); // ⏰ 45s
     return fetch(`${SUPABASE_URL}${path}`, {
       ...options,
       headers:{
@@ -203,25 +199,19 @@
       typing.remove();
 
       const a = document.createElement('div');
-      a.className='message assistant-message';
+      a.className='message assistant-message visible';
       messagesDiv.appendChild(a);
 
       if(data && data.ok === false){
         a.innerHTML = `<p class="error">Error: ${data.error || 'desconocido'}</p>`;
-        a.classList.add('visible'); scrollToBottom(); return;
+        scrollToBottom(); return;
       }
 
       const resultHTML = renderFromStructured(data.structured, data.result_text);
-      console.log("Render resultHTML:", resultHTML);
       const processHTML = basicFormat(data.process_text || '');
-
       const { id, html } = buildBlock(resultHTML, processHTML);
       a.innerHTML = html;
 
-      // 👇 PRIMERO hacemos visible SIEMPRE
-      a.classList.add('visible');
-
-      // 👇 Luego, si existe el header, añadimos el evento (null-safe)
       const header = a.querySelector('.process-header');
       header?.addEventListener('click', ()=>toggleProcess(id));
 
