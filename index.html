@@ -196,24 +196,38 @@
     return englishScore > spanishScore ? 'en' : 'es';
   }
   
-  // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN CON LIMPIEZA DE TAGS
+  // FUNCIÓN MEJORADA PARA RENDERIZAR MARKDOWN CON LIMPIEZA COMPLETA DE TAGS
   const renderMarkdown = (text) => {
     if (!text) return '';
     
-    // Limpiar tags de estructura que no deben ser visibles
+    console.log("Raw text before cleaning:", text); // Para debugging temporal
+    
+    // Limpiar TODOS los tags de estructura que no deben ser visibles
     let cleanedText = text
-      .replace(/\[\/RESULTADO\]/gi, '') // Eliminar [/RESULTADO] visible
-      .replace(/\[RESULTADO\]/gi, '')  // Eliminar [RESULTADO] si aparece solo
-      .replace(/\[\/PROCESO\]/gi, '')  // Limpiar [/PROCESO] también
-      .replace(/\[PROCESO\]/gi, '');   // Limpiar [PROCESO] también
+      // Eliminar tags de cierre
+      .replace(/\[\/RESULTADO\]/gi, '')
+      .replace(/\[\/RESULT\]/gi, '')
+      .replace(/\[\/PROCESO\]/gi, '')  
+      .replace(/\[\/PROCESS\]/gi, '')
+      // Eliminar tags de apertura
+      .replace(/\[RESULTADO\]/gi, '')
+      .replace(/\[RESULT\]/gi, '')
+      .replace(/\[PROCESO\]/gi, '')
+      .replace(/\[PROCESS\]/gi, '')
+      // Limpiar cualquier variación que pueda quedar
+      .replace(/\[\/?(?:RESULTADO|RESULT|PROCESO|PROCESS)\]/gi, '')
+      // Limpiar líneas vacías extra
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    
+    console.log("Cleaned text:", cleanedText); // Para debugging temporal
     
     // Usar marked.js para convertir Markdown a HTML
     if (typeof marked !== 'undefined') {
-      // Configurar marked para ser seguro
       marked.setOptions({
-        breaks: true, // Convierte saltos de línea en <br>
-        gfm: true, // GitHub Flavored Markdown
-        sanitize: false // No sanitizar (ya confiamos en nuestro backend)
+        breaks: true,
+        gfm: true,
+        sanitize: false
       });
       
       return marked.parse(cleanedText);
@@ -221,12 +235,12 @@
     
     // Fallback si marked no está disponible
     return cleanedText
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Negritas
-      .replace(/\*(.+?)\*/g, '<em>$1</em>') // Cursivas
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>') // H3
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>') // H2
-      .replace(/^# (.+)$/gm, '<h1>$1</h1>') // H1
-      .replace(/\n/g, '<br>'); // Saltos de línea
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\n/g, '<br>');
   };
 
   // Función mejorada para post-procesar respuestas
@@ -406,7 +420,7 @@
       }
 
       const data = await r.json();
-      console.log("Respuesta backend:", data);
+      console.log("Respuesta backend completa:", data);
       typing.remove();
 
       if(data && data.ok === false && data.retry_after && retryCount < 3){
