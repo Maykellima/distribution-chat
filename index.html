@@ -26,6 +26,7 @@
     .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
     .process-content.visible{display:block}
     .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
+    .typing-indicator.retry{color:#ff9800}
     .input-container{position:relative}
     .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
     .input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
@@ -36,6 +37,8 @@
     .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
     .st-1{background:#2ecc71}.st-0{background:#bdc3c7}.st--1{background:#e74c3c}
     .error{color:#b00020}
+    .warning{color:#ff9800}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
@@ -58,6 +61,7 @@
   const input = document.getElementById('input');
   const sendBtn = document.getElementById('sendBtn');
   let isLoading = false;
+  let retryTimeouts = [];
 
   if (!hasCfg) {
     const warn = document.createElement('div');
@@ -130,8 +134,8 @@
         const label = it.status_label || '';
         const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
         const name = it.name ? `<strong>${it.name}</strong>` : '';
-        const role = it.role ? ` – ${it.role}` : '';
-        return `<li><span class="status-dot ${dotClass}"></span>${name}${role}${label ? ` – ${label}` : ''}</li>`;
+        const role = it.role ? ` — ${it.role}` : '';
+        return `<li><span class="status-dot ${dotClass}"></span>${name}${role}${label ? ` — ${label}` : ''}</li>`;
       }).join('');
       const note = structured.note ? `<br><strong>Nota:</strong> ${basicFormat(structured.note)}` : '';
       return `${title}<ol>${list}</ol>${note}`;
@@ -161,22 +165,37 @@
     }).finally(()=>clearTimeout(t));
   }
 
-  async function sendMessage(){
+  async function sendMessage(question = null, retryCount = 0){
     if(!hasCfg) return;
-    const question = input.value.trim();
-    if(!question || isLoading) return;
-
-    const u = document.createElement('div');
-    u.className='message user-message';
-    u.textContent=question.toUpperCase();
-    messagesDiv.appendChild(u);
-
-    input.value=''; input.focus();
-    isLoading=true; sendBtn.disabled=true;
+    
+    // Si no hay pregunta proporcionada, tomarla del input
+    if (!question) {
+      question = input.value.trim();
+      if(!question || isLoading) return;
+      
+      // Mostrar la pregunta del usuario
+      const u = document.createElement('div');
+      u.className='message user-message';
+      u.textContent=question.toUpperCase();
+      messagesDiv.appendChild(u);
+      
+      input.value=''; 
+    }
+    
+    input.focus();
+    isLoading=true; 
+    sendBtn.disabled=true;
 
     const typing=document.createElement('div');
     typing.className='typing-indicator';
-    typing.textContent='thinking…';
+    
+    if (retryCount > 0) {
+      typing.className += ' retry';
+      typing.textContent=`Reintentando... (intento ${retryCount + 1})`;
+    } else {
+      typing.textContent='thinking…';
+    }
+    
     messagesDiv.appendChild(typing);
     scrollToBottom();
 
@@ -191,12 +210,32 @@
         const a = document.createElement('div');
         a.className='message assistant-message error visible';
         a.textContent = `No pudimos procesar la consulta (HTTP ${r.status}).`;
-        messagesDiv.appendChild(a); scrollToBottom(); return;
+        messagesDiv.appendChild(a); 
+        scrollToBottom(); 
+        return;
       }
 
       const data = await r.json();
       console.log("Respuesta backend:", data);
       typing.remove();
+
+      // Si el servicio está sobrecargado y tenemos retry_after
+      if(data && data.ok === false && data.retry_after && retryCount < 3){
+        const retryMsg = document.createElement('div');
+        retryMsg.className='message assistant-message warning visible';
+        retryMsg.textContent = `${data.error || 'Servicio temporalmente sobrecargado'}. Reintentando automáticamente en ${Math.ceil(data.retry_after/1000)} segundos...`;
+        messagesDiv.appendChild(retryMsg);
+        scrollToBottom();
+        
+        // Programar reintento
+        const timeoutId = setTimeout(() => {
+          retryMsg.remove();
+          sendMessage(question, retryCount + 1);
+        }, data.retry_after);
+        
+        retryTimeouts.push(timeoutId);
+        return;
+      }
 
       const a = document.createElement('div');
       a.className='message assistant-message visible';
@@ -204,7 +243,8 @@
 
       if(data && data.ok === false){
         a.innerHTML = `<p class="error">Error: ${data.error || 'desconocido'}</p>`;
-        scrollToBottom(); return;
+        scrollToBottom(); 
+        return;
       }
 
       const resultHTML = renderFromStructured(data.structured, data.result_text);
@@ -220,17 +260,40 @@
     }catch(err){
       console.error(err);
       typing.remove();
+      
+      // Si es un timeout y no hemos reintentado demasiadas veces
+      if(err.name === 'AbortError' && retryCount < 2){
+        const retryMsg = document.createElement('div');
+        retryMsg.className='message assistant-message warning visible';
+        retryMsg.textContent = 'Tiempo de espera agotado. Reintentando...';
+        messagesDiv.appendChild(retryMsg);
+        scrollToBottom();
+        
+        setTimeout(() => {
+          retryMsg.remove();
+          sendMessage(question, retryCount + 1);
+        }, 2000);
+        return;
+      }
+      
       const e = document.createElement('div');
       e.className='message assistant-message error visible';
-      e.textContent = 'No pudimos procesar la consulta. ' + (err.name==='AbortError'?'Tiempo de espera agotado.':(err.message||'Error'));
+      e.textContent = 'No pudimos procesar la consulta. ' + 
+        (err.name==='AbortError'?'Tiempo de espera agotado.':(err.message||'Error'));
       messagesDiv.appendChild(e);
       scrollToBottom();
     }finally{
-      isLoading=false; sendBtn.disabled=false;
+      isLoading=false; 
+      sendBtn.disabled=false;
     }
   }
 
-  sendBtn.addEventListener('click', sendMessage);
+  // Limpiar timeouts al salir
+  window.addEventListener('beforeunload', () => {
+    retryTimeouts.forEach(t => clearTimeout(t));
+  });
+
+  sendBtn.addEventListener('click', () => sendMessage());
   input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
   input.focus();
   </script>
