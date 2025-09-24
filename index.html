@@ -49,7 +49,7 @@
     </div>
   </div>
 
-  <!-- config.js con SUPABASE_URL y SUPABASE_ANON_KEY -->
+  <!-- Carga credenciales -->
   <script src="config.js"></script>
   <script>
   const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
@@ -60,6 +60,7 @@
   const sendBtn = document.getElementById('sendBtn');
   let isLoading = false;
 
+  // Aviso si no hay config
   if (!hasCfg) {
     const warn = document.createElement('div');
     warn.className='message assistant-message error';
@@ -68,8 +69,8 @@
     sendBtn.disabled = true; input.disabled = true;
   }
 
-  function scrollToBottom(){ messagesDiv.scrollTop = messagesDiv.scrollHeight; }
-  function basicFormat(s){ return (s||'').replace(/\n{2,}/g, '\n\n').replace(/\n/g,'<br>'); }
+  const scrollToBottom = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
+  const basicFormat = (s) => (s || '').replace(/\n{2,}/g, '\n\n').replace(/\n/g,'<br>');
 
   function buildBlock(resultHTML, processHTML){
     const id='m'+Date.now()+Math.floor(Math.random()*1e4);
@@ -84,15 +85,9 @@
       </div>`;
     return { id, html };
   }
-  function toggleProcess(id){
-    const proc=document.getElementById('process-'+id);
-    const arrow=document.getElementById('arrow-'+id);
-    if(!proc)return; const vis=proc.classList.toggle('visible');
-    arrow.textContent=vis?'▲':'▼';
-  }
 
-  // Render ficha si viene
-  function renderFromStructured(structured, fallback){
+  function renderFromStructured(structured, fallbackResultText){
+    // 1) Ficha de persona
     if (structured && structured.profile){
       const p = structured.profile;
       const sv = typeof p.bandwidth === 'number' ? p.bandwidth : null;
@@ -123,9 +118,11 @@
         </ul>
       `;
     }
+
+    // 2) Lista estructurada
     if (structured && Array.isArray(structured.items) && structured.items.length){
       const title = `<p><strong>Resultados (${structured.items.length})</strong></p>`;
-      const list = structured.items.map(it=>{
+      const list = structured.items.map((it)=>{
         const sv = typeof it.status_value === 'number' ? it.status_value : null;
         const label = it.status_label || '';
         const dotClass = sv === 1 ? 'st-1' : (sv === -1 ? 'st--1' : 'st-0');
@@ -136,7 +133,9 @@
       const note = structured.note ? `<br><strong>Nota:</strong> ${basicFormat(structured.note)}` : '';
       return `${title}<ol>${list}</ol>${note}`;
     }
-    return basicFormat(fallback || '—');
+
+    // 3) Fallback SIEMPRE: result_text en HTML básico
+    return basicFormat(fallbackResultText || '—');
   }
 
   function getConversationId(){
@@ -145,6 +144,7 @@
     if(!id){ id = self.crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()); localStorage.setItem(k,id); }
     return id;
   }
+
   function apiFetch(path, options={}){
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), 20000);
@@ -177,7 +177,7 @@
     typing.className='typing-indicator';
     typing.textContent='thinking…';
     messagesDiv.appendChild(typing);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    scrollToBottom();
 
     try{
       const r = await apiFetch('/functions/v1/chat-query', {
@@ -193,7 +193,7 @@
       }
 
       const data = await r.json();
-      console.log("Respuesta backend:", data);
+      console.log("Respuesta backend:", data); // LOG
       typing.remove();
 
       const a = document.createElement('div');
@@ -202,12 +202,18 @@
 
       if(data && data.ok === false){
         a.innerHTML = `<p class="error">Error: ${data.error || 'desconocido'}</p>`;
-        requestAnimationFrame(()=>a.classList.add('visible')); messagesDiv.scrollTop = messagesDiv.scrollHeight; return;
+        requestAnimationFrame(()=>a.classList.add('visible')); scrollToBottom(); return;
       }
 
       const resultHTML = renderFromStructured(data.structured, data.result_text);
+      console.log("Render resultHTML:", resultHTML); // LOG
       const processHTML = basicFormat(data.process_text || '');
-      const { id, html } = buildBlock(resultHTML, processHTML);
+
+      // Si por algún motivo ambos están vacíos, muestra mensaje
+      const safeResult = (resultHTML && resultHTML.trim()) ? resultHTML : basicFormat(data?.result_text || '—');
+      const safeProcess = (processHTML && processHTML.trim()) ? processHTML : '';
+
+      const { id, html } = buildBlock(safeResult, safeProcess);
       a.innerHTML = html;
 
       const header = a.querySelector(`.process-header[data-target="${id}"]`);
@@ -218,7 +224,7 @@
       });
 
       requestAnimationFrame(()=>a.classList.add('visible'));
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      scrollToBottom();
 
     }catch(err){
       typing.remove();
