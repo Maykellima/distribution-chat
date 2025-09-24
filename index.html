@@ -10,42 +10,44 @@
   
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    :root{--black-90:rgba(0,0,0,.9);--black-80:rgba(0,0,0,.8);--bg:#fff}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
+    :root{--black-90:rgba(0,0,0,.9);--black-80:rgba(0,0,0,.8);--bg:#fff;--main-text-color:#222}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:var(--main-text-color)}
     .container{width:640px;padding:40px 0}
     .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
     .messages::-webkit-scrollbar{display:none}
     .message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
-    .user-message{font-size:18px;color:#222;font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px}
+    .user-message{font-size:18px;color:var(--main-text-color);font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px}
     .user-message::before{content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%}
-    .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all .4s ease-out}
+    .assistant-message{font-size:15px;color:var(--main-text-color);line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all .4s ease-out}
     .assistant-message.visible{opacity:1;transform:translateY(0)}
     
-    /* Estilos para Markdown renderizado */
+    /* Estilos para Markdown renderizado - AJUSTADOS */
     .assistant-message h1, .assistant-message h2, .assistant-message h3 {
-      font-weight:700;
-      color:#000;
+      font-weight:600;
+      color:var(--main-text-color);
       margin:12px 0 8px;
+      font-size:15px; /* Tamaño uniforme como solicitaste */
     }
-    .assistant-message h1 {font-size:20px}
-    .assistant-message h2 {font-size:18px}
-    .assistant-message h3 {font-size:16px}
-    .assistant-message strong{font-weight:700;color:#000}
+    .assistant-message h1 {font-size:15px}
+    .assistant-message h2 {font-size:15px}
+    .assistant-message h3 {font-size:15px}
+    .assistant-message strong{font-weight:600;color:var(--main-text-color)} /* Mismo color que la pregunta */
     .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
-    .assistant-message li{margin:4px 0}
-    .assistant-message p{margin:8px 0}
+    .assistant-message li{margin:4px 0;color:var(--main-text-color)}
+    .assistant-message p{margin:8px 0;color:var(--main-text-color)}
     .assistant-message code{
       background:#f5f5f5;
       padding:2px 4px;
       border-radius:3px;
       font-family:'SF Mono',Monaco,monospace;
       font-size:14px;
+      color:var(--main-text-color);
     }
     .assistant-message blockquote{
       border-left:3px solid #ddd;
       padding-left:12px;
       margin:8px 0;
-      color:#666;
+      color:var(--main-text-color);
     }
     
     /* Mejoras específicas para estados de bandwidth */
@@ -80,13 +82,13 @@
     
     .proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
     .process-section{margin-top:10px}
-    .process-header{font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
+    .process-header{font-size:15px;font-weight:600;color:var(--main-text-color);margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
     .process-arrow{font-size:13px;display:inline-block;min-width:14px}
-    .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
+    .process-content{display:none;padding-top:8px;font-size:13px;color:var(--main-text-color);line-height:1.7}
     .process-content.visible{display:block}
     .process-content h4 {
-      color: #333;
-      font-size: 14px;
+      color: var(--main-text-color);
+      font-size: 15px; /* Ajustado a 15px */
       margin: 8px 0 4px;
       font-weight: 600;
     }
@@ -97,9 +99,14 @@
     .process-content li {
       margin: 2px 0;
       font-size: 13px;
+      color: var(--main-text-color);
     }
     .process-content strong {
-      color: #111;
+      color: var(--main-text-color);
+      font-weight: 600;
+    }
+    .process-content p {
+      color: var(--main-text-color);
     }
     .metric-highlight {
       background-color: #f8f9fa;
@@ -107,12 +114,13 @@
       border-radius: 3px;
       font-family: 'SF Mono', Monaco, monospace;
       font-size: 12px;
+      color: var(--main-text-color);
     }
     
     .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
     .typing-indicator.retry{color:#ff9800}
     .input-container{position:relative}
-    .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:var(--main-text-color);background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
     .input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
     .send-button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)}
     .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
