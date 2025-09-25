@@ -41,7 +41,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 <div class="container">
 <div class="messages" id="messages"></div>
 <div class="input-container">
-<input type="text" class="input-field" id="input" placeholder="¿En qué puedo ayudarte?" autocomplete="off"/>
+<input type="text" class="input-field" id="input" placeholder="How can I help you?" autocomplete="off"/>
 <button class="send-button" id="sendBtn" aria-label="Enviar">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
 </button>
@@ -160,7 +160,7 @@ function buildStructuredMessage(resultText, processText) {
         <hr class="proc-sep">
         <div class="process-section">
             <div class="process-header" data-target="${id}">
-                <span>Proceso</span><span class="process-arrow" id="arrow-${id}">▼</span>
+                <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
             </div>
             <div class="process-content" id="process-${id}">
                 ${formatContent(processText)}
@@ -202,7 +202,7 @@ async function sendMessage() {
     // Indicador de escritura
     const typing = document.createElement('div');
     typing.className = 'typing-indicator';
-    typing.textContent = 'procesando...';
+    typing.textContent = 'thinking...';
     messagesDiv.appendChild(typing);
     scrollToBottom();
     
