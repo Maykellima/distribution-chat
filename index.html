@@ -1,317 +1,287 @@
-<!-- index.html - VERSIÓN DE PRUEBA -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Distribution Chat - Test</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{ --black-90:rgba(0,0,0,.9); --black-80:rgba(0,0,0,.8); --border:rgba(0,0,0,.2); --bg:#fff; }
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
-    .container{width:640px;padding:40px 0}
-    .messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
-    .messages::-webkit-scrollbar{display:none}
-    .message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
-    .user-message{font-size:18px;color:#222;font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px}
-    .user-message::before{content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%}
-    .assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all 0.4s ease-out}
-    .assistant-message.visible{opacity:1;transform:translateY(0)}
-    .assistant-message strong{font-weight:700;color:#000}
-    .assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
-    .assistant-message li{margin:4px 0}
-    .proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
-    .process-section{margin-top:10px}
-    .process-header{font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
-    .process-arrow{font-size:13px;display:inline-block;min-width:14px}
-    .process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
-    .process-content.visible{display:block}
-    .typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
-    .input-container{position:relative}
-    .input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
-    .input-field::placeholder{color:#999;font-weight:400}
-    .send-button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-    .send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
-    .send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
-    .send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Distribution Chat - Optimized</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{ --black-90:rgba(0,0,0,.9); --black-80:rgba(0,0,0,.8); --border:rgba(0,0,0,.2); --bg:#fff; }
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;align-items:center;color:#222}
+.container{width:640px;padding:40px 0}
+.messages{min-height:400px;max-height:70vh;overflow-y:auto;margin-bottom:40px;padding:20px 0;scrollbar-width:none;-ms-overflow-style:none}
+.messages::-webkit-scrollbar{display:none}
+.message{margin-bottom:14px;margin-left:60px;position:relative;animation:fadeIn .25s ease}
+.user-message{font-size:18px;color:#222;font-weight:600;text-transform:uppercase;letter-spacing:.02em;max-width:520px}
+.user-message::before{content:'';position:absolute;left:-40px;top:5px;width:12px;height:12px;background:#000;border-radius:50%}
+.assistant-message{font-size:15px;color:#2b2b2b;line-height:1.65;max-width:520px;opacity:0;transform:translateY(20px);transition:all 0.4s ease-out}
+.assistant-message.visible{opacity:1;transform:translateY(0)}
+.assistant-message strong{font-weight:700;color:#000}
+.assistant-message ul,.assistant-message ol{margin:8px 0 8px 22px}
+.assistant-message li{margin:4px 0}
+.proc-sep{margin:16px 0;border:0;border-top:1px solid var(--black-90)}
+.process-section{margin-top:10px}
+.process-header{font-size:15px;font-weight:700;color:#111;margin:6px 0 8px;display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer}
+.process-arrow{font-size:13px;display:inline-block;min-width:14px}
+.process-content{display:none;padding-top:8px;font-size:13px;color:#444;line-height:1.7}
+.process-content.visible{display:block}
+.typing-indicator{margin-left:60px;height:18px;color:var(--black-80);font-size:13px}
+.input-container{position:relative}
+.input-field{width:100%;padding:20px 60px 20px 24px;border:2px solid #e5e5e5;border-radius:50px;font-size:16px;color:#222;background:#fff;outline:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.input-field:focus{border-color:#666;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.input-field::placeholder{color:#999;font-weight:400}
+.send-button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:none;border-radius:50%;background:#111;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.send-button:hover:not(:disabled){background:#000;transform:translateY(-50%) scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.send-button:disabled{background:#f0f0f0;color:#aaa;cursor:not-allowed;box-shadow:none;transform:translateY(-50%)}
+.send-button svg{width:20px;height:20px;transform:rotate(-90deg)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="messages" id="messages"></div>
-    <div class="input-container">
-      <input type="text" class="input-field" id="input" placeholder="Hello, how can I help you?." autocomplete="off"/>
-      <button class="send-button" id="sendBtn" aria-label="Enviar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
-      </button>
-    </div>
-  </div>
+<div class="container">
+<div class="messages" id="messages"></div>
+<div class="input-container">
+<input type="text" class="input-field" id="input" placeholder="¿En qué puedo ayudarte?" autocomplete="off"/>
+<button class="send-button" id="sendBtn" aria-label="Enviar">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
+</button>
+</div>
+</div>
 
 <script>
-// CONFIGURACIÓN DIRECTA PARA PRUEBAS
+// Configuración - Obtener de variables de entorno en producción
 const SUPABASE_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6b2lzY296d2pudXhtZWN3dHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDQ4MTEsImV4cCI6MjA3MTE4MDgxMX0.67idmsow4i51CLKf3a07UGYvHOepZ50tryvyJH3pKaY';
 
-console.log('🧪 MODO PRUEBA - Credenciales cargadas directamente');
+console.log('🚀 Distribution Chat - Versión Optimizada');
 
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
 let isLoading = false;
 
-/* ===== Memoria breve ===== */
-class ConversationMemory{
-  constructor(){this.context=null;this.DUR=10*60*1000}
-  update(q,a){this.context={lastQuery:q,lastAnswer:a,entities:this.extract(q,a),ts:Date.now()}}
-  extract(q,a){const c=(q+' '+a).toLowerCase();return {projects:this.extractProjects(c),people:this.extractPeople(a)}}
-  extractProjects(txt){const known=['dataverse','delta','sid','hornblower','data','al findr','solutran','control plane','infrastructure team','zeta'];return known.filter(p=>txt.includes(p))}
-  extractPeople(t){const re=/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+/g;return t.match(re)||[]}
-  enhance(q){
-    if(!this.context || Date.now()-this.context.ts>this.DUR) return q
-    const lq=q.toLowerCase()
-    if((lq.includes('ellos')||lq.includes('estos')) && this.context.entities.people.length) return q+` (contexto: ${this.context.entities.people.join(', ')})`
-    if((lq.includes('ese proyecto')||lq.includes('el proyecto')) && this.context.entities.projects.length) return q+` (contexto: proyecto ${this.context.entities.projects[0]})`
-    return q
-  }
-}
-const memory=new ConversationMemory();
-
-/* ===== Markdown básico → HTML ===== */
-function formatBasicContent(content){
-  let f = content
-    .replace(/^### (.*?)$/gm,'<h3>$1</h3>')
-    .replace(/^## (.*?)$/gm,'<h2>$1</h2>')
-    .replace(/^# (.*?)$/gm,'<h1>$1</h1>')
-    .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code class="language-$1">$2</code></pre>')
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g,'<em>$1</em>')
-    .replace(/`(.*?)`/g,'<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>')
-    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
-    .replace(/^[\*\-\+] (.+)$/gm,'<li>$1</li>')
-    .replace(/\n/g,'<br>');
-  f = f.replace(/(<li>.*?<\/li>(?:<br>)?)+/g, m => '<ul>' + m.replace(/<br>/g,'') + '</ul>');
-  f = f.replace(/(<br>){2,}/g,'<br><br>');
-  return f;
-}
-
-/* ===== Post-formateo robusto para [RESULTADO] ===== */
-function formatResultRich(text){
-  let body = text.trim().replace(/\u00A0/g,' ');
-  let note = '';
-
-  const nIdx = body.search(/\bNota:/i);
-  if (nIdx >= 0){
-    note = body.slice(nIdx).replace(/^.*?\bNota:\s*/i,'').trim();
-    body = body.slice(0, nIdx).trim();
-  }
-
-  const items = [];
-  const itemRe = /(?:^|\s)(\d+)\.\s+([^]+?)(?=(?:\s+\d+\.\s+)|$)/g;
-  let m; while((m=itemRe.exec(body))!==null){ items.push(m[2].trim()); }
-
-  if(items.length===0){
-    const injected = body.replace(/(\d+)\.\s+/g, '\n$1. ');
-    const parts = injected.split(/\n(?=\d+\.\s)/).map(s=>s.trim());
-    if(parts.length>1){
-      parts.forEach(p=> items.push(p.replace(/^\d+\.\s+/,'').trim()));
-      body = body.replace(/^[\s\S]*?(?=\d+\.\s)/,'').trim();
+// Memoria conversacional simplificada
+class SimpleMemory {
+    constructor() {
+        this.context = null;
+        this.DURATION = 10 * 60 * 1000; // 10 minutos
     }
-  }
-
-  let intro = '';
-  if(items.length){
-    const firstIdx = body.search(/\d+\.\s+/);
-    if(firstIdx > 0) intro = body.slice(0, firstIdx).trim().replace(/[;:,–—-]\s*$/,'');
-  }
-
-  const enhanceItem = (s)=>{
-    let t = s;
-    t = t.replace(
-      /^([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+(?:\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.'-]+)+)/,
-      '<strong>$1</strong>'
-    );
-    t = t.replace(/\b(Proyecto|Project):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
-    t = t.replace(/\b(Departamento|Department):\s*([^–—\-\n]+?)(?=(?:\s*(?:–|—|-)\s*|\s|$))/gi, '<strong>$1:</strong> <strong>$2</strong>');
-    return t.trim();
-  };
-
-  let html = '';
-  if(intro) html += `<p>${formatBasicContent(intro)}</p>`;
-  if(items.length){
-    html += '<ol>';
-    items.forEach(it => html += `<li>${formatBasicContent(enhanceItem(it))}</li>`);
-    html += '</ol>';
-  }else{
-    html += formatBasicContent(body);
-  }
-  if(note){ html += `<br><strong>Nota:</strong> ${formatBasicContent(note)}`; }
-  return html;
+    
+    update(question, answer) {
+        this.context = {
+            lastQuery: question,
+            lastAnswer: answer,
+            timestamp: Date.now(),
+            entities: this.extractEntities(question + ' ' + answer)
+        };
+    }
+    
+    extractEntities(text) {
+        const lower = text.toLowerCase();
+        return {
+            projects: this.findProjects(lower),
+            people: this.findPeople(text)
+        };
+    }
+    
+    findProjects(text) {
+        const projectKeywords = ['dataverse', 'delta', 'sid', 'hornblower', 'solutran', 'zeta'];
+        return projectKeywords.filter(p => text.includes(p));
+    }
+    
+    findPeople(text) {
+        // Buscar nombres propios (empiezan con mayúscula)
+        const namePattern = /[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+/g;
+        return text.match(namePattern) || [];
+    }
+    
+    enhance(question) {
+        if (!this.context || Date.now() - this.context.timestamp > this.DURATION) {
+            return question;
+        }
+        
+        const q = question.toLowerCase();
+        
+        // Añadir contexto si usa pronombres
+        if ((q.includes('ellos') || q.includes('estos')) && this.context.entities.people.length) {
+            return question + ` (contexto: ${this.context.entities.people.join(', ')})`;
+        }
+        
+        if ((q.includes('ese proyecto') || q.includes('el proyecto')) && this.context.entities.projects.length) {
+            return question + ` (contexto: proyecto ${this.context.entities.projects[0]})`;
+        }
+        
+        return question;
+    }
 }
 
-/* ===== Parser robusto ===== */
+const memory = new SimpleMemory();
+
+// Formateo de markdown básico
+function formatContent(content) {
+    return content
+        .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        .replace(/^\* (.+)$/gm, '<li>$1</li>')
+        .replace(/\n/g, '<br>');
+}
+
+// Parser de respuestas estructuradas
 function parseStructuredResponse(text) {
-  const normalized = text.trim().replace(/\u00A0/g, ' ');
-  
-  let resultMatch = normalized.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
-  let processMatch = normalized.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
-  
-  if (!resultMatch) {
-    resultMatch = normalized.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i) ||
-                  normalized.match(/RESULTADO:([\s\S]*?)(?=\[PROCESO\]|\[PROCESS\]|$)/i);
-  }
-  
-  if (!processMatch) {
-    processMatch = normalized.match(/\[PROCESS\]([\s\S]*?)\[\/PROCESS\]/i) ||
-                   normalized.match(/PROCESO:([\s\S]*?)(?=\[RESULTADO\]|\[RESULT\]|$)/i);
-  }
-  
-  if (resultMatch) {
-    return {
-      hasStructure: true,
-      result: resultMatch[1].trim(),
-      process: processMatch ? processMatch[1].trim() : 'No se proporcionó información del proceso.'
-    };
-  }
-  
-  return {
-    hasStructure: false,
-    result: normalized,
-    process: ''
-  };
-}
-
-/* ===== Mostrar contenido con animación fade-in y slide-up ===== */
-function showContentWithAnimation(text, element, onComplete) {
-  const formattedHTML = formatResultRich(text);
-  element.innerHTML = formattedHTML;
-  
-  if (onComplete) {
-    setTimeout(onComplete, 50);
-  }
-}
-
-/* ===== Bloque Resultado/Proceso ===== */
-function buildStructuredMessage(resultText, processText){
-  const id='m'+Date.now()+Math.floor(Math.random()*1e4);
-  const html = `
-    <div class="result-section" id="result-${id}"></div>
-    <hr class="proc-sep">
-    <div class="process-section">
-      <div class="process-header" data-target="${id}">
-        <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
-      </div>
-      <div class="process-content" id="process-${id}">
-        ${formatBasicContent(processText)}
-      </div>
-    </div>`;
-  return {id, html};
-}
-
-function toggleProcess(id){
-  const proc=document.getElementById('process-'+id);
-  const arrow=document.getElementById('arrow-'+id);
-  if(!proc) return;
-  const vis=proc.classList.toggle('visible');
-  arrow.textContent=vis?'▲':'▼';
-}
-
-/* ===== Auto-scroll ===== */
-function scrollToBottom(){ 
-  messagesDiv.scrollTop = messagesDiv.scrollHeight; 
-}
-
-/* ===== Envío ===== */
-async function sendMessage(){
-  const original = input.value.trim();
-  if(!original || isLoading) return;
-  const enhanced = memory.enhance(original);
-
-  const u = document.createElement('div');
-  u.className='message user-message';
-  u.textContent=original.toUpperCase();
-  messagesDiv.appendChild(u);
-
-  input.value=''; input.focus();
-  isLoading=true; sendBtn.disabled=true;
-
-  const typing=document.createElement('div');
-  typing.className='typing-indicator';
-  typing.textContent='thinking…';
-  messagesDiv.appendChild(typing);
-  scrollToBottom();
-
-  try{
-    console.log('📤 Enviando consulta:', enhanced);
+    const resultMatch = text.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
+    const processMatch = text.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
     
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${SUPABASE_ANON_KEY}`},
-      body:JSON.stringify({question:enhanced})
-    });
-    
-    console.log('📡 Response status:', r.status);
-    
-    const data = await r.json();
-    console.log('📊 Response data:', data);
-    
-    typing.remove();
-
-    const a = document.createElement('div');
-    a.className='message assistant-message';
-    messagesDiv.appendChild(a);
-
-    const full = data.answer || '—';
-    memory.update(original, full);
-
-    const parsedResponse = parseStructuredResponse(full);
-    
-    if(parsedResponse.hasStructure){
-      const {id, html} = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
-      a.innerHTML = html;
-      const resultEl = document.getElementById('result-'+id);
-
-      showContentWithAnimation(parsedResponse.result, resultEl, () => {
-        scrollToBottom();
-      });
-
-      const header = a.querySelector(`.process-header[data-target="${id}"]`);
-      header.addEventListener('click', ()=>toggleProcess(id));
-      
-      requestAnimationFrame(() => {
-        a.classList.add('visible');
-      });
-    }else{
-      a.innerHTML = formatResultRich(full);
-      
-      requestAnimationFrame(() => {
-        a.classList.add('visible');
-      });
+    if (resultMatch) {
+        return {
+            hasStructure: true,
+            result: resultMatch[1].trim(),
+            process: processMatch ? processMatch[1].trim() : 'No se proporcionó información del proceso.'
+        };
     }
-    scrollToBottom();
-
-  }catch(err){
-    console.error('❌ Error:', err);
-    typing.remove();
-    const e = document.createElement('div');
-    e.className='message assistant-message';
-    e.textContent='Error al conectar con el servidor: ' + err.message;
-    messagesDiv.appendChild(e);
-  }finally{
-    isLoading=false; sendBtn.disabled=false;
-  }
+    
+    return {
+        hasStructure: false,
+        result: text,
+        process: ''
+    };
 }
 
-/* ===== Eventos ===== */
+// Construcción de mensaje estructurado
+function buildStructuredMessage(resultText, processText) {
+    const id = 'm' + Date.now() + Math.floor(Math.random() * 1e4);
+    const html = `
+        <div class="result-section" id="result-${id}"></div>
+        <hr class="proc-sep">
+        <div class="process-section">
+            <div class="process-header" data-target="${id}">
+                <span>Proceso</span><span class="process-arrow" id="arrow-${id}">▼</span>
+            </div>
+            <div class="process-content" id="process-${id}">
+                ${formatContent(processText)}
+            </div>
+        </div>`;
+    return { id, html };
+}
+
+function toggleProcess(id) {
+    const proc = document.getElementById('process-' + id);
+    const arrow = document.getElementById('arrow-' + id);
+    if (!proc) return;
+    const visible = proc.classList.toggle('visible');
+    arrow.textContent = visible ? '▲' : '▼';
+}
+
+function scrollToBottom() {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Función principal de envío
+async function sendMessage() {
+    const original = input.value.trim();
+    if (!original || isLoading) return;
+    
+    const enhanced = memory.enhance(original);
+    
+    // Mostrar mensaje del usuario
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message user-message';
+    userMsg.textContent = original.toUpperCase();
+    messagesDiv.appendChild(userMsg);
+    
+    input.value = '';
+    input.focus();
+    isLoading = true;
+    sendBtn.disabled = true;
+    
+    // Indicador de escritura
+    const typing = document.createElement('div');
+    typing.className = 'typing-indicator';
+    typing.textContent = 'procesando...';
+    messagesDiv.appendChild(typing);
+    scrollToBottom();
+    
+    try {
+        console.log('📤 Enviando consulta:', enhanced);
+        
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-query`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({ question: enhanced })
+        });
+        
+        const data = await response.json();
+        console.log('📥 Respuesta recibida:', data);
+        
+        typing.remove();
+        
+        const assistantMsg = document.createElement('div');
+        assistantMsg.className = 'message assistant-message';
+        messagesDiv.appendChild(assistantMsg);
+        
+        const fullAnswer = data.answer || 'No se pudo procesar la respuesta.';
+        memory.update(original, fullAnswer);
+        
+        const parsedResponse = parseStructuredResponse(fullAnswer);
+        
+        if (parsedResponse.hasStructure) {
+            const { id, html } = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
+            assistantMsg.innerHTML = html;
+            
+            const resultEl = document.getElementById('result-' + id);
+            resultEl.innerHTML = formatContent(parsedResponse.result);
+            
+            const header = assistantMsg.querySelector(`.process-header[data-target="${id}"]`);
+            header.addEventListener('click', () => toggleProcess(id));
+            
+            requestAnimationFrame(() => {
+                assistantMsg.classList.add('visible');
+            });
+        } else {
+            assistantMsg.innerHTML = formatContent(fullAnswer);
+            requestAnimationFrame(() => {
+                assistantMsg.classList.add('visible');
+            });
+        }
+        
+        scrollToBottom();
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        typing.remove();
+        
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message assistant-message';
+        errorMsg.textContent = 'Error al conectar con el servidor: ' + error.message;
+        messagesDiv.appendChild(errorMsg);
+        
+        requestAnimationFrame(() => {
+            errorMsg.classList.add('visible');
+        });
+    } finally {
+        isLoading = false;
+        sendBtn.disabled = false;
+    }
+}
+
+// Event listeners
 sendBtn.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendMessage(); });
+input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+});
 
 // Inicialización
 input.focus();
-console.log('🚀 Distribution Chat Test - Listo para probar');
+console.log('✅ Distribution Chat optimizado listo');
 </script>
 </body>
 </html>
-
