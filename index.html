@@ -6,7 +6,6 @@
     <title>Distribution Chat - Professional</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" />
     <style>
-        /* 2. ESTILOS CSS */
         :root {
             --black-90: rgba(0, 0, 0, .9);
             --black-80: rgba(0, 0, 0, .8);
@@ -79,7 +78,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-        /* --- ESTILOS MEJORADOS PARA MARKDOWN PROFESIONAL --- */
         .assistant-message h1,
         .assistant-message h2,
         .assistant-message h3 {
@@ -127,7 +125,6 @@
             background-color: #f7f7f7;
             font-weight: 600;
         }
-        /* --- FIN DE ESTILOS MARKDOWN --- */
         .proc-sep { margin: 14px 0; border: 0; border-top: 1px solid var(--black-90); }
         .process-section { margin-top: 10px; }
         .process-header { font-size: 14px; font-weight: 600; color: #111; margin: 6px 0; display: flex; align-items: center; gap: 8px; user-select: none; cursor: pointer; }
@@ -165,21 +162,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script>
-        // --- CONSTANTES DE CONFIGURACIÓN ---
-        // Estas URLs deben ser definidas en el entorno de despliegue (por ejemplo, variables de entorno en Netlify, Vercel, etc.)
-        // Si no están definidas, se usan valores por defecto o se lanza un error.
-        const CHAT_FUNCTION_URL = window.CHAT_FUNCTION_URL || 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1/chat-query';
-        if (!CHAT_FUNCTION_URL) {
-            console.error('Error: CHAT_FUNCTION_URL no está definida. Por favor configúrela.');
-            // Puedes mostrar un mensaje de error al usuario aquí también
-        }
-
-        console.log('🚀 Distribution Chat - Professional Version (Refactored)');
+        // --- CONFIGURACIÓN ---
+        // Cambia esta URL por la URL de tu función Supabase
+        const CHAT_FUNCTION_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1/chat-query';
+        
+        console.log('🚀 Distribution Chat - Professional Version (Fixed CORS)');
+        console.log('📡 Endpoint:', CHAT_FUNCTION_URL);
+        
         const messagesDiv = document.getElementById('messages');
         const input = document.getElementById('input');
         const sendBtn = document.getElementById('sendBtn');
         let isLoading = false;
 
+        // --- CLASE DE MEMORIA SIMPLE ---
         class SimpleMemory {
             constructor() {
                 this.context = null;
@@ -225,6 +220,7 @@
 
         const memory = new SimpleMemory();
 
+        // --- FUNCIONES DE FORMATO ---
         function formatContent(content) {
             const rawHtml = marked.parse(content, { gfm: true, breaks: true });
             const cleanHtml = DOMPurify.sanitize(rawHtml);
@@ -276,6 +272,7 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
+        // --- FUNCIÓN PRINCIPAL DE ENVÍO CON CORS MEJORADO ---
         async function sendMessage() {
             const original = input.value.trim();
             if (!original || isLoading) return;
@@ -297,22 +294,63 @@
             scrollToBottom();
 
             try {
-                // Enviar la pregunta al endpoint de la función
+                console.log('📤 Sending request to:', CHAT_FUNCTION_URL);
+                console.log('📝 Question:', enhanced);
+                
+                // Configuración mejorada de fetch con timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
+
                 const response = await fetch(CHAT_FUNCTION_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        // Opcional: Si la función requiere autenticación adicional
-                        // 'Authorization': `Bearer ${someToken}`, 
+                        'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ question: enhanced })
+                    body: JSON.stringify({ question: enhanced }),
+                    signal: controller.signal,
+                    mode: 'cors', // Explícitamente establecer modo CORS
+                    credentials: 'omit', // No enviar cookies
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                clearTimeout(timeoutId);
+
+                console.log('📥 Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+
+                // Verificar el content-type antes de parsear
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const textResponse = await response.text();
+                    console.error('❌ Non-JSON response:', textResponse);
+                    throw new Error(`Server returned non-JSON response`);
                 }
 
-                const data = await response.json();
+                // Parsear JSON con manejo de errores
+                let data;
+                try {
+                    data = await response.json();
+                    console.log('✅ Data parsed successfully');
+                } catch (jsonError) {
+                    console.error('❌ JSON parse error:', jsonError);
+                    throw new Error('Failed to parse server response as JSON');
+                }
+
+                // Verificar si la respuesta fue exitosa
+                if (!response.ok) {
+                    console.error('❌ Server error:', data);
+                    throw new Error(data.error || `Server error: ${response.status}`);
+                }
+
+                // Verificar estructura de datos
+                if (!data || typeof data.answer === 'undefined') {
+                    console.error('❌ Invalid response structure:', data);
+                    throw new Error('Invalid response structure from server');
+                }
+
                 typing.remove();
 
                 const assistantMsg = document.createElement('div');
@@ -341,32 +379,53 @@
                 scrollToBottom();
 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('❌ Full error details:', error);
                 typing.remove();
+                
                 const errorMsg = document.createElement('div');
                 errorMsg.className = 'message assistant-message';
-                // Mensaje de error amigable
-                errorMsg.textContent = 'Sorry, there was an error processing your request. Please try again.';
-                // Opcional: Mostrar el error real en modo desarrollo
-                if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-                     errorMsg.textContent = 'Error: ' + error.message;
+                
+                // Mensajes de error específicos
+                let userFriendlyMessage = 'Sorry, there was an error processing your request.';
+                
+                if (error.name === 'AbortError') {
+                    userFriendlyMessage = 'Request timed out. Please try again.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    userFriendlyMessage = 'Unable to connect to the server. Please check if the service is available.';
+                } else if (error.message.includes('Non-JSON response')) {
+                    userFriendlyMessage = 'Server returned an invalid response format.';
+                } else if (error.message.includes('NetworkError')) {
+                    userFriendlyMessage = 'Network error. Please check your connection.';
                 }
+                
+                errorMsg.innerHTML = `
+                    <strong>Error:</strong> ${userFriendlyMessage}
+                    ${location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? 
+                        `<br><small style="opacity: 0.7; font-size: 12px;">Debug: ${error.message}</small>` : ''}
+                `;
+                
                 messagesDiv.appendChild(errorMsg);
                 requestAnimationFrame(() => {
                     errorMsg.classList.add('visible');
                 });
+                scrollToBottom();
+                
             } finally {
                 isLoading = false;
                 sendBtn.disabled = false;
+                input.focus();
             }
         }
 
+        // --- EVENT LISTENERS ---
         sendBtn.addEventListener('click', sendMessage);
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
+        
+        // Foco inicial
         input.focus();
-        console.log('✅ Chat ready');
+        console.log('✅ Chat ready - CORS configuration applied');
     </script>
 </body>
 </html>
