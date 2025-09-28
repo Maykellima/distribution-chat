@@ -165,10 +165,10 @@
         // --- CONFIGURACIÓN ---
         // Cambia esta URL por la URL de tu función Supabase
         const CHAT_FUNCTION_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1/chat-query';
-        
+
         console.log('🚀 Distribution Chat - Professional Version (Fixed CORS)');
         console.log('📡 Endpoint:', CHAT_FUNCTION_URL);
-        
+
         const messagesDiv = document.getElementById('messages');
         const input = document.getElementById('input');
         const sendBtn = document.getElementById('sendBtn');
@@ -296,7 +296,7 @@
             try {
                 console.log('📤 Sending request to:', CHAT_FUNCTION_URL);
                 console.log('📝 Question:', enhanced);
-                
+
                 // Configuración mejorada de fetch con timeout
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
@@ -381,13 +381,13 @@
             } catch (error) {
                 console.error('❌ Full error details:', error);
                 typing.remove();
-                
+
                 const errorMsg = document.createElement('div');
                 errorMsg.className = 'message assistant-message';
-                
+
                 // Mensajes de error específicos
                 let userFriendlyMessage = 'Sorry, there was an error processing your request.';
-                
+
                 if (error.name === 'AbortError') {
                     userFriendlyMessage = 'Request timed out. Please try again.';
                 } else if (error.message.includes('Failed to fetch')) {
@@ -397,19 +397,19 @@
                 } else if (error.message.includes('NetworkError')) {
                     userFriendlyMessage = 'Network error. Please check your connection.';
                 }
-                
+
                 errorMsg.innerHTML = `
                     <strong>Error:</strong> ${userFriendlyMessage}
-                    ${location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? 
+                    ${location.hostname === 'localhost' || location.hostname === '127.0.0.1' ?
                         `<br><small style="opacity: 0.7; font-size: 12px;">Debug: ${error.message}</small>` : ''}
                 `;
-                
+
                 messagesDiv.appendChild(errorMsg);
                 requestAnimationFrame(() => {
                     errorMsg.classList.add('visible');
                 });
                 scrollToBottom();
-                
+
             } finally {
                 isLoading = false;
                 sendBtn.disabled = false;
@@ -422,7 +422,7 @@
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
-        
+
         // Foco inicial
         input.focus();
         console.log('✅ Chat ready - CORS configuration applied');
