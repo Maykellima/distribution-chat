@@ -163,62 +163,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script>
         // --- CONFIGURACIÓN ---
-        // Cambia esta URL por la URL de tu función Supabase
         const CHAT_FUNCTION_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1/chat-query';
-
-        console.log('🚀 Distribution Chat - Professional Version (Fixed CORS)');
+        
+        console.log('🚀 Distribution Chat - Professional Version');
         console.log('📡 Endpoint:', CHAT_FUNCTION_URL);
-
+        
         const messagesDiv = document.getElementById('messages');
         const input = document.getElementById('input');
         const sendBtn = document.getElementById('sendBtn');
         let isLoading = false;
 
-        // --- CLASE DE MEMORIA SIMPLE ---
-        class SimpleMemory {
-            constructor() {
-                this.context = null;
-                this.DURATION = 10 * 60 * 1000; // 10 minutos
+        // Generar o recuperar session ID
+        function getSessionId() {
+            let sessionId = localStorage.getItem('chat-session-id');
+            if (!sessionId) {
+                sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('chat-session-id', sessionId);
             }
-            update(question, answer) {
-                this.context = {
-                    lastQuery: question,
-                    lastAnswer: answer,
-                    timestamp: Date.now(),
-                    entities: this.extractEntities(question + ' ' + answer)
-                };
-            }
-            extractEntities(text) {
-                const lower = text.toLowerCase();
-                return {
-                    projects: this.findProjects(lower),
-                    people: this.findPeople(text)
-                };
-            }
-            findProjects(text) {
-                const projectKeywords = ['dataverse', 'delta', 'sid', 'hornblower', 'solutran', 'zeta', 'distribution'];
-                return projectKeywords.filter(p => text.includes(p));
-            }
-            findPeople(text) {
-                const namePattern = /[A-ZÁÉÍÓÚÑ'][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ'][a-záéíóúñ]+)*/g;
-                return text.match(namePattern) || [];
-            }
-            enhance(question) {
-                if (!this.context || Date.now() - this.context.timestamp > this.DURATION) {
-                    return question;
-                }
-                const q = question.toLowerCase();
-                if ((q.includes('they') || q.includes('them') || q.includes('ellos') || q.includes('estos')) && this.context.entities.people.length) {
-                    return question + ` (context: ${this.context.entities.people.join(', ')})`;
-                }
-                if ((q.includes('that project') || q.includes('el proyecto') || q.includes('ese proyecto')) && this.context.entities.projects.length) {
-                    return question + ` (context: project ${this.context.entities.projects[0]})`;
-                }
-                return question;
-            }
+            return sessionId;
         }
 
-        const memory = new SimpleMemory();
+        const sessionId = getSessionId();
+        console.log('📍 Session ID:', sessionId);
 
         // --- FUNCIONES DE FORMATO ---
         function formatContent(content) {
@@ -272,15 +238,14 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // --- FUNCIÓN PRINCIPAL DE ENVÍO CON CORS MEJORADO ---
+        // --- FUNCIÓN PRINCIPAL DE ENVÍO ---
         async function sendMessage() {
-            const original = input.value.trim();
-            if (!original || isLoading) return;
+            const question = input.value.trim();
+            if (!question || isLoading) return;
 
-            const enhanced = memory.enhance(original);
             const userMsg = document.createElement('div');
             userMsg.className = 'message user-message';
-            userMsg.textContent = original.toUpperCase();
+            userMsg.textContent = question.toUpperCase();
             messagesDiv.appendChild(userMsg);
             input.value = '';
             input.focus();
@@ -294,61 +259,35 @@
             scrollToBottom();
 
             try {
-                console.log('📤 Sending request to:', CHAT_FUNCTION_URL);
-                console.log('📝 Question:', enhanced);
-
-                // Configuración mejorada de fetch con timeout
+                console.log('📤 Sending request');
+                
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 200000); // 30 segundos timeout
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
 
                 const response = await fetch(CHAT_FUNCTION_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
+                        'X-Session-ID': sessionId
                     },
-                    body: JSON.stringify({ question: enhanced }),
+                    body: JSON.stringify({ question, sessionId }),
                     signal: controller.signal,
-                    mode: 'cors', // Explícitamente establecer modo CORS
-                    credentials: 'omit', // No enviar cookies
+                    mode: 'cors',
+                    credentials: 'omit'
                 });
 
                 clearTimeout(timeoutId);
 
-                console.log('📥 Response received:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries())
-                });
-
-                // Verificar el content-type antes de parsear
                 const contentType = response.headers.get("content-type");
                 if (!contentType || !contentType.includes("application/json")) {
-                    const textResponse = await response.text();
-                    console.error('❌ Non-JSON response:', textResponse);
                     throw new Error(`Server returned non-JSON response`);
                 }
 
-                // Parsear JSON con manejo de errores
-                let data;
-                try {
-                    data = await response.json();
-                    console.log('✅ Data parsed successfully');
-                } catch (jsonError) {
-                    console.error('❌ JSON parse error:', jsonError);
-                    throw new Error('Failed to parse server response as JSON');
-                }
-
-                // Verificar si la respuesta fue exitosa
+                const data = await response.json();
+                
                 if (!response.ok) {
-                    console.error('❌ Server error:', data);
                     throw new Error(data.error || `Server error: ${response.status}`);
-                }
-
-                // Verificar estructura de datos
-                if (!data || typeof data.answer === 'undefined') {
-                    console.error('❌ Invalid response structure:', data);
-                    throw new Error('Invalid response structure from server');
                 }
 
                 typing.remove();
@@ -358,9 +297,8 @@
                 messagesDiv.appendChild(assistantMsg);
 
                 const fullAnswer = data.answer || 'Unable to process response.';
-                memory.update(original, fullAnswer);
-
                 const parsedResponse = parseStructuredResponse(fullAnswer);
+                
                 if (parsedResponse.hasStructure) {
                     const { id, html } = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
                     assistantMsg.innerHTML = html;
@@ -379,37 +317,27 @@
                 scrollToBottom();
 
             } catch (error) {
-                console.error('❌ Full error details:', error);
+                console.error('❌ Error:', error);
                 typing.remove();
-
+                
                 const errorMsg = document.createElement('div');
                 errorMsg.className = 'message assistant-message';
-
-                // Mensajes de error específicos
+                
                 let userFriendlyMessage = 'Sorry, there was an error processing your request.';
-
+                
                 if (error.name === 'AbortError') {
                     userFriendlyMessage = 'Request timed out. Please try again.';
                 } else if (error.message.includes('Failed to fetch')) {
-                    userFriendlyMessage = 'Unable to connect to the server. Please check if the service is available.';
-                } else if (error.message.includes('Non-JSON response')) {
-                    userFriendlyMessage = 'Server returned an invalid response format.';
-                } else if (error.message.includes('NetworkError')) {
-                    userFriendlyMessage = 'Network error. Please check your connection.';
+                    userFriendlyMessage = 'Unable to connect to the server.';
                 }
-
-                errorMsg.innerHTML = `
-                    <strong>Error:</strong> ${userFriendlyMessage}
-                    ${location.hostname === 'localhost' || location.hostname === '127.0.0.1' ?
-                        `<br><small style="opacity: 0.7; font-size: 12px;">Debug: ${error.message}</small>` : ''}
-                `;
-
+                
+                errorMsg.innerHTML = `<strong>Error:</strong> ${userFriendlyMessage}`;
                 messagesDiv.appendChild(errorMsg);
                 requestAnimationFrame(() => {
                     errorMsg.classList.add('visible');
                 });
                 scrollToBottom();
-
+                
             } finally {
                 isLoading = false;
                 sendBtn.disabled = false;
@@ -422,10 +350,9 @@
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
-
-        // Foco inicial
+        
         input.focus();
-        console.log('✅ Chat ready - CORS configuration applied');
+        console.log('✅ Chat ready');
     </script>
 </body>
 </html>
