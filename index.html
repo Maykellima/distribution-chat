@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -162,7 +162,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script>
-        // --- CONFIGURACIÓN ---
+        // --- CONFIGURATION ---
         const CHAT_FUNCTION_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1/chat-query';
         
         console.log('🚀 Distribution Chat - Professional Version');
@@ -173,7 +173,7 @@
         const sendBtn = document.getElementById('sendBtn');
         let isLoading = false;
 
-        // Generar o recuperar session ID
+        // Generate or retrieve session ID
         function getSessionId() {
             let sessionId = localStorage.getItem('chat-session-id');
             if (!sessionId) {
@@ -184,9 +184,9 @@
         }
 
         const sessionId = getSessionId();
-        console.log('📍 Session ID:', sessionId);
+        console.log('🔑 Session ID:', sessionId);
 
-        // --- FUNCIONES DE FORMATO ---
+        // --- FORMAT FUNCTIONS ---
         function formatContent(content) {
             const rawHtml = marked.parse(content, { gfm: true, breaks: true });
             const cleanHtml = DOMPurify.sanitize(rawHtml);
@@ -194,8 +194,23 @@
         }
 
         function parseStructuredResponse(text) {
-            const resultMatch = text.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
-            const processMatch = text.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
+            // Try multiple formats to maintain compatibility
+            let resultMatch = text.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i);
+            let processMatch = text.match(/\[PROCESS DETAILS\]([\s\S]*?)\[\/PROCESS DETAILS\]/i);
+            
+            // Fallback to PROCESS without DETAILS
+            if (!processMatch) {
+                processMatch = text.match(/\[PROCESS\]([\s\S]*?)\[\/PROCESS\]/i);
+            }
+            
+            // Fallback to Spanish tags for backward compatibility
+            if (!resultMatch) {
+                resultMatch = text.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
+            }
+            if (!processMatch) {
+                processMatch = text.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
+            }
+            
             if (resultMatch) {
                 return {
                     hasStructure: true,
@@ -203,6 +218,7 @@
                     process: processMatch ? processMatch[1].trim() : 'Process information not available.'
                 };
             }
+            
             return {
                 hasStructure: false,
                 result: text,
@@ -217,7 +233,7 @@
                 <hr class="proc-sep">
                 <div class="process-section">
                     <div class="process-header" data-target="${id}">
-                        <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
+                        <span>Process Details</span><span class="process-arrow" id="arrow-${id}">▼</span>
                     </div>
                     <div class="process-content" id="process-${id}">
                         ${formatContent(processText)}
@@ -238,7 +254,7 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // --- FUNCIÓN PRINCIPAL DE ENVÍO ---
+        // --- MAIN SEND FUNCTION ---
         async function sendMessage() {
             const question = input.value.trim();
             if (!question || isLoading) return;
@@ -254,7 +270,7 @@
 
             const typing = document.createElement('div');
             typing.className = 'typing-indicator';
-            typing.textContent = 'thinking...';
+            typing.textContent = 'Processing your request...';
             messagesDiv.appendChild(typing);
             scrollToBottom();
 
