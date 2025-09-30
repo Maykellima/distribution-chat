@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -127,19 +127,92 @@
         }
         .proc-sep { margin: 14px 0; border: 0; border-top: 1px solid var(--black-90); }
         .process-section { margin-top: 10px; }
-        .process-header { font-size: 14px; font-weight: 600; color: #111; margin: 6px 0; display: flex; align-items: center; gap: 8px; user-select: none; cursor: pointer; }
-        .process-arrow { font-size: 12px; display: inline-block; min-width: 14px; }
-        .process-content { display: none; padding-top: 6px; font-size: 13px; color: #444; line-height: 1.6; }
+        .process-header { 
+            font-size: 14px; 
+            font-weight: 600; 
+            color: #111; 
+            margin: 6px 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            user-select: none; 
+            cursor: pointer; 
+        }
+        .process-arrow { 
+            font-size: 12px; 
+            display: inline-block; 
+            min-width: 14px; 
+        }
+        .process-content { 
+            display: none; 
+            padding-top: 6px; 
+            font-size: 13px; 
+            color: #444; 
+            line-height: 1.6; 
+        }
         .process-content.visible { display: block; }
-        .typing-indicator { margin-left: 60px; height: 18px; color: var(--black-80); font-size: 13px; }
+        .typing-indicator { 
+            margin-left: 60px; 
+            height: 18px; 
+            color: var(--black-80); 
+            font-size: 13px; 
+        }
         .input-container { position: relative; }
-        .input-field { width: 100%; padding: 20px 60px 20px 24px; border: 2px solid #e5e5e5; border-radius: 50px; font-size: 16px; color: #222; background: #fff; outline: none; transition: all .2s ease; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-        .input-field:focus { border-color: #666; box-shadow: 0 4px 16px rgba(0,0,0,.12); }
-        .input-field::placeholder { color: #999; font-weight: 400; }
-        .send-button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: none; border-radius: 50%; background: #111; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s ease; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
-        .send-button:hover:not(:disabled) { background: #000; transform: translateY(-50%) scale(1.04); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
-        .send-button:disabled { background: #f0f0f0; color: #aaa; cursor: not-allowed; box-shadow: none; transform: translateY(-50%); }
-        .send-button svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+        .input-field { 
+            width: 100%; 
+            padding: 20px 60px 20px 24px; 
+            border: 2px solid #e5e5e5; 
+            border-radius: 50px; 
+            font-size: 16px; 
+            color: #222; 
+            background: #fff; 
+            outline: none; 
+            transition: all .2s ease; 
+            box-shadow: 0 2px 8px rgba(0,0,0,.08); 
+        }
+        .input-field:focus { 
+            border-color: #666; 
+            box-shadow: 0 4px 16px rgba(0,0,0,.12); 
+        }
+        .input-field::placeholder { 
+            color: #999; 
+            font-weight: 400; 
+        }
+        .send-button { 
+            position: absolute; 
+            right: 8px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            width: 44px; 
+            height: 44px; 
+            border: none; 
+            border-radius: 50%; 
+            background: #111; 
+            color: #fff; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: all .2s ease; 
+            box-shadow: 0 2px 8px rgba(0,0,0,.15); 
+        }
+        .send-button:hover:not(:disabled) { 
+            background: #000; 
+            transform: translateY(-50%) scale(1.04); 
+            box-shadow: 0 4px 12px rgba(0,0,0,.25); 
+        }
+        .send-button:disabled { 
+            background: #f0f0f0; 
+            color: #aaa; 
+            cursor: not-allowed; 
+            box-shadow: none; 
+            transform: translateY(-50%); 
+        }
+        .send-button svg { 
+            width: 20px; 
+            height: 20px; 
+            transform: rotate(-90deg); 
+        }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
@@ -150,19 +223,29 @@
     <div class="container">
         <div class="messages" id="messages"></div>
         <div class="input-container">
-            <input type="text" class="input-field" id="input" placeholder="How can I help you?" autocomplete="off" />
+            <input 
+                type="text" 
+                class="input-field" 
+                id="input" 
+                placeholder="How can I help you today?" 
+                autocomplete="off" 
+            />
             <button class="send-button" id="sendBtn" aria-label="Send">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0M12 5l7 7-7 7"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12l14 0M12 5l7 7-7 7"/>
+                </svg>
             </button>
         </div>
     </div>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
     <script>
-        // --- CONFIGURACIÓN ---
+        // --- CONFIGURATION ---
         const CHAT_FUNCTION_URL = 'https://tzoiscozwjnuxmecwtqi.supabase.co/functions/v1/chat-query';
         
         console.log('🚀 Distribution Chat - Professional Version');
@@ -173,7 +256,7 @@
         const sendBtn = document.getElementById('sendBtn');
         let isLoading = false;
 
-        // Generar o recuperar session ID
+        // Generate or retrieve session ID
         function getSessionId() {
             let sessionId = localStorage.getItem('chat-session-id');
             if (!sessionId) {
@@ -184,9 +267,9 @@
         }
 
         const sessionId = getSessionId();
-        console.log('📍 Session ID:', sessionId);
+        console.log('🔑 Session ID:', sessionId);
 
-        // --- FUNCIONES DE FORMATO ---
+        // --- FORMAT FUNCTIONS ---
         function formatContent(content) {
             const rawHtml = marked.parse(content, { gfm: true, breaks: true });
             const cleanHtml = DOMPurify.sanitize(rawHtml);
@@ -194,8 +277,18 @@
         }
 
         function parseStructuredResponse(text) {
-            const resultMatch = text.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
-            const processMatch = text.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
+            // Try English tags first
+            let resultMatch = text.match(/\[RESULT\]([\s\S]*?)\[\/RESULT\]/i);
+            let processMatch = text.match(/\[PROCESS\]([\s\S]*?)\[\/PROCESS\]/i);
+            
+            // Fallback to Spanish tags for backward compatibility
+            if (!resultMatch) {
+                resultMatch = text.match(/\[RESULTADO\]([\s\S]*?)\[\/RESULTADO\]/i);
+            }
+            if (!processMatch) {
+                processMatch = text.match(/\[PROCESO\]([\s\S]*?)\[\/PROCESO\]/i);
+            }
+            
             if (resultMatch) {
                 return {
                     hasStructure: true,
@@ -203,6 +296,7 @@
                     process: processMatch ? processMatch[1].trim() : 'Process information not available.'
                 };
             }
+            
             return {
                 hasStructure: false,
                 result: text,
@@ -217,7 +311,8 @@
                 <hr class="proc-sep">
                 <div class="process-section">
                     <div class="process-header" data-target="${id}">
-                        <span>Process</span><span class="process-arrow" id="arrow-${id}">▼</span>
+                        <span>Process Details</span>
+                        <span class="process-arrow" id="arrow-${id}">▼</span>
                     </div>
                     <div class="process-content" id="process-${id}">
                         ${formatContent(processText)}
@@ -230,6 +325,7 @@
             const proc = document.getElementById('process-' + id);
             const arrow = document.getElementById('arrow-' + id);
             if (!proc) return;
+            
             const visible = proc.classList.toggle('visible');
             arrow.textContent = visible ? '▲' : '▼';
         }
@@ -238,23 +334,27 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // --- FUNCIÓN PRINCIPAL DE ENVÍO ---
+        // --- MAIN SEND FUNCTION ---
         async function sendMessage() {
             const question = input.value.trim();
             if (!question || isLoading) return;
 
+            // Add user message
             const userMsg = document.createElement('div');
             userMsg.className = 'message user-message';
             userMsg.textContent = question.toUpperCase();
             messagesDiv.appendChild(userMsg);
+            
+            // Clear input
             input.value = '';
             input.focus();
             isLoading = true;
             sendBtn.disabled = true;
 
+            // Add typing indicator
             const typing = document.createElement('div');
             typing.className = 'typing-indicator';
-            typing.textContent = 'thinking...';
+            typing.textContent = 'Processing your request...';
             messagesDiv.appendChild(typing);
             scrollToBottom();
 
@@ -290,8 +390,10 @@
                     throw new Error(data.error || `Server error: ${response.status}`);
                 }
 
+                // Remove typing indicator
                 typing.remove();
 
+                // Add assistant message
                 const assistantMsg = document.createElement('div');
                 assistantMsg.className = 'message assistant-message';
                 messagesDiv.appendChild(assistantMsg);
@@ -302,18 +404,26 @@
                 if (parsedResponse.hasStructure) {
                     const { id, html } = buildStructuredMessage(parsedResponse.result, parsedResponse.process);
                     assistantMsg.innerHTML = html;
+                    
+                    // Fill result section
                     const resultEl = document.getElementById('result-' + id);
                     resultEl.innerHTML = formatContent(parsedResponse.result);
+                    
+                    // Add click handler for process toggle
                     const header = assistantMsg.querySelector(`.process-header[data-target="${id}"]`);
                     header.addEventListener('click', () => toggleProcess(id));
                 } else {
                     assistantMsg.innerHTML = formatContent(fullAnswer);
                 }
 
+                // Highlight code blocks
                 Prism.highlightAll();
+                
+                // Animate in
                 requestAnimationFrame(() => {
                     assistantMsg.classList.add('visible');
                 });
+                
                 scrollToBottom();
 
             } catch (error) {
@@ -323,19 +433,21 @@
                 const errorMsg = document.createElement('div');
                 errorMsg.className = 'message assistant-message';
                 
-                let userFriendlyMessage = 'Sorry, there was an error processing your request.';
+                let userFriendlyMessage = 'Sorry, there was an error processing your request. Please try again.';
                 
                 if (error.name === 'AbortError') {
-                    userFriendlyMessage = 'Request timed out. Please try again.';
+                    userFriendlyMessage = 'Request timed out. Please try again with a simpler query.';
                 } else if (error.message.includes('Failed to fetch')) {
-                    userFriendlyMessage = 'Unable to connect to the server.';
+                    userFriendlyMessage = 'Unable to connect to the server. Please check your connection and try again.';
                 }
                 
                 errorMsg.innerHTML = `<strong>Error:</strong> ${userFriendlyMessage}`;
                 messagesDiv.appendChild(errorMsg);
+                
                 requestAnimationFrame(() => {
                     errorMsg.classList.add('visible');
                 });
+                
                 scrollToBottom();
                 
             } finally {
@@ -351,7 +463,30 @@
             if (e.key === 'Enter') sendMessage();
         });
         
+        // Focus input on load
         input.focus();
+        
+        // Welcome message (optional)
+        const welcomeMsg = document.createElement('div');
+        welcomeMsg.className = 'message assistant-message';
+        welcomeMsg.innerHTML = `
+            <strong>Welcome to Distribution Chat</strong><br>
+            Ask me about team members, projects, skills, or client assignments.
+            <br><br>
+            Example queries:
+            <ul>
+                <li>Who works at Hornblower?</li>
+                <li>Show me all active employees</li>
+                <li>What are the team capabilities?</li>
+                <li>Find John Smith's profile</li>
+            </ul>
+        `;
+        messagesDiv.appendChild(welcomeMsg);
+        
+        requestAnimationFrame(() => {
+            welcomeMsg.classList.add('visible');
+        });
+        
         console.log('✅ Chat ready');
     </script>
 </body>
